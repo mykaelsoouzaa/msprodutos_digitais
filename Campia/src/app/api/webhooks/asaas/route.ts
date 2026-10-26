@@ -12,7 +12,14 @@ export async function POST(request: NextRequest) {
   // trim(): espaço ou quebra de linha colados junto com o token não podem derrubar o webhook.
   const expected = (process.env.ASAAS_WEBHOOK_TOKEN || '').trim();
   const got = (request.headers.get('asaas-access-token') || '').trim();
-  if (!expected || !safeEqual(got, expected)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!expected || !safeEqual(got, expected)) {
+    // Diagnóstico sem revelar o token: aparece no log de webhooks do Asaas e nos logs da Vercel.
+    const motivo = !expected ? 'ASAAS_WEBHOOK_TOKEN não configurado na Vercel'
+      : !got ? 'o Asaas não enviou token (webhook sem token de autenticação)'
+      : 'token diferente do ASAAS_WEBHOOK_TOKEN da Vercel';
+    console.warn(`Webhook Asaas recusado: ${motivo} (recebido ${got.length} caracteres, esperado ${expected.length})`);
+    return NextResponse.json({ error: 'unauthorized', motivo, recebido: got.length, esperado: expected.length }, { status: 401 });
+  }
 
   const body = await request.json().catch(() => null) as
     | { id?: string; event?: string; payment?: { id?: string; externalReference?: string } }
