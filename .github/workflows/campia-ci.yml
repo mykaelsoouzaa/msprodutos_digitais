@@ -1,0 +1,35 @@
+name: Campia
+on:
+  push:
+    paths: ['Campia/**', '.github/workflows/campia-ci.yml']
+  pull_request:
+    paths: ['Campia/**']
+
+defaults:
+  run:
+    working-directory: Campia
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://exemplo.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: chave-de-exemplo
+          NEXT_PUBLIC_SITE_URL: https://exemplo.com
+      # Depois do build, que gera o next-env.d.ts
+      - run: npm run typecheck
+
+  banco:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: sudo apt-get update && sudo apt-get install -y postgresql
+      - run: bash scripts/test-db.sh

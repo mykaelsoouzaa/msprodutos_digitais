@@ -4,10 +4,13 @@ Produtos digitais da MS Suporte TI.
 
 | Produto | O que é | Pasta |
 | --- | --- | --- |
-| Rodada | Plataforma para organizar campeonatos amadores: tabela automática, inscrição com PIX, resultados, página pública e app instalável com lembretes | [`rodada/`](rodada/) |
+| [Campia](https://campia.app.br) | Plataforma para organizar campeonatos amadores de qualquer esporte: tabela automática, inscrição com PIX, resultados, página pública e app instalável com lembretes | [`Campia/`](Campia/) |
 
-## Rodada
+## Campia
 
-- `rodada/` — MVP em Next.js + Supabase + PIX (Asaas). Instruções em [`rodada/README.md`](rodada/README.md).
-- `rodada/prototipo/prototipo-campeonatos.html` — protótipo navegável com todas as funções estudadas (abre direto no navegador).
-- `rodada/prototipo/demo-rodada.mp4` — vídeo de demonstração do protótipo (2 min, vertical).
+![Campia](Campia/brand/campia-logo-claro.png)
+
+- `Campia/`: o sistema (Next.js + Supabase + PIX Asaas). Instruções em [`Campia/README.md`](Campia/README.md).
+- `Campia/docs/PUBLICAR.md`: passo a passo para colocar o campia.app.br no ar com o PIX funcionando.
+- `Campia/brand/`: logo, símbolo e imagens para redes sociais.
+- `Campia/prototipo/`: protótipo navegável com todas as funções estudadas e vídeo de demonstração.
