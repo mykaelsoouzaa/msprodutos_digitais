@@ -32,7 +32,10 @@ export default async function Pagamento({ params }: { params: Promise<{ id: stri
         <div style={{ fontSize: 54 }}>✅</div>
         <h1>{team.name} está inscrito!</h1>
         <p className="sub">Pagamento de {brl(p.amount_cents)} confirmado. Os jogos e a tabela ficam na página do campeonato.</p>
-        <Link href={`/c/${champ.slug}`} className="btn">Ver {champ.name}</Link>
+        <div className="actions" style={{ justifyContent: 'center' }}>
+          <Link href={`/c/${champ.slug}`} className="btn">Ver {champ.name}</Link>
+          <Link href="/meus-times" className="btn ghost">Acompanhar em Meus times</Link>
+        </div>
       </div>
     );
   }

@@ -14,6 +14,7 @@ const Signup = z.object({
   short: z.string().trim().max(3).default(''),
   captain: z.string().trim().min(2, 'Informe o nome do capitão').max(60),
   phone: z.string().transform(s => normalizePhone(s)).refine(Boolean, 'WhatsApp com DDD inválido'),
+  email: z.string().trim().toLowerCase().email('E-mail do capitão inválido').max(120),
   cpf: z.string().default(''),
   players: z.string().max(4000).default(''),
   consent: z.literal('on', { errorMap: () => ({ message: 'É preciso aceitar os termos de exibição' }) }),
@@ -50,6 +51,7 @@ export async function registerTeam(formData: FormData) {
   if (reserveError) fail('Não foi possível reservar a vaga. Tente de novo.');
   if (!teamId) fail('As vagas esgotaram');
 
+  await db.from('team_contacts').update({ captain_email: f.email }).eq('team_id', teamId);
   await db.from('players').insert(players.map(p => ({ championship_id: champ!.id, team_id: teamId, name: p.name, number: p.number })));
 
   // Inscrição grátis: confirma direto.

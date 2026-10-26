@@ -30,7 +30,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .nav a:hover { color: var(--text); background: var(--panel); }
 .spacer { flex: 1; }
 .top .cta-top { display: none; }
-@media (min-width: 768px) { .nav { display: flex; } .top .cta-top { display: inline-flex; } }
+@media (min-width: 640px) { .top .cta-top { display: inline-flex; } }
+@media (min-width: 1024px) { .nav { display: flex; } }
 
 main { padding: 20px 0 56px; }
 @media (min-width: 1024px) { main { padding-top: 32px; } }
@@ -350,3 +351,29 @@ form.esports:has(input[name="online"][value="1"]:checked) .presencial { display:
 .organizer { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); text-decoration: none; margin-top: 10px; }
 .organizer:hover { color: var(--text); }
 .organizer img, .organizer .arena-logo { width: 24px; height: 24px; border-radius: 7px; font-size: 10px; }
+
+/* ---------- meus times ---------- */
+.grid-cards.wide { grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); }
+.my-team { display: flex; flex-direction: column; gap: 14px; }
+.my-team-head { display: flex; gap: 12px; align-items: center; }
+.my-team-head b { display: block; font-size: 18px; }
+.my-team-champ { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); text-decoration: none; }
+.my-team-champ:hover { color: var(--text); }
+.dot.lg { width: 44px; height: 44px; border-radius: 12px; font-size: 13px; }
+.my-team .round-title { margin: 0 0 8px; align-items: center; }
+.mini-edit summary { cursor: pointer; font-size: 13px; color: var(--muted); margin-top: 4px; list-style: none; }
+.mini-edit summary::-webkit-details-marker { display: none; }
+.mini-edit summary:hover { color: var(--text); }
+.mini-form { display: flex; gap: 6px; margin-top: 8px; }
+.mini-form .inp { padding: 8px 10px; font-size: 14px; }
+
+/* ---------- menu do celular ---------- */
+.mnav { position: relative; }
+.mnav summary { list-style: none; cursor: pointer; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; border: 1px solid var(--line); background: var(--panel2); }
+.mnav summary::-webkit-details-marker { display: none; }
+.mnav[open] summary { border-color: var(--accent); }
+.mnav-panel { position: absolute; right: 0; top: 48px; width: min(280px, calc(100vw - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 8px; display: grid; gap: 2px; box-shadow: 0 20px 50px rgba(0, 0, 0, .5); }
+.mnav-panel a { text-decoration: none; padding: 12px; border-radius: 10px; font-weight: 600; font-size: 15px; }
+.mnav-panel a:not(.btn):hover, .mnav-panel a.on { background: var(--panel2); }
+.mnav-panel .btn { margin-top: 6px; }
+@media (min-width: 1024px) { .mnav { display: none; } }

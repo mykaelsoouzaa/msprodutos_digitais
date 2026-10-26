@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
+import MobileNav, { NAV_LINKS } from '@/components/MobileNav';
 import PwaSetup from '@/components/PwaSetup';
 import Splash from '@/components/Splash';
 import { APP_VERSION } from '@/lib/version';
@@ -26,14 +27,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <img src="/brand/campia-logo-escuro.svg" alt="Campia" height={30} />
             </Link>
             <nav className="nav" aria-label="Principal">
-              <Link href="/campeonatos">Campeonatos</Link>
-              <Link href="/#como-funciona">Como funciona</Link>
-              <Link href="/#esportes">Esportes</Link>
-              <Link href="/novidades">Novidades</Link>
+              {NAV_LINKS.map(([href, label]) => <Link key={href} href={href}>{label}</Link>)}
             </nav>
             <span className="spacer" />
             <Link href="/painel" className="btn ghost sm">Painel</Link>
             <Link href="/painel/novo" className="btn sm cta-top">Criar campeonato</Link>
+            <MobileNav />
           </div>
         </header>
         <main>

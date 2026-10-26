@@ -23,6 +23,8 @@ export interface Team {
   paid: boolean;
   captainName: string;
   captainPhone: string;
+  /** Só carregado para o dono do campeonato. */
+  captainEmail?: string;
 }
 
 export interface Player {

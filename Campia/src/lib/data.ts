@@ -32,9 +32,9 @@ export const toChampionship = (r: ChampionshipRow): Championship => ({
   id: r.id, slug: r.slug, name: r.name, sport: r.sport, format: r.format, feeCents: r.fee_cents,
   location: r.location, city: r.city, state: r.state ?? '', online: !!r.online, visibility: r.visibility, rules: r.rules, schedule: r.schedule,
 });
-export const toTeam = (r: TeamRow, phone = ''): Team => ({
+export const toTeam = (r: TeamRow, phone = '', email = ''): Team => ({
   id: r.id, slot: r.slot, name: r.name, short: r.short, color: r.color, group: r.grp, status: r.status,
-  paid: r.paid, captainName: r.captain_name, captainPhone: phone,
+  paid: r.paid, captainName: r.captain_name, captainPhone: phone, captainEmail: email,
 });
 export const toPlayer = (r: PlayerRow): Player => ({ id: r.id, teamId: r.team_id, name: r.name, number: r.number });
 export const toGame = (r: GameRow): Game => ({
@@ -66,6 +66,8 @@ export interface ChampData {
   goals: Goal[];
 }
 
+type Contact = { team_id: string; captain_phone: string; captain_email: string };
+
 export async function loadChampionship(
   db: SupabaseClient, by: { id: string } | { slug: string }, opts: { withContacts?: boolean } = {},
 ): Promise<ChampData | null> {
@@ -79,15 +81,15 @@ export async function loadChampionship(
     db.from('games').select('*').eq('championship_id', row.id).order('sort').returns<GameRow[]>(),
     db.from('goals').select('*').eq('championship_id', row.id).returns<GoalRow[]>(),
     opts.withContacts
-      ? db.from('team_contacts').select('team_id, captain_phone').eq('championship_id', row.id).returns<Array<{ team_id: string; captain_phone: string }>>()
-      : Promise.resolve({ data: [] as Array<{ team_id: string; captain_phone: string }> }),
+      ? db.from('team_contacts').select('team_id, captain_phone, captain_email').eq('championship_id', row.id).returns<Contact[]>()
+      : Promise.resolve({ data: [] as Contact[] }),
   ]);
-  const phones = new Map((contacts.data ?? []).map(c => [c.team_id, c.captain_phone]));
+  const byTeam = new Map((contacts.data ?? []).map(c => [c.team_id, c]));
 
   return {
     row,
     champ: toChampionship(row),
-    teams: (teams.data ?? []).map(t => toTeam(t, phones.get(t.id) ?? '')),
+    teams: (teams.data ?? []).map(t => toTeam(t, byTeam.get(t.id)?.captain_phone ?? '', byTeam.get(t.id)?.captain_email ?? '')),
     players: (players.data ?? []).map(toPlayer),
     games: (games.data ?? []).map(toGame),
     goals: (goals.data ?? []).map(toGoal),

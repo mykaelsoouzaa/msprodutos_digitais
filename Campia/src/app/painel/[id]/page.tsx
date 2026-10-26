@@ -10,7 +10,7 @@ import { siteUrl } from '@/lib/env';
 import { brl, placeLabel, waLink } from '@/lib/format';
 import PlaceFields from '@/components/PlaceFields';
 import { createClient } from '@/lib/supabase/server';
-import { deleteChampionship, markPaidManually, updatePlace, updateVisibility } from '../actions';
+import { deleteChampionship, markPaidManually, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
 
 export const metadata: Metadata = { title: 'Campeonato' };
 export const dynamic = 'force-dynamic';
@@ -79,6 +79,16 @@ export default async function Campeonato({ params, searchParams }: {
                   <div className="grow">
                     <b>{t.name}{t.group ? ` · Grupo ${t.group}` : ''}</b>
                     <span>{t.status === 'aberta' ? 'Aguardando inscrição pelo link' : `${n} atleta${n === 1 ? '' : 's'} · cap. ${t.captainName}${t.captainPhone ? ` · ${t.captainPhone}` : ''}`}</span>
+                    {t.status !== 'aberta' && (
+                      <details className="mini-edit">
+                        <summary>{t.captainEmail ? `✉ ${t.captainEmail}` : '✉ Cadastrar e-mail do capitão'}</summary>
+                        <form action={setCaptainEmail} className="mini-form">
+                          <input type="hidden" name="championship" value={id} /><input type="hidden" name="team" value={t.id} />
+                          <input name="email" type="email" className="inp" defaultValue={t.captainEmail} placeholder="capitao@exemplo.com" aria-label="E-mail do capitão" />
+                          <button className="btn sm">Salvar</button>
+                        </form>
+                      </details>
+                    )}
                   </div>
                   {t.status === 'inscrita' && <span className="badge ok">Pago</span>}
                   {t.status === 'aberta' && <span className="badge open">Vaga</span>}

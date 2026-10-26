@@ -157,6 +157,20 @@ export async function markPaidManually(formData: FormData) {
   redirect(`/painel/${champId}?aba=times&ok=${encodeURIComponent('Inscrição confirmada')}`);
 }
 
+export async function setCaptainEmail(formData: FormData) {
+  const { supabase } = await requireUser();
+  const champId = String(formData.get('championship'));
+  const teamId = String(formData.get('team'));
+  const back = `/painel/${champId}?aba=times`;
+  const email = z.union([z.string().trim().toLowerCase().email().max(120), z.literal('')]).safeParse(String(formData.get('email') ?? '').trim());
+  if (!email.success) fail(back, 'E-mail inválido');
+  const { error } = await supabase.from('team_contacts')
+    .upsert({ team_id: teamId, championship_id: champId, captain_email: email.data }, { onConflict: 'team_id' });
+  if (error) fail(back, 'Não foi possível salvar o e-mail');
+  revalidatePath(`/painel/${champId}`);
+  redirect(`${back}&ok=${encodeURIComponent('E-mail do capitão salvo')}`);
+}
+
 export async function updateVisibility(formData: FormData) {
   const { supabase } = await requireUser();
   const champId = String(formData.get('championship'));

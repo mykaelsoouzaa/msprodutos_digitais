@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.4.0';
+export const APP_VERSION = '1.5.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,17 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.5.0',
+    date: '2026-10-26',
+    title: 'Área do capitão: Meus times',
+    items: [
+      "Nova página Meus times: o capitão entra com o e-mail da inscrição e vê os times dele.",
+      "Para cada time: posição na tabela, último resultado, próximos jogos e link para pagar o PIX pendente.",
+      "A inscrição agora pede o e-mail do capitão; o organizador pode cadastrar o e-mail de quem se inscreveu antes.",
+      "Menu no celular com Campeonatos, Meus times, Como funciona e Novidades.",
+    ],
+  },
   {
     version: '1.4.0',
     date: '2026-10-26',

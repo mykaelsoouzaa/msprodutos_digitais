@@ -15,6 +15,7 @@ export function winnerId(g: Game): string | null {
   if (!isDecided(g)) return null;
   if (g.homeScore! > g.awayScore!) return g.homeId;
   if (g.homeScore! < g.awayScore!) return g.awayId;
+  if (g.stage !== 'ko') return null; // empate em fase de pontos
   return g.penHome! > g.penAway! ? g.homeId : g.awayId;
 }
 

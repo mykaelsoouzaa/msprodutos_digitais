@@ -43,6 +43,9 @@ export default async function Inscricao({ params, searchParams }: {
           </div>
           <label htmlFor="phone">WhatsApp do capitão</label>
           <input id="phone" name="phone" className="inp" inputMode="tel" required placeholder="(11) 99999-9999" />
+          <label htmlFor="email">E-mail do capitão</label>
+          <input id="email" name="email" type="email" className="inp" required autoComplete="email" inputMode="email" placeholder="voce@exemplo.com" />
+          <p className="sub small" style={{ margin: '6px 0 0' }}>Com esse e-mail você acompanha o time em <b>Meus times</b>: próximos jogos, resultados e posição.</p>
           {needsCpf && <><label htmlFor="cpf">CPF ou CNPJ do responsável (para o PIX)</label><input id="cpf" name="cpf" className="inp" inputMode="numeric" required /></>}
           <label htmlFor="players">{rules.who} (um por linha, com o número se quiser)</label>
           <textarea id="players" name="players" className="inp" required placeholder={'10 João\n7 Pedro\nCarlos'} />
