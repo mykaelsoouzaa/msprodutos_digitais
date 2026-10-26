@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import PwaSetup from '@/components/PwaSetup';
+import Splash from '@/components/Splash';
+import { APP_VERSION } from '@/lib/version';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -15,22 +17,40 @@ export const viewport: Viewport = { width: 'device-width', initialScale: 1, them
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body>
-        <div className="shell">
-          <header className="top">
+        <Splash />
+        <header className="top">
+          <div className="container">
             <Link href="/" className="brand" aria-label="Campia: início">
-              <img src="/brand/campia-logo-escuro.svg" alt="Campia" height={32} style={{ display: 'block', height: 32, width: 'auto' }} />
+              <img src="/brand/campia-logo-escuro.svg" alt="Campia" height={30} />
             </Link>
+            <nav className="nav" aria-label="Principal">
+              <Link href="/#como-funciona">Como funciona</Link>
+              <Link href="/#esportes">Esportes</Link>
+              <Link href="/novidades">Novidades</Link>
+            </nav>
             <span className="spacer" />
             <Link href="/painel" className="btn ghost sm">Painel</Link>
-          </header>
-          <main>
+            <Link href="/painel/novo" className="btn sm cta-top">Criar campeonato</Link>
+          </div>
+        </header>
+        <main>
+          <div className="container">
             <PwaSetup />
             {children}
-          </main>
-          <footer className="foot">Campia · campia.app.br · um produto MS Suporte TI</footer>
-        </div>
+          </div>
+        </main>
+        <footer className="foot">
+          <div className="container">
+            <img src="/brand/campia-logo-escuro.svg" alt="Campia" height={22} />
+            <div className="foot-links">
+              <Link href="/novidades" className="ver-chip"><span className="new" />v{APP_VERSION} · Novidades</Link>
+              <span>campia.app.br</span>
+              <span>um produto MS Suporte TI</span>
+            </div>
+          </div>
+        </footer>
       </body>
     </html>
   );

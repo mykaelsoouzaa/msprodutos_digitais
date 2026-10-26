@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Flash } from '@/components/champ';
 import { loadChampionship } from '@/lib/data';
-import { sportRules } from '@/lib/domain/sports';
+import { sportLabel, sportRules } from '@/lib/domain/sports';
 import { createClient } from '@/lib/supabase/server';
 import { clearResult, saveResult } from '../../../actions';
 
@@ -43,7 +43,7 @@ export default async function Jogo({ params, searchParams }: {
           <b style={{ color: 'var(--muted)' }}>×</b>
           <div><input name="away" type="number" min={0} className="inp" defaultValue={g.awayScore ?? ''} aria-label={`Placar ${away.name}`} /><div className="nm">{away.name}</div></div>
         </div>
-        <p className="sub small" style={{ margin: '8px 0 0' }}>Placar em {rules.unit}.{rules.draws ? '' : ` ${data.champ.sport} não tem empate.`}</p>
+        <p className="sub small" style={{ margin: '8px 0 0' }}>Placar em {rules.unit}.{rules.draws ? '' : ` ${sportLabel(data.champ.sport)} não tem empate.`}</p>
 
         {g.stage === 'ko' && (
           <>

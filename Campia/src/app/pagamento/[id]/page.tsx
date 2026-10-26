@@ -28,7 +28,7 @@ export default async function Pagamento({ params }: { params: Promise<{ id: stri
 
   if (p.status === 'pago') {
     return (
-      <div className="card" style={{ textAlign: 'center', marginTop: 20 }}>
+      <div className="card narrow" style={{ textAlign: 'center', marginTop: 20 }}>
         <div style={{ fontSize: 54 }}>✅</div>
         <h1>{team.name} está inscrito!</h1>
         <p className="sub">Pagamento de {brl(p.amount_cents)} confirmado. Os jogos e a tabela ficam na página do campeonato.</p>
@@ -40,7 +40,7 @@ export default async function Pagamento({ params }: { params: Promise<{ id: stri
   const expired = p.status !== 'pendente' || (team.reserved_until && new Date(team.reserved_until) < new Date() && team.status !== 'inscrita');
   if (expired) {
     return (
-      <div className="card" style={{ textAlign: 'center', marginTop: 20 }}>
+      <div className="card narrow" style={{ textAlign: 'center', marginTop: 20 }}>
         <h1>Reserva expirada</h1>
         <p className="sub">O PIX não foi pago a tempo e a vaga foi liberada. Faça a inscrição de novo se ainda houver vagas.</p>
         <Link href={`/c/${champ.slug}/inscricao`} className="btn">Tentar de novo</Link>
@@ -49,7 +49,7 @@ export default async function Pagamento({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <>
+    <div className="narrow">
       <AutoRefresh seconds={4} />
       <h1>Pague {brl(p.amount_cents)} pelo PIX</h1>
       <p className="sub">{team.name} · {champ.name}. A vaga fica reservada por 30 minutos; esta página atualiza sozinha quando o pagamento cair.</p>
@@ -70,6 +70,6 @@ export default async function Pagamento({ params }: { params: Promise<{ id: stri
           <button className="btn block">Simular pagamento recebido (modo de teste)</button>
         </form>
       )}
-    </>
+    </div>
   );
 }

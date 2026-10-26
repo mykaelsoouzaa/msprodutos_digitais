@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Flash } from '@/components/champ';
-import { sportRules } from '@/lib/domain/sports';
+import SportIcon from '@/components/SportIcon';
+import { sportLabel, sportRules } from '@/lib/domain/sports';
 import { paymentProvider } from '@/lib/env';
 import { brl } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
@@ -25,10 +26,10 @@ export default async function Inscricao({ params, searchParams }: {
   const needsCpf = paymentProvider() === 'asaas';
 
   return (
-    <>
-      <Link href={`/c/${slug}`} className="sub" style={{ textDecoration: 'none' }}>← {champ.name}</Link>
+    <div className="narrow">
+      <Link href={`/c/${slug}`} className="back-link">‹ {champ.name}</Link>
       <h1>Inscrição de {rules.who === 'Dupla' ? 'dupla' : 'time'}</h1>
-      <p className="sub">{rules.icon} {champ.sport} · {brl(champ.fee_cents)} · {count ?? 0} vaga{count === 1 ? '' : 's'} em aberto</p>
+      <p className="sub" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><SportIcon sport={champ.sport} size={16} plain />{sportLabel(champ.sport)} · {brl(champ.fee_cents)} · {count ?? 0} vaga{count === 1 ? '' : 's'} em aberto</p>
       <Flash erro={sp.erro} />
       {!count ? <div className="card empty">As vagas estão preenchidas no momento. Vagas reservadas e não pagas voltam em até 30 minutos.</div> : (
         <form action={registerTeam} className="card">
@@ -52,6 +53,6 @@ export default async function Inscricao({ params, searchParams }: {
           <p className="sub small" style={{ margin: '10px 0 0' }}>A vaga fica reservada por 30 minutos enquanto o PIX não é pago.</p>
         </form>
       )}
-    </>
+    </div>
   );
 }

@@ -4,7 +4,8 @@ import { notFound } from 'next/navigation';
 import { Flash, GameRow, GamesList, Scorers, TableTab, Tabs } from '@/components/champ';
 import ReminderButton from '@/components/ReminderButton';
 import { loadChampionship } from '@/lib/data';
-import { FORMATS, sportRules } from '@/lib/domain/sports';
+import SportIcon from '@/components/SportIcon';
+import { FORMATS, sportLabel, sportRules } from '@/lib/domain/sports';
 import { champion as getChampion, isDecided, ordered } from '@/lib/domain/standings';
 import { siteUrl } from '@/lib/env';
 import { brl, waLink } from '@/lib/format';
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!data) return { title: 'Campeonato' };
   return {
     title: data.name,
-    description: `${data.sport}: jogos, tabela e artilharia ao vivo.`,
+    description: `${sportLabel(data.sport)}: jogos, tabela e artilharia ao vivo.`,
     robots: data.visibility === 'publico' ? undefined : { index: false, follow: false },
   };
 }
@@ -45,14 +46,15 @@ export default async function Publico({ params, searchParams }: {
   const champion = getChampion(champ, games, teams);
   const upcoming = ordered(games).filter(g => !isDecided(g) && g.homeId && g.awayId && g.date >= today).slice(0, 4);
 
+  const signupOpen = open > 0 && !started;
   return (
     <>
       <div className="hero">
-        <div className="tag">{rules.icon} {champ.sport} · {FORMATS[champ.format]}</div>
+        <div className="tag"><SportIcon sport={champ.sport} size={18} />{sportLabel(champ.sport)} · {FORMATS[champ.format]}</div>
         <h1>{champ.name}</h1>
         <div className="meta">
-          <span>👥 {teams.length} times</span>
-          <span>📅 {games.filter(isDecided).length}/{games.length} jogos</span>
+          <span>{teams.length} times</span>
+          <span>{games.filter(isDecided).length} de {games.length} jogos</span>
           {(champ.location || champ.city) && <span>📍 {[champ.location, champ.city].filter(Boolean).join(' · ')}</span>}
         </div>
         <div className="actions">
@@ -60,24 +62,30 @@ export default async function Publico({ params, searchParams }: {
         </div>
       </div>
       <Flash ok={sp.ok} />
-      {open > 0 && !started && (
-        <div className="cta">
-          <div style={{ flex: 1 }}><b>Inscrições abertas</b><span>{open} vaga{open > 1 ? 's' : ''} · {brl(champ.feeCents)} por time</span></div>
-          <Link href={`/c/${champ.slug}/inscricao`} className="btn sm">Inscrever</Link>
+      <div className="split">
+        <aside className="side">
+          {signupOpen && (
+            <div className="cta">
+              <div className="grow"><b>Inscrições abertas</b><span>{open} vaga{open > 1 ? 's' : ''} · {brl(champ.feeCents)} por time</span></div>
+              <Link href={`/c/${champ.slug}/inscricao`} className="btn sm">Inscrever</Link>
+            </div>
+          )}
+          {!champion && <ReminderButton championshipId={champ.id} teams={teams.filter(t => t.status === 'inscrita').map(t => ({ id: t.id, name: t.name }))} />}
+          {upcoming.length > 0 && tab === 'jogos' && (
+            <div>
+              <h2 style={{ marginTop: 4 }}>Próximos jogos</h2>
+              <div className="stack">{upcoming.map(g => <GameRow key={g.id} g={g} teams={teams} games={games} />)}</div>
+            </div>
+          )}
+        </aside>
+        <div className="main-col">
+          <Tabs items={tabs} current={tab} base={`/c/${champ.slug}`} />
+          {tab === 'jogos' && <GamesList games={games} teams={teams} />}
+          {tab === 'tabela' && <TableTab champ={champ} games={games} teams={teams} />}
+          {tab === 'artilharia' && <Scorers champ={champ} games={games} goals={goals} players={players} teams={teams} />}
         </div>
-      )}
-      {!champion && <ReminderButton championshipId={champ.id} teams={teams.filter(t => t.status === 'inscrita').map(t => ({ id: t.id, name: t.name }))} />}
-      <Tabs items={tabs} current={tab} base={`/c/${champ.slug}`} />
-      {tab === 'jogos' && (
-        <>
-          {upcoming.length > 0 && <><h2>Próximos jogos</h2>{upcoming.map(g => <GameRow key={g.id} g={g} teams={teams} games={games} />)}</>}
-          <h2>Todos os jogos</h2>
-          <GamesList games={games} teams={teams} />
-        </>
-      )}
-      {tab === 'tabela' && <TableTab champ={champ} games={games} teams={teams} />}
-      {tab === 'artilharia' && <Scorers champ={champ} games={games} goals={goals} players={players} teams={teams} />}
-      <p className="sub small" style={{ textAlign: 'center', marginTop: 24 }}>Organiza campeonatos? <Link href="/">Crie o seu na Campia</Link>.</p>
+      </div>
+      <p className="sub small" style={{ textAlign: 'center', marginTop: 32 }}>Organiza campeonatos? <Link href="/">Crie o seu na Campia</Link>.</p>
     </>
   );
 }

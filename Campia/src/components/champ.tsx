@@ -48,7 +48,7 @@ export function GamesList({ games, teams, hrefFor }: { games: Game[]; teams: Tea
         return (
           <section key={label}>
             <div className="round-title"><span>{label}</span><span>{list[0]?.date ? fmtDate(list[0].date) : ''}</span></div>
-            {list.map(g => <GameRow key={g.id} g={g} teams={teams} games={games} href={hrefFor?.(g)} />)}
+            <div className="games">{list.map(g => <GameRow key={g.id} g={g} teams={teams} games={games} href={hrefFor?.(g)} />)}</div>
           </section>
         );
       })}
@@ -62,10 +62,11 @@ export function Standings({ champ, games, teams }: { champ: Championship; games:
   if (!ts.length) return null;
   return (
     <>
+      <div className={`tables ${ts.length > 1 ? 'two' : ''}`}>
       {ts.map(tb => (
         <div className="card" key={tb.title ?? 'geral'} style={{ padding: '8px 10px' }}>
           {tb.title && <b style={{ fontSize: 13, display: 'block', padding: '4px 2px' }}>{tb.title}</b>}
-          <table>
+          <div className="table-wrap"><table>
             <thead>
               <tr><th>#</th><th className="t">Time</th><th>P</th><th>J</th><th>V</th>{rules.draws && <th>E</th>}<th>D</th><th>{rules.diff}</th></tr>
             </thead>
@@ -78,9 +79,10 @@ export function Standings({ champ, games, teams }: { champ: Championship; games:
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </div>
       ))}
+      </div>
       {champ.format === 'grupos' && <p className="sub small" style={{ marginTop: 8 }}>Os {champ.rules.qualify} primeiros de cada grupo vão para o mata-mata.</p>}
     </>
   );

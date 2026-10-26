@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 import type { NextRequest } from 'next/server';
 import { loadChampionship } from '@/lib/data';
-import { sportRules } from '@/lib/domain/sports';
+import { sportLabel, sportRules } from '@/lib/domain/sports';
 import { isDecided, labels, ordered, tables, topScorers } from '@/lib/domain/standings';
 import { createClient } from '@/lib/supabase/server';
 
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', padding: 80, color: '#eaf4ee',
         background: 'linear-gradient(160deg, #14532d 0%, #0b1410 55%, #052e16 100%)', fontFamily: 'sans-serif' }}>
         <div style={{ display: 'flex', fontSize: 34, fontWeight: 800, letterSpacing: 6, color: '#a3e635', textTransform: 'uppercase' }}>
-          {rules.icon} {champ.name}
+          {champ.name}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', fontSize: 92, fontWeight: 800, lineHeight: 1.05, margin: '24px 0 56px' }}>
           {ko ? <span>{label}</span> : <><span>Resultados da</span><span>{label}</span></>}

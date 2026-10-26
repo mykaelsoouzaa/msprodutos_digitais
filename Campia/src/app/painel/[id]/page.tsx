@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Dot, Flash, GamesList, TableTab, Tabs } from '@/components/champ';
 import { loadChampionship } from '@/lib/data';
-import { FORMATS, sportRules } from '@/lib/domain/sports';
+import SportIcon from '@/components/SportIcon';
+import { FORMATS, sportLabel } from '@/lib/domain/sports';
 import { isDecided, labels } from '@/lib/domain/standings';
 import { siteUrl } from '@/lib/env';
 import { brl, waLink } from '@/lib/format';
@@ -38,7 +39,7 @@ export default async function Campeonato({ params, searchParams }: {
   return (
     <>
       <h1>{champ.name}</h1>
-      <p className="sub" style={{ marginBottom: 6 }}>{sportRules(champ.sport).icon} {champ.sport} · {FORMATS[champ.format]}{champ.location ? ` · ${champ.location}` : ''}</p>
+      <p className="sub" style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}><SportIcon sport={champ.sport} size={16} plain />{sportLabel(champ.sport)} · {FORMATS[champ.format]}{champ.location ? ` · ${champ.location}` : ''}</p>
       <div className="actions" style={{ marginTop: 0 }}><Link href={`/c/${champ.slug}`} className="btn ghost sm" target="_blank">👁 Página pública</Link></div>
       <div className="stats">
         <div className="stat"><b>{signed.length}/{teams.length}</b><span>times inscritos</span></div>
@@ -64,7 +65,7 @@ export default async function Campeonato({ params, searchParams }: {
             <p className="sub" style={{ margin: '4px 0 8px' }}>Cada capitão cadastra o time e paga {brl(champ.feeCents)} pelo PIX. A vaga é confirmada sozinha.</p>
             <div className="copybox">{signupUrl}</div>
             <div className="actions">
-              <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 Inscrições abertas: ${champ.name}\n${champ.sport} · ${FORMATS[champ.format]}\n💰 ${brl(champ.feeCents)} por time (PIX)\n${champ.location ? `📍 ${champ.location}\n` : ''}Inscreva seu time: ${signupUrl}`)}>Divulgar no WhatsApp</a>
+              <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 Inscrições abertas: ${champ.name}\n${sportLabel(champ.sport)} · ${FORMATS[champ.format]}\n💰 ${brl(champ.feeCents)} por time (PIX)\n${champ.location ? `📍 ${champ.location}\n` : ''}Inscreva seu time: ${signupUrl}`)}>Divulgar no WhatsApp</a>
             </div>
           </div>
           <h2>Vagas</h2>

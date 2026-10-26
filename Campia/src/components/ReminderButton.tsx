@@ -68,7 +68,7 @@ export default function ReminderButton({ championshipId, teams }: { championship
 
   if (state === 'carregando') return null;
   return (
-    <div className="card" style={{ marginBottom: 14 }}>
+    <div className="card">
       <b>🔔 Lembretes dos jogos</b>
       {state === 'instalar-ios' && <p className="sub" style={{ margin: '4px 0 0' }}>No iPhone, primeiro instale o app: toque em Compartilhar › &quot;Adicionar à Tela de Início&quot; e abra a Campia pelo ícone.</p>}
       {state === 'sem-suporte' && <p className="sub" style={{ margin: '4px 0 0' }}>Este navegador não recebe notificações. Tente pelo Chrome no Android ou pelo app instalado no iPhone.</p>}
