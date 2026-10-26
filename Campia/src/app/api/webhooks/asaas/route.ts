@@ -9,8 +9,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
 const safeEqual = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
 export async function POST(request: NextRequest) {
-  const expected = process.env.ASAAS_WEBHOOK_TOKEN || '';
-  const got = request.headers.get('asaas-access-token') || '';
+  // trim(): espaço ou quebra de linha colados junto com o token não podem derrubar o webhook.
+  const expected = (process.env.ASAAS_WEBHOOK_TOKEN || '').trim();
+  const got = (request.headers.get('asaas-access-token') || '').trim();
   if (!expected || !safeEqual(got, expected)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const body = await request.json().catch(() => null) as
