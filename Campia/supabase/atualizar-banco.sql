@@ -1,0 +1,158 @@
+-- =============================================================================
+-- Campia · atualizar o banco até a versão 1.8.0
+--
+-- Pode rodar quantas vezes quiser: cada parte só cria o que ainda não existe.
+-- Use no Supabase › SQL Editor quando o banco já tem a primeira migração (init).
+-- Para um banco novo, rode antes migrations/20261026000000_init.sql.
+-- =============================================================================
+
+-- 1.0 · Lembretes por notificação ----------------------------------------------
+create table if not exists public.push_subscriptions (
+  id               uuid primary key default gen_random_uuid(),
+  championship_id  uuid not null references public.championships (id) on delete cascade,
+  team_id          uuid references public.teams (id) on delete cascade,
+  endpoint         text not null,
+  p256dh           text not null,
+  auth             text not null,
+  leads            integer[] not null default '{1440,60}',
+  created_at       timestamptz not null default now(),
+  unique (endpoint, championship_id)
+);
+create index if not exists push_subscriptions_championship_idx on public.push_subscriptions (championship_id);
+create table if not exists public.push_deliveries (
+  subscription_id  uuid not null references public.push_subscriptions (id) on delete cascade,
+  game_id          uuid not null references public.games (id) on delete cascade,
+  lead             integer not null,
+  sent_at          timestamptz not null default now(),
+  primary key (subscription_id, game_id, lead)
+);
+alter table public.push_subscriptions enable row level security;
+alter table public.push_deliveries    enable row level security;
+
+-- 1.2 · Cidade, estado e online ------------------------------------------------
+alter table public.championships
+  add column if not exists state  text    not null default '' check (state = '' or state ~ '^[A-Z]{2}$'),
+  add column if not exists online boolean not null default false;
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'championships_online_esports') then
+    alter table public.championships add constraint championships_online_esports check (not online or sport like 'E-sports%');
+  end if;
+end $$;
+-- Separa "Cidade, UF" gravado no campo cidade (só onde o estado ainda está vazio).
+update public.championships c
+   set city = trim(m[1]), state = upper(m[2])
+  from (select id, regexp_match(city, '^\s*(.*?)\s*[,/-]\s*([A-Za-z]{2})\s*$') as m from public.championships where state = '') x
+ where x.id = c.id and x.m is not null;
+
+-- 1.3 · Explorar campeonatos ---------------------------------------------------
+create index if not exists championships_public_place_idx
+  on public.championships (state, city) where visibility = 'publico';
+
+-- 1.4 · Página da arena --------------------------------------------------------
+create table if not exists public.arenas (
+  id          uuid primary key default gen_random_uuid(),
+  owner_id    uuid not null unique references auth.users (id) on delete cascade,
+  slug        text not null unique check (slug ~ '^[a-z0-9-]{3,60}$'),
+  name        text not null check (char_length(name) between 2 and 80),
+  bio         text not null default '' check (char_length(bio) <= 400),
+  address     text not null default '' check (char_length(address) <= 120),
+  city        text not null default '' check (char_length(city) <= 60),
+  state       text not null default '' check (state = '' or state ~ '^[A-Z]{2}$'),
+  whatsapp    text not null default '' check (whatsapp ~ '^[0-9]{0,11}$'),
+  instagram   text not null default '' check (instagram ~ '^[A-Za-z0-9._]{0,30}$'),
+  logo_url    text not null default '',
+  created_at  timestamptz not null default now()
+);
+alter table public.arenas enable row level security;
+drop policy if exists "arena: leitura pública" on public.arenas;
+drop policy if exists "arena: dono cria" on public.arenas;
+drop policy if exists "arena: dono altera" on public.arenas;
+drop policy if exists "arena: dono apaga" on public.arenas;
+create policy "arena: leitura pública" on public.arenas for select using (true);
+create policy "arena: dono cria" on public.arenas for insert with check (owner_id = auth.uid());
+create policy "arena: dono altera" on public.arenas for update using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+create policy "arena: dono apaga" on public.arenas for delete using (owner_id = auth.uid());
+do $$ begin
+  if to_regclass('storage.buckets') is not null then
+    insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    values ('arenas', 'arenas', true, 1048576, array['image/png', 'image/jpeg', 'image/webp'])
+    on conflict (id) do nothing;
+  end if;
+end $$;
+
+-- 1.5 · Área do capitão --------------------------------------------------------
+alter table public.team_contacts
+  add column if not exists captain_email text not null default '' check (char_length(captain_email) <= 120 and captain_email = lower(captain_email));
+create index if not exists team_contacts_email_idx on public.team_contacts (captain_email) where captain_email <> '';
+
+-- 1.6 · Ajudantes --------------------------------------------------------------
+create table if not exists public.championship_helpers (
+  championship_id  uuid not null references public.championships (id) on delete cascade,
+  email            text not null check (email = lower(email) and char_length(email) between 3 and 120),
+  created_at       timestamptz not null default now(),
+  primary key (championship_id, email)
+);
+create index if not exists championship_helpers_email_idx on public.championship_helpers (email);
+create or replace function public.is_helper(champ uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.championship_helpers h
+    where h.championship_id = champ and h.email = lower(coalesce(auth.email(), ''))
+  );
+$$;
+alter table public.championship_helpers enable row level security;
+drop policy if exists "ajudantes: dono gerencia" on public.championship_helpers;
+drop policy if exists "ajudantes: ajudante vê o próprio convite" on public.championship_helpers;
+drop policy if exists "jogos: ajudante lança" on public.games;
+drop policy if exists "gols: ajudante escreve" on public.goals;
+create policy "ajudantes: dono gerencia" on public.championship_helpers
+  for all using (public.is_owner(championship_id)) with check (public.is_owner(championship_id));
+create policy "ajudantes: ajudante vê o próprio convite" on public.championship_helpers
+  for select using (email = lower(coalesce(auth.email(), '')));
+create policy "jogos: ajudante lança" on public.games
+  for update using (public.is_helper(championship_id)) with check (public.is_helper(championship_id));
+create policy "gols: ajudante escreve" on public.goals
+  for all using (public.is_helper(championship_id)) with check (public.is_helper(championship_id));
+
+-- 1.7 · W.O. e cartões ---------------------------------------------------------
+alter table public.games add column if not exists wo text check (wo in ('home', 'away', 'both'));
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'games_wo_both_not_ko') then
+    alter table public.games add constraint games_wo_both_not_ko check (wo is distinct from 'both' or stage <> 'ko');
+  end if;
+end $$;
+create table if not exists public.cards (
+  game_id          uuid not null references public.games (id) on delete cascade,
+  player_id        uuid not null references public.players (id) on delete cascade,
+  team_id          uuid not null references public.teams (id) on delete cascade,
+  championship_id  uuid not null references public.championships (id) on delete cascade,
+  yellow           integer not null default 0 check (yellow between 0 and 2),
+  red              boolean not null default false,
+  primary key (game_id, player_id),
+  check (yellow > 0 or red)
+);
+create index if not exists cards_championship_idx on public.cards (championship_id);
+alter table public.cards enable row level security;
+drop policy if exists "cartões: leitura" on public.cards;
+drop policy if exists "cartões: dono escreve" on public.cards;
+drop policy if exists "cartões: ajudante escreve" on public.cards;
+create policy "cartões: leitura" on public.cards for select using (public.can_read(championship_id));
+create policy "cartões: dono escreve" on public.cards for all using (public.is_owner(championship_id)) with check (public.is_owner(championship_id));
+create policy "cartões: ajudante escreve" on public.cards for all using (public.is_helper(championship_id)) with check (public.is_helper(championship_id));
+
+-- 1.8 · Repasse automático -----------------------------------------------------
+create table if not exists public.payout_accounts (
+  owner_id         uuid primary key references auth.users (id) on delete cascade,
+  asaas_wallet_id  text not null check (asaas_wallet_id ~ '^[0-9a-fA-F-]{36}$'),
+  updated_at       timestamptz not null default now()
+);
+alter table public.payout_accounts enable row level security;
+drop policy if exists "repasse: dono gerencia" on public.payout_accounts;
+create policy "repasse: dono gerencia" on public.payout_accounts
+  for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+alter table public.payments
+  add column if not exists payout          text not null default 'manual' check (payout in ('automatico', 'manual')),
+  add column if not exists split_wallet_id text,
+  add column if not exists split_percent   numeric(7, 4) check (split_percent between 0 and 100);
+
+select 'Banco da Campia atualizado até a versão 1.8.0' as resultado;

@@ -21,7 +21,7 @@ Passo a passo para colocar a Campia no ar, na ordem. Cada etapa diz onde clicar 
    8. `supabase/migrations/20261027130000_wo_cartoes.sql`
    9. `supabase/migrations/20261027140000_repasse.sql`
 
-   Já rodou alguns antes? Rode só os que faltam, na ordem. Cada arquivo roda uma vez só.
+   **Banco já criado e precisa atualizar?** Rode só `supabase/atualizar-banco.sql`. Ele confere o que já existe e cria só o que falta; pode rodar de novo sem problema.
 3. Em *Authentication › URL Configuration*:
    - **Site URL:** `https://campia.app.br`
    - **Redirect URLs:** `https://campia.app.br/auth/callback` e `http://localhost:3000/auth/callback`
