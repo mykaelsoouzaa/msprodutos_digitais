@@ -1,17 +1,17 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Dot, Flash, GamesList, TableTab, Tabs } from '@/components/champ';
+import { Discipline, Dot, Flash, GamesList, TableTab, Tabs } from '@/components/champ';
 import { roleIn } from '@/lib/access';
 import { loadChampionship } from '@/lib/data';
 import SportIcon from '@/components/SportIcon';
-import { FORMATS, allowsOnline, sportLabel } from '@/lib/domain/sports';
+import { FORMATS, allowsOnline, sportLabel, sportRules } from '@/lib/domain/sports';
 import { isDecided, labels } from '@/lib/domain/standings';
 import { siteUrl } from '@/lib/env';
 import { brl, placeLabel, waLink } from '@/lib/format';
 import PlaceFields from '@/components/PlaceFields';
 import { createClient } from '@/lib/supabase/server';
-import { addHelper, deleteChampionship, markPaidManually, removeHelper, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
+import { addHelper, updateYellowLimit, deleteChampionship, markPaidManually, removeHelper, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
 
 export const metadata: Metadata = { title: 'Campeonato' };
 export const dynamic = 'force-dynamic';
@@ -30,7 +30,8 @@ export default async function Campeonato({ params, searchParams }: {
   const role = data ? await roleIn(supabase, data.row, user) : null;
   if (!data || !role) notFound();
   const owner = role === 'dono';
-  const tabs = owner ? TABS : TABS.slice(0, 2);
+  const cardTab: Array<[string, string]> = sportRules(data.champ.sport).cards ? [['cartoes', 'Cartões']] : [];
+  const tabs = [...TABS.slice(0, 2), ...cardTab, ...(owner ? TABS.slice(2) : [])];
 
   const { champ, teams, games, players } = data;
   const tab = tabs.some(t => t[0] === sp.aba) ? sp.aba! : 'jogos';
@@ -67,6 +68,7 @@ export default async function Campeonato({ params, searchParams }: {
       )}
 
       {tab === 'tabela' && <TableTab champ={champ} games={games} teams={teams} />}
+      {tab === 'cartoes' && <Discipline champ={champ} games={games} cards={data.cards} players={players} teams={teams} />}
 
       {tab === 'times' && (
         <>
@@ -147,6 +149,19 @@ export default async function Campeonato({ params, searchParams }: {
             <PlaceFields mode={allowsOnline(champ.sport) ? 'esports' : 'presencial'} online={champ.online} location={champ.location} city={champ.city} state={champ.state} />
             <div className="actions"><button className="btn sm">Salvar local</button></div>
           </form>
+          {sportRules(champ.sport).cards && (
+            <form action={updateYellowLimit} className="card">
+              <input type="hidden" name="championship" value={id} />
+              <b>Cartões</b>
+              <p className="sub" style={{ margin: '4px 0 10px' }}>Vermelho ou 2 amarelos no mesmo jogo suspendem o atleta no próximo jogo. Escolha quantos amarelos acumulados também suspendem.</p>
+              <div className="mini-form">
+                <select name="yellowLimit" className="inp" defaultValue={String(champ.rules.yellowLimit ?? 3)} aria-label="Amarelos para suspensão">
+                  {[2, 3, 4, 5].map(n => <option key={n} value={n}>{n} amarelos = 1 jogo suspenso</option>)}
+                </select>
+                <button className="btn sm">Salvar</button>
+              </div>
+            </form>
+          )}
           <div className="card">
             <b>Ajudantes</b>
             <p className="sub" style={{ margin: '4px 0 10px' }}>Pessoas que podem lançar resultados e ajustar horários, sem ver pagamentos, contatos ou ajustes. Elas entram na Campia com o e-mail cadastrado aqui.</p>

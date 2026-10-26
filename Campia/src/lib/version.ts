@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.6.0';
+export const APP_VERSION = '1.7.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,18 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.7.0',
+    date: '2026-10-26',
+    title: 'W.O. e cartões',
+    items: [
+      "Marque W.O. no resultado: o time presente vence com o placar padrão do esporte (3 × 0 no futebol) e o ausente não pontua.",
+      "W.O. duplo nos pontos corridos e na fase de grupos: derrota sem pontos para os dois.",
+      "Cartões amarelo e vermelho por atleta no futebol, futsal e handebol.",
+      "Suspensão automática no próximo jogo após vermelho, 2 amarelos no jogo ou amarelos acumulados (o organizador escolhe quantos).",
+      "Nova aba Cartões com os suspensos da próxima rodada; o formulário avisa quem está suspenso.",
+    ],
+  },
   {
     version: '1.6.0',
     date: '2026-10-26',

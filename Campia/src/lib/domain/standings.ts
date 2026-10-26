@@ -6,13 +6,18 @@ export const hasTeams = (g: Game) => !!(g.homeId && g.awayId);
 
 /** O jogo tem resultado válido? (no mata-mata, empate precisa de desempate) */
 export function isDecided(g: Game): boolean {
-  if (!hasTeams(g) || g.homeScore === null || g.awayScore === null) return false;
+  if (!hasTeams(g)) return false;
+  if (g.wo) return true;
+  if (g.homeScore === null || g.awayScore === null) return false;
   if (g.stage !== 'ko' || g.homeScore !== g.awayScore) return true;
   return g.penHome !== null && g.penAway !== null && g.penHome !== g.penAway;
 }
 
 export function winnerId(g: Game): string | null {
   if (!isDecided(g)) return null;
+  if (g.wo === 'both') return null;
+  if (g.wo === 'home') return g.awayId;
+  if (g.wo === 'away') return g.homeId;
   if (g.homeScore! > g.awayScore!) return g.homeId;
   if (g.homeScore! < g.awayScore!) return g.awayId;
   if (g.stage !== 'ko') return null; // empate em fase de pontos
@@ -32,6 +37,11 @@ function headToHead(c: Championship, games: Game[], a: string, b: string): numbe
   const [pw, pd, pl] = sportRules(c.sport).points;
   let pa = 0, pb = 0;
   games.filter(g => isDecided(g) && ((g.homeId === a && g.awayId === b) || (g.homeId === b && g.awayId === a))).forEach(g => {
+    if (g.wo) { // W.O.: só o time presente pontua
+      const w = winnerId(g);
+      if (w === a) pa += pw; else if (w === b) pb += pw;
+      return;
+    }
     const ga = g.homeId === a ? g.homeScore! : g.awayScore!;
     const gb = g.homeId === a ? g.awayScore! : g.homeScore!;
     if (ga > gb) { pa += pw; pb += pl; } else if (ga < gb) { pb += pw; pa += pl; } else { pa += pd; pb += pd; }
@@ -47,8 +57,16 @@ export function standings(c: Championship, games: Game[], teams: Team[]): Standi
   games.filter(isDecided).forEach(g => {
     const h = rows.get(g.homeId!), a = rows.get(g.awayId!);
     if (!h || !a) return;
+    h.J++; a.J++;
+    if (g.wo === 'both') { h.D++; a.D++; return; } // W.O. duplo: derrota sem pontos para os dois
+    if (g.wo) { // W.O.: vitória com o placar padrão; o ausente não ganha nem o ponto de derrota
+      const win = winnerId(g) === h.team.id ? h : a, lose = win === h ? a : h;
+      const [ws, ls] = sportRules(c.sport).woScore;
+      win.V++; lose.D++; win.P += pw; win.GP += ws; win.GC += ls; lose.GP += ls; lose.GC += ws;
+      return;
+    }
     const hs = g.homeScore!, as = g.awayScore!;
-    h.J++; a.J++; h.GP += hs; h.GC += as; a.GP += as; a.GC += hs;
+    h.GP += hs; h.GC += as; a.GP += as; a.GC += hs;
     if (hs > as) { h.V++; a.D++; h.P += pw; a.P += pl; }
     else if (hs < as) { a.V++; h.D++; a.P += pw; h.P += pl; }
     else { h.E++; a.E++; h.P += pd; a.P += pd; }
@@ -114,6 +132,7 @@ export function resolveKnockout(c: Championship, games: Game[], teams: Team[]): 
     if (g.homeId !== h || g.awayId !== a) {
       g.homeId = h; g.awayId = a;
       g.homeScore = g.awayScore = g.penHome = g.penAway = null;
+      g.wo = null;
       changed.push(g.id);
     }
   });

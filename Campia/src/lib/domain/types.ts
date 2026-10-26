@@ -49,10 +49,23 @@ export interface Game {
   awayScore: number | null;
   penHome: number | null;
   penAway: number | null;
+  /** W.O.: qual time faltou ('home', 'away') ou os dois ('both'). */
+  wo: WO;
   date: string;   // AAAA-MM-DD ou ''
   time: string;   // HH:MM ou ''
   field: string;
   sort: number;
+}
+
+export type WO = 'home' | 'away' | 'both' | null;
+
+/** Cartões de um atleta numa partida. Dois amarelos no mesmo jogo contam como expulsão. */
+export interface Card {
+  gameId: string;
+  playerId: string;
+  teamId: string;
+  yellow: number;
+  red: boolean;
 }
 
 export interface Goal {
@@ -72,6 +85,7 @@ export type Tiebreak = 'v' | 'sg' | 'gp' | 'cd';
 
 export interface Rules {
   qualify: number;       // classificados por grupo
+  yellowLimit?: number;  // amarelos acumulados que dão 1 jogo de suspensão (padrão 3)
   tiebreak: Tiebreak[];  // ordem dos critérios depois dos pontos
 }
 

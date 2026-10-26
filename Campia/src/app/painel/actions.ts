@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { roleIn } from '@/lib/access';
 import { gameRow, loadChampionship, persistKnockout, teamRow } from '@/lib/data';
 import { buildPlan, teamCountError } from '@/lib/domain/build';
-import { SPORTS, allowsOnline } from '@/lib/domain/sports';
+import { SPORTS, allowsOnline, sportRules } from '@/lib/domain/sports';
 import { scoreError } from '@/lib/domain/standings';
 import { UFS, slugify } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
@@ -100,16 +100,28 @@ export async function saveResult(formData: FormData) {
     redirect(`/painel/${champId}?aba=jogos&ok=${encodeURIComponent('Data e horário salvos')}`);
   }
 
-  const home = int(formData.get('home')), away = int(formData.get('away'));
-  const penHome = int(formData.get('penHome')), penAway = int(formData.get('penAway'));
-  const err = home === null || away === null ? 'Preencha o placar' : scoreError(data!.champ, g!, home, away, penHome, penAway);
-  if (err) fail(back, err);
+  const rules = sportRules(data!.champ.sport);
+  const woRaw = String(formData.get('wo') || '');
+  const wo = (['home', 'away', 'both'] as const).find(x => x === woRaw) ?? null;
+  if (wo === 'both' && g!.stage === 'ko') fail(back, 'No mata-mata não existe W.O. duplo: escolha qual time faltou');
+
+  let home = int(formData.get('home')), away = int(formData.get('away'));
+  let penHome = int(formData.get('penHome')), penAway = int(formData.get('penAway'));
+  if (wo) {
+    // W.O.: placar padrão do esporte para o time presente; ninguém marca gol nem recebe cartão.
+    const [w, l] = rules.woScore;
+    [home, away] = wo === 'home' ? [l, w] : wo === 'away' ? [w, l] : [0, 0];
+    penHome = penAway = null;
+  } else {
+    const err = home === null || away === null ? 'Preencha o placar' : scoreError(data!.champ, g!, home, away, penHome, penAway);
+    if (err) fail(back, err);
+  }
 
   // Gols por atleta: campos "goal_<playerId>"
   const teamIds = new Set([g!.homeId, g!.awayId]);
   const goals: Array<{ game_id: string; player_id: string; team_id: string; championship_id: string; count: number }> = [];
   for (const [key, value] of formData.entries()) {
-    if (!key.startsWith('goal_')) continue;
+    if (wo || !key.startsWith('goal_')) continue;
     const count = Number(value);
     const player = data!.players.find(p => p.id === key.slice(5));
     if (player && teamIds.has(player.teamId) && Number.isInteger(count) && count > 0 && count < 200) {
@@ -117,17 +129,29 @@ export async function saveResult(formData: FormData) {
     }
   }
 
-  const tie = home === away && g!.stage === 'ko';
+  // Cartões por atleta: "y_<playerId>" (0 a 2 amarelos) e "r_<playerId>" (vermelho)
+  const cards: Array<{ game_id: string; player_id: string; team_id: string; championship_id: string; yellow: number; red: boolean }> = [];
+  if (!wo && rules.cards) {
+    for (const p of data!.players.filter(x => teamIds.has(x.teamId))) {
+      const yellow = Math.min(2, Math.max(0, Number(formData.get(`y_${p.id}`) || 0) | 0));
+      const red = formData.get(`r_${p.id}`) === 'on';
+      if (yellow || red) cards.push({ game_id: gameId, player_id: p.id, team_id: p.teamId, championship_id: champId, yellow, red });
+    }
+  }
+
+  const tie = !wo && home === away && g!.stage === 'ko';
   const { error } = await supabase.from('games').update({
-    home_score: home, away_score: away, pen_home: tie ? penHome : null, pen_away: tie ? penAway : null,
+    home_score: home, away_score: away, pen_home: tie ? penHome : null, pen_away: tie ? penAway : null, wo,
     date: date || null, time, field,
   }).eq('id', gameId);
   if (error) fail(back, 'Não foi possível salvar o resultado');
 
   await supabase.from('goals').delete().eq('game_id', gameId);
   if (goals.length) await supabase.from('goals').insert(goals);
+  await supabase.from('cards').delete().eq('game_id', gameId);
+  if (cards.length) await supabase.from('cards').insert(cards);
 
-  Object.assign(g!, { homeScore: home, awayScore: away, penHome: tie ? penHome : null, penAway: tie ? penAway : null });
+  Object.assign(g!, { homeScore: home, awayScore: away, penHome: tie ? penHome : null, penAway: tie ? penAway : null, wo });
   await persistKnockout(supabase, data!);
 
   revalidatePath(`/painel/${champId}`);
@@ -141,9 +165,10 @@ export async function clearResult(formData: FormData) {
   const gameId = String(formData.get('game'));
   const { data: c } = await supabase.from('championships').select('id, owner_id').eq('id', champId).maybeSingle();
   if (!c || !(await roleIn(supabase, c, user))) fail(`/painel/${champId}/jogo/${gameId}`, 'Você não tem acesso a este campeonato');
-  const { error } = await supabase.from('games').update({ home_score: null, away_score: null, pen_home: null, pen_away: null }).eq('id', gameId);
+  const { error } = await supabase.from('games').update({ home_score: null, away_score: null, pen_home: null, pen_away: null, wo: null }).eq('id', gameId);
   if (error) fail(`/painel/${champId}/jogo/${gameId}`, 'Não foi possível apagar');
   await supabase.from('goals').delete().eq('game_id', gameId);
+  await supabase.from('cards').delete().eq('game_id', gameId);
   const data = await loadChampionship(supabase, { id: champId });
   if (data) await persistKnockout(supabase, data);
   revalidatePath(`/painel/${champId}`);
@@ -197,6 +222,18 @@ export async function removeHelper(formData: FormData) {
   await supabase.from('championship_helpers').delete().eq('championship_id', champId).eq('email', String(formData.get('email')));
   revalidatePath(`/painel/${champId}`);
   redirect(`${helpersBack(champId)}&ok=${encodeURIComponent('Ajudante removido')}`);
+}
+
+export async function updateYellowLimit(formData: FormData) {
+  const { supabase } = await requireUser();
+  const champId = String(formData.get('championship'));
+  const n = z.coerce.number().int().min(1).max(10).safeParse(formData.get('yellowLimit'));
+  if (!n.success) fail(helpersBack(champId), 'Número de amarelos inválido');
+  const { data: c } = await supabase.from('championships').select('rules').eq('id', champId).maybeSingle();
+  if (!c) fail(helpersBack(champId), 'Campeonato não encontrado');
+  await supabase.from('championships').update({ rules: { ...c!.rules, yellowLimit: n.data } }).eq('id', champId);
+  revalidatePath(`/painel/${champId}`);
+  redirect(`${helpersBack(champId)}&ok=${encodeURIComponent('Regra de cartões salva')}`);
 }
 
 export async function updateVisibility(formData: FormData) {

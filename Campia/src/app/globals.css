@@ -84,7 +84,9 @@ label { display: block; font-size: 13px; color: var(--muted); font-weight: 600; 
 .inp:focus { border-color: var(--accent); }
 textarea.inp { min-height: 120px; resize: vertical; line-height: 1.5; }
 .grid2 { display: grid; grid-template-columns: 1fr; gap: 0 12px; }
-.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid3 > :nth-child(3) { grid-column: 1 / -1; }
+@media (min-width: 560px) { .grid3 { grid-template-columns: 1fr 1fr 1fr; } .grid3 > :nth-child(3) { grid-column: auto; } }
 @media (min-width: 520px) { .grid2 { grid-template-columns: 1fr 1fr; } }
 fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 legend { font-size: 13px; color: var(--muted); font-weight: 600; margin: 16px 0 8px; padding: 0; }
@@ -350,7 +352,7 @@ form.esports:has(input[name="online"][value="1"]:checked) .presencial { display:
 .inline-check { display: flex; gap: 8px; align-items: center; color: var(--text); margin: 8px 0 0; font-weight: 500; }
 .organizer { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); text-decoration: none; margin-top: 10px; }
 .organizer:hover { color: var(--text); }
-.organizer img, .organizer .arena-logo { width: 24px; height: 24px; border-radius: 7px; font-size: 10px; }
+.org-logo { width: 26px; height: 26px; min-width: 26px; max-height: 26px; border-radius: 8px; object-fit: cover; display: inline-grid; place-items: center; font-size: 10px; font-weight: 800; color: var(--accent2); background: var(--panel2); border: 1px solid var(--line); line-height: 1; }
 
 /* ---------- meus times ---------- */
 .grid-cards.wide { grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); }
@@ -380,3 +382,17 @@ form.esports:has(input[name="online"][value="1"]:checked) .presencial { display:
 .helper-row { flex-wrap: wrap; }
 .helper-row .grow { overflow-wrap: anywhere; }
 @media (max-width: 519px) { .helper-row .grow { flex-basis: 100%; } }
+
+/* ---------- W.O. e cartões ---------- */
+.result-form:has(input[name="wo"]:not([value=""]):checked) .if-played { display: none; }
+.result-form .if-wo { display: none; }
+.result-form:has(input[name="wo"]:not([value=""]):checked) .if-wo { display: block; }
+.prow.with-cards { grid-template-columns: minmax(0, 1fr) 64px 58px 36px; }
+.prow.head { font-size: 12px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); text-align: center; }
+.prow.head span:first-child { text-align: left; }
+.prow select.inp { padding: 8px 4px; text-align: center; }
+.red-check { width: 22px; height: 22px; accent-color: var(--danger); justify-self: center; }
+.wo-tag { display: block; font-size: 10px; color: var(--warn); font-weight: 700; letter-spacing: .04em; }
+.card-chip { display: inline-block; width: 10px; height: 14px; border-radius: 2px; vertical-align: -2px; }
+.card-chip.y { background: #facc15; }
+.card-chip.r { background: var(--danger); }

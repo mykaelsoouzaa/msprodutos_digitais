@@ -43,7 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             <div key={g.id} style={{ ...box, justifyContent: 'space-between', fontSize: 40, fontWeight: 700 }}>
               <span style={{ display: 'flex', width: 340 }}>{name(g.homeId).slice(0, 16)}</span>
               <span style={{ display: 'flex', fontSize: 56, fontWeight: 800 }}>
-                {g.homeScore} × {g.awayScore}{g.penHome !== null && g.homeScore === g.awayScore ? ` (${g.penHome}×${g.penAway})` : ''}
+                {g.wo === 'both' ? 'W.O.' : `${g.homeScore} × ${g.awayScore}`}{g.wo && g.wo !== 'both' ? ' W.O.' : g.penHome !== null && g.homeScore === g.awayScore ? ` (${g.penHome}×${g.penAway})` : ''}
               </span>
               <span style={{ display: 'flex', width: 340, justifyContent: 'flex-end' }}>{name(g.awayId).slice(0, 16)}</span>
             </div>

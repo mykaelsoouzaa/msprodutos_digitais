@@ -2,7 +2,8 @@
 import Link from 'next/link';
 import { sportRules } from '@/lib/domain/sports';
 import { champion, isDecided, labels, ordered, sourceLabel, tables, topScorers, winnerId } from '@/lib/domain/standings';
-import type { Championship, Game, Goal, Player, Team } from '@/lib/domain/types';
+import { discipline } from '@/lib/domain/discipline';
+import type { Card, Championship, Game, Goal, Player, Team } from '@/lib/domain/types';
 import { fmtDate } from '@/lib/format';
 
 export function Dot({ team }: { team: Team | null | undefined }) {
@@ -19,7 +20,7 @@ function side(g: Game, s: 'h' | 'a', teams: Team[], games: Game[]) {
 
 export function GameRow({ g, teams, games, href }: { g: Game; teams: Team[]; games: Game[]; href?: string }) {
   const h = side(g, 'h', teams, games), a = side(g, 'a', teams, games);
-  const done = g.homeScore !== null && g.awayScore !== null;
+  const done = !!g.wo || (g.homeScore !== null && g.awayScore !== null);
   const meta = [g.date ? fmtDate(g.date) : '', g.time, g.field].filter(Boolean).join(' · ');
   const body = (
     <>
@@ -31,7 +32,9 @@ export function GameRow({ g, teams, games, href }: { g: Game; teams: Team[]; gam
       <div className="gline">
         <div className={`team ${h.tbd ? 'tbd' : ''}`}><Dot team={h.team} /><span className="nm">{h.name}</span></div>
         {done
-          ? <div className="score">{g.homeScore} × {g.awayScore}{g.penHome !== null && g.homeScore === g.awayScore && <small>({g.penHome}×{g.penAway})</small>}</div>
+          ? g.wo === 'both'
+            ? <div className="score"><span className="wo-tag" style={{ fontSize: 13 }}>W.O. duplo</span></div>
+            : <div className="score">{g.homeScore} × {g.awayScore}{g.wo ? <span className="wo-tag">W.O.</span> : g.penHome !== null && g.homeScore === g.awayScore && <small>({g.penHome}×{g.penAway})</small>}</div>
           : <div className="score pend">vs</div>}
         <div className={`team r ${a.tbd ? 'tbd' : ''}`}><span className="nm">{a.name}</span><Dot team={a.team} /></div>
       </div>
@@ -159,4 +162,45 @@ export function Flash({ erro, ok }: { erro?: string; ok?: string }) {
   if (erro) return <div className="alert err">{erro}</div>;
   if (ok) return <div className="alert ok">{ok}</div>;
   return null;
+}
+
+/** Cartões e suspensões (esportes com cartão). */
+export function Discipline({ champ, games, cards, players, teams }: { champ: Championship; games: Game[]; cards: Card[]; players: Player[]; teams: Team[] }) {
+  const { rows } = discipline(games, cards, players, teams, champ.rules.yellowLimit);
+  const out = rows.filter(r => r.suspendedIn);
+  const fmt = (g: Game) => [g.stage === 'ko' ? g.name : g.label, g.date ? fmtDate(g.date) : ''].filter(Boolean).join(' · ');
+  if (!rows.length) return <div className="card empty">Nenhum cartão até agora.</div>;
+  return (
+    <>
+      {out.length > 0 && (
+        <>
+          <h2 style={{ marginTop: 0 }}>Suspensos no próximo jogo</h2>
+          <div className="card">
+            {out.map(r => (
+              <div className="row" key={r.player.id}>
+                <Dot team={r.team} />
+                <div className="grow"><b>{r.player.name}</b><span>{r.team.name} · {fmt(r.suspendedIn!)}</span></div>
+                <span className="badge wait">suspenso</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      <h2>Cartões</h2>
+      <div className="card" style={{ padding: '8px 10px' }}>
+        <div className="table-wrap"><table>
+          <thead><tr><th className="t">Atleta</th><th><span className="card-chip y" aria-label="Amarelos" /></th><th><span className="card-chip r" aria-label="Vermelhos" /></th></tr></thead>
+          <tbody>
+            {rows.map(r => (
+              <tr key={r.player.id}>
+                <td className="t"><div><Dot team={r.team} />{r.player.name}</div></td>
+                <td>{r.yellow}</td><td>{r.red}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table></div>
+      </div>
+      <p className="sub small" style={{ marginTop: 8 }}>Vermelho ou 2 amarelos no jogo: suspenso no próximo. {champ.rules.yellowLimit ?? 3} amarelos acumulados: suspenso no próximo.</p>
+    </>
+  );
 }

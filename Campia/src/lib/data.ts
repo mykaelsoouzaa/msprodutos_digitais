@@ -1,7 +1,7 @@
 // Leitura e gravação no banco, convertendo linhas em tipos do domínio.
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { resolveKnockout } from './domain/standings';
-import type { Championship, Game, Goal, Player, Rules, Schedule, Source, Team } from './domain/types';
+import type { Card, Championship, Game, Goal, Player, Rules, Schedule, Source, Team } from './domain/types';
 
 /* ---------- linhas do banco ---------- */
 export interface ChampionshipRow {
@@ -18,8 +18,9 @@ export interface GameRow {
   id: string; championship_id: string; stage: Game['stage']; grp: string | null; seq: number; label: string; name: string;
   home_team_id: string | null; away_team_id: string | null; src_home: Source | null; src_away: Source | null;
   home_score: number | null; away_score: number | null; pen_home: number | null; pen_away: number | null;
-  date: string | null; time: string; field: string; sort: number;
+  wo: Game['wo']; date: string | null; time: string; field: string; sort: number;
 }
+export interface CardRow { game_id: string; player_id: string; team_id: string; championship_id: string; yellow: number; red: boolean }
 export interface GoalRow { game_id: string; player_id: string; team_id: string; championship_id: string; count: number }
 export interface PaymentRow {
   id: string; championship_id: string; team_id: string; amount_cents: number; provider: 'mock' | 'asaas';
@@ -40,9 +41,10 @@ export const toPlayer = (r: PlayerRow): Player => ({ id: r.id, teamId: r.team_id
 export const toGame = (r: GameRow): Game => ({
   id: r.id, stage: r.stage, group: r.grp, seq: r.seq, label: r.label, name: r.name,
   homeId: r.home_team_id, awayId: r.away_team_id, srcHome: r.src_home, srcAway: r.src_away,
-  homeScore: r.home_score, awayScore: r.away_score, penHome: r.pen_home, penAway: r.pen_away,
+  homeScore: r.home_score, awayScore: r.away_score, penHome: r.pen_home, penAway: r.pen_away, wo: r.wo ?? null,
   date: r.date ?? '', time: r.time, field: r.field, sort: r.sort,
 });
+export const toCard = (r: CardRow): Card => ({ gameId: r.game_id, playerId: r.player_id, teamId: r.team_id, yellow: r.yellow, red: r.red });
 export const toGoal = (r: GoalRow): Goal => ({ gameId: r.game_id, playerId: r.player_id, teamId: r.team_id, count: r.count });
 
 export const teamRow = (championshipId: string, t: Team): Omit<TeamRow, 'reserved_until'> => ({
@@ -52,7 +54,7 @@ export const teamRow = (championshipId: string, t: Team): Omit<TeamRow, 'reserve
 export const gameRow = (championshipId: string, g: Game): GameRow => ({
   id: g.id, championship_id: championshipId, stage: g.stage, grp: g.group, seq: g.seq, label: g.label, name: g.name,
   home_team_id: g.homeId, away_team_id: g.awayId, src_home: g.srcHome, src_away: g.srcAway,
-  home_score: g.homeScore, away_score: g.awayScore, pen_home: g.penHome, pen_away: g.penAway,
+  home_score: g.homeScore, away_score: g.awayScore, pen_home: g.penHome, pen_away: g.penAway, wo: g.wo,
   date: g.date || null, time: g.time, field: g.field, sort: g.sort,
 });
 
@@ -64,6 +66,7 @@ export interface ChampData {
   players: Player[];
   games: Game[];
   goals: Goal[];
+  cards: Card[];
 }
 
 type Contact = { team_id: string; captain_phone: string; captain_email: string };
@@ -75,7 +78,7 @@ export async function loadChampionship(
   const { data: row } = await ('id' in by ? q.eq('id', by.id) : q.eq('slug', by.slug)).maybeSingle<ChampionshipRow>();
   if (!row) return null;
 
-  const [teams, players, games, goals, contacts] = await Promise.all([
+  const [teams, players, games, goals, contacts, cards] = await Promise.all([
     db.from('teams').select('*').eq('championship_id', row.id).order('slot').returns<TeamRow[]>(),
     db.from('players').select('*').eq('championship_id', row.id).order('number').returns<PlayerRow[]>(),
     db.from('games').select('*').eq('championship_id', row.id).order('sort').returns<GameRow[]>(),
@@ -83,6 +86,7 @@ export async function loadChampionship(
     opts.withContacts
       ? db.from('team_contacts').select('team_id, captain_phone, captain_email').eq('championship_id', row.id).returns<Contact[]>()
       : Promise.resolve({ data: [] as Contact[] }),
+    db.from('cards').select('*').eq('championship_id', row.id).returns<CardRow[]>(),
   ]);
   const byTeam = new Map((contacts.data ?? []).map(c => [c.team_id, c]));
 
@@ -93,6 +97,7 @@ export async function loadChampionship(
     players: (players.data ?? []).map(toPlayer),
     games: (games.data ?? []).map(toGame),
     goals: (goals.data ?? []).map(toGoal),
+    cards: (cards.data ?? []).map(toCard),
   };
 }
 
@@ -105,10 +110,11 @@ export async function persistKnockout(db: SupabaseClient, data: ChampData) {
   for (const id of changed) {
     const g = data.games.find(x => x.id === id)!;
     const { error } = await db.from('games').update({
-      home_team_id: g.homeId, away_team_id: g.awayId, home_score: null, away_score: null, pen_home: null, pen_away: null,
+      home_team_id: g.homeId, away_team_id: g.awayId, home_score: null, away_score: null, pen_home: null, pen_away: null, wo: null,
     }).eq('id', id);
     if (error) throw error;
     await db.from('goals').delete().eq('game_id', id);
+    await db.from('cards').delete().eq('game_id', id);
   }
   return changed.length;
 }

@@ -41,7 +41,7 @@ const shortStage = (s: string) => (s === 'Semifinal' ? 'Semi' : s);
 export function newGame(partial: Partial<Game>): Game {
   return {
     id: uuid(), stage: 'liga', group: null, seq: 1, label: '', name: '', homeId: null, awayId: null,
-    srcHome: null, srcAway: null, homeScore: null, awayScore: null, penHome: null, penAway: null,
+    srcHome: null, srcAway: null, homeScore: null, awayScore: null, penHome: null, penAway: null, wo: null,
     date: '', time: '', field: '', sort: 0, ...partial,
   };
 }

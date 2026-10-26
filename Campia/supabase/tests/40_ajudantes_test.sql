@@ -50,3 +50,33 @@ reset role;
 select set_config('request.jwt.claim.sub', '', false);
 select set_config('request.jwt.claim.email', '', false);
 select 'TESTES DE AJUDANTE PASSARAM';
+
+-- Cartões: ajudante lança, estranho não; W.O. duplo não vale no mata-mata.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000d2', false);
+select set_config('request.jwt.claim.email', 'mesario@x.com', false);
+insert into public.cards (game_id, player_id, team_id, championship_id, yellow)
+  values ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-00000000c0de', 1);
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000d3', false);
+select set_config('request.jwt.claim.email', 'estranho@x.com', false);
+do $$
+begin
+  begin
+    insert into public.cards (game_id, player_id, team_id, championship_id, red)
+      values ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-00000000c0de', true)
+      on conflict (game_id, player_id) do update set red = true;
+    raise exception 'estranho lançou cartão';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+do $$
+begin
+  if (select count(*) from public.cards) <> 1 then raise exception 'cartão do ajudante não gravou'; end if;
+  begin
+    update public.games set stage = 'ko', wo = 'both' where id = '00000000-0000-0000-0000-0000000000f1';
+    raise exception 'W.O. duplo aceito no mata-mata';
+  exception when check_violation then null; end;
+end $$;
+select set_config('request.jwt.claim.sub', '', false);
+select set_config('request.jwt.claim.email', '', false);
+select 'TESTES DE CARTÕES PASSARAM';
