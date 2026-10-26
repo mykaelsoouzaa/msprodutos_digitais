@@ -93,6 +93,9 @@ openssl rand -hex 32       # use como ASAAS_WEBHOOK_TOKEN
    - URL: `https://campia.app.br/api/webhooks/asaas`
    - Eventos: `PAYMENT_RECEIVED` e `PAYMENT_CONFIRMED`
    - Token de autenticação: o mesmo `ASAAS_WEBHOOK_TOKEN`
+   - Tipo de envio: **Não sequencial** (no sequencial, um aviso que falhou trava os seguintes)
+   - A conta precisa ter uma **chave Pix** cadastrada, senão o QR code não é gerado
+   - Se o log do webhook mostrar 401, o token do Asaas e o da Vercel estão diferentes: gere um novo, cole nos dois e faça Redeploy
 4. Faça uma inscrição de teste. Com a Asaas ligada, a inscrição pede o CPF do responsável: use um CPF de teste válido. No painel do sandbox, marque a cobrança como recebida; a tela de pagamento da Campia deve virar "inscrito" sozinha em poucos segundos.
 
 **Depois em produção:**
