@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { paymentProvider } from '@/lib/env';
 import { normalizePhone, onlyDigits, parsePlayers, shortName, validCpfCnpj } from '@/lib/format';
 import { createPixCharge } from '@/lib/payments';
+import { organizerPercent } from '@/lib/payout';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 const RESERVE_MINUTES = 30;
@@ -38,7 +39,7 @@ export async function registerTeam(formData: FormData) {
   if (needsCpf && !validCpfCnpj(f.cpf)) fail('CPF ou CNPJ inválido (exigido para gerar o PIX)');
 
   const db = createAdminClient();
-  const { data: champ } = await db.from('championships').select('id, name, fee_cents').eq('slug', f.slug).maybeSingle();
+  const { data: champ } = await db.from('championships').select('id, name, fee_cents, owner_id').eq('slug', f.slug).maybeSingle();
   if (!champ) fail('Campeonato não encontrado');
 
   const { data: hasResults } = await db.from('games').select('id').eq('championship_id', champ!.id).not('home_score', 'is', null).limit(1);
@@ -65,12 +66,18 @@ export async function registerTeam(formData: FormData) {
   }).select('id').single();
   if (payError || !payment) fail('Não foi possível criar a cobrança');
 
+  // Repasse automático se o organizador cadastrou a conta Asaas dele.
+  const { data: payout } = await db.from('payout_accounts').select('asaas_wallet_id').eq('owner_id', champ!.owner_id).maybeSingle();
+  const split = payout?.asaas_wallet_id ? { walletId: payout.asaas_wallet_id as string, percent: organizerPercent() } : undefined;
+
   try {
     const charge = await createPixCharge({
       paymentId: payment!.id, amountCents: champ!.fee_cents, description: `Inscrição ${f.name} · ${champ!.name}`,
-      payerName: f.captain, payerPhone: f.phone!, payerCpfCnpj: needsCpf ? onlyDigits(f.cpf) : undefined,
+      payerName: f.captain, payerPhone: f.phone!, payerCpfCnpj: needsCpf ? onlyDigits(f.cpf) : undefined, split,
     });
     await db.from('payments').update({
+      payout: charge.splitApplied ? 'automatico' : 'manual',
+      split_wallet_id: charge.splitApplied ? split!.walletId : null, split_percent: charge.splitApplied ? split!.percent : null,
       provider_id: charge.providerId, pix_payload: charge.payload, pix_image: charge.imageBase64,
       expires_at: new Date(Date.now() + RESERVE_MINUTES * 60_000).toISOString(),
     }).eq('id', payment!.id);

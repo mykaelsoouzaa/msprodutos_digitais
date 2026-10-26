@@ -9,6 +9,8 @@ export interface PixChargeInput {
   payerName: string;
   payerPhone: string;
   payerCpfCnpj?: string;  // exigido pela Asaas para criar o cliente
+  /** Repasse automático: parte do valor líquido que vai direto para a conta Asaas do organizador. */
+  split?: { walletId: string; percent: number };
 }
 
 export interface PixCharge {
@@ -16,6 +18,8 @@ export interface PixCharge {
   payload: string;            // PIX copia e cola
   imageBase64: string | null; // QR code em PNG (base64), quando o provedor envia
   expiresAt: string | null;
+  /** O split foi aceito pelo provedor (senão o repasse fica manual). */
+  splitApplied: boolean;
 }
 
 export async function createPixCharge(input: PixChargeInput): Promise<PixCharge> {
@@ -25,5 +29,6 @@ export async function createPixCharge(input: PixChargeInput): Promise<PixCharge>
     payload: `00020126580014BR.GOV.BCB.PIX-SIMULADO-${input.paymentId.slice(0, 8)}-${input.amountCents}`,
     imageBase64: null,
     expiresAt: null,
+    splitApplied: !!input.split,
   };
 }

@@ -37,6 +37,7 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
         <div><h1>Seus campeonatos</h1><p className="sub" style={{ margin: 0 }}>{user?.email}</p></div>
         <div className="actions" style={{ marginTop: 0 }}>
           <Link href="/painel/arena" className="btn ghost">{arena ? 'Página da arena' : 'Criar página da arena'}</Link>
+          <Link href="/painel/recebimentos" className="btn ghost">Recebimentos</Link>
           <Link href="/painel/novo" className="btn">＋ Novo campeonato</Link>
         </div>
       </div>

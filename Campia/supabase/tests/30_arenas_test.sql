@@ -24,3 +24,21 @@ end $$;
 reset role;
 select set_config('request.jwt.claim.sub', '', false);
 select 'TESTES DE ARENA PASSARAM';
+
+-- Conta de repasse: só o dono lê e grava.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+insert into public.payout_accounts (owner_id, asaas_wallet_id) values ('00000000-0000-0000-0000-0000000000a1', '0e1f2a3b-4c5d-6e7f-8091-a2b3c4d5e6f7');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', false);
+do $$
+begin
+  if exists (select 1 from public.payout_accounts) then raise exception 'outro usuário vê a conta de repasse'; end if;
+  begin
+    insert into public.payout_accounts (owner_id, asaas_wallet_id) values ('00000000-0000-0000-0000-0000000000a1', '0e1f2a3b-4c5d-6e7f-8091-a2b3c4d5e6f8')
+      on conflict (owner_id) do update set asaas_wallet_id = excluded.asaas_wallet_id;
+    raise exception 'outro usuário trocou a conta de repasse';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+select 'TESTES DE REPASSE PASSARAM';

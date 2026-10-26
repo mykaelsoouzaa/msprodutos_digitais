@@ -396,3 +396,5 @@ form.esports:has(input[name="online"][value="1"]:checked) .presencial { display:
 .card-chip { display: inline-block; width: 10px; height: 14px; border-radius: 2px; vertical-align: -2px; }
 .card-chip.y { background: #facc15; }
 .card-chip.r { background: var(--danger); }
+.howto { margin: 12px 0 4px; padding-left: 20px; color: var(--muted); line-height: 1.6; font-size: 14px; }
+.howto a { color: var(--accent); }

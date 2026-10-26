@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.7.0';
+export const APP_VERSION = '1.8.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,17 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.8.0',
+    date: '2026-10-26',
+    title: 'Repasse automático do PIX',
+    items: [
+      "Nova página Recebimentos no painel: o organizador conecta a conta Asaas dele e cada inscrição paga já cai dividida, direto na conta dele.",
+      "Para conectar basta colar a chave de API do Asaas uma vez; a Campia descobre o Wallet ID e não guarda a chave.",
+      "Lista das últimas inscrições com o status do pagamento e se o repasse foi automático ou manual.",
+      "Se o Asaas recusar a divisão, a inscrição continua funcionando e aquele repasse fica manual.",
+    ],
+  },
   {
     version: '1.7.0',
     date: '2026-10-26',

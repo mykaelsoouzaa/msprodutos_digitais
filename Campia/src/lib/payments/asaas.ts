@@ -4,12 +4,13 @@
 //   2. POST /payments         → cria a cobrança com billingType PIX e externalReference = nosso id
 //   3. GET  /payments/{id}/pixQrCode → encodedImage (PNG base64), payload (copia e cola), expirationDate
 // Autenticação: cabeçalho `access_token`. Contas novas exigem também um User-Agent.
+import { walletFromResponse } from '../payout';
 import type { PixCharge, PixChargeInput } from './index';
 
 const base = () => (process.env.ASAAS_BASE_URL || 'https://api-sandbox.asaas.com/v3').replace(/\/$/, '');
 
-async function asaas<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const key = process.env.ASAAS_API_KEY;
+async function asaas<T>(path: string, init: RequestInit = {}, apiKey?: string): Promise<T> {
+  const key = apiKey ?? process.env.ASAAS_API_KEY;
   if (!key) throw new Error('ASAAS_API_KEY não configurada');
   const res = await fetch(`${base()}${path}`, {
     ...init,
@@ -34,20 +35,37 @@ export async function createAsaasPixCharge(input: PixChargeInput): Promise<PixCh
     body: JSON.stringify({ name: input.payerName, cpfCnpj: input.payerCpfCnpj, mobilePhone: input.payerPhone, notificationDisabled: true }),
   });
 
-  const payment = await asaas<{ id: string }>('/payments', {
+  const body = {
+    customer: customer.id,
+    billingType: 'PIX',
+    value: input.amountCents / 100,
+    dueDate: today(),
+    description: input.description.slice(0, 500),
+    externalReference: input.paymentId,
+  };
+  const create = (split?: PixChargeInput['split']) => asaas<{ id: string }>('/payments', {
     method: 'POST',
-    body: JSON.stringify({
-      customer: customer.id,
-      billingType: 'PIX',
-      value: input.amountCents / 100,
-      dueDate: today(),
-      description: input.description.slice(0, 500),
-      externalReference: input.paymentId,
-    }),
+    body: JSON.stringify(split ? { ...body, split: [{ walletId: split.walletId, percentualValue: split.percent }] } : body),
   });
 
+  // Com repasse automático: se a Asaas recusar o split (walletId errado, conta bloqueada...),
+  // cria a cobrança sem split para a inscrição não travar; o repasse dessa fica manual.
+  let payment: { id: string };
+  let splitApplied = false;
+  if (input.split) {
+    try { payment = await create(input.split); splitApplied = true; }
+    catch (e) { console.error('Asaas recusou o split; cobrança sem repasse automático', e); payment = await create(); }
+  } else {
+    payment = await create();
+  }
+
   const qr = await asaas<{ encodedImage: string; payload: string; expirationDate: string }>(`/payments/${payment.id}/pixQrCode`);
-  return { providerId: payment.id, payload: qr.payload, imageBase64: qr.encodedImage, expiresAt: qr.expirationDate ?? null };
+  return { providerId: payment.id, payload: qr.payload, imageBase64: qr.encodedImage, expiresAt: qr.expirationDate ?? null, splitApplied };
+}
+
+/** Busca o walletId da conta dona da chave informada (GET /wallets). A chave não é guardada. */
+export async function walletIdForKey(apiKey: string): Promise<string | null> {
+  return walletFromResponse(await asaas<unknown>('/wallets', {}, apiKey));
 }
 
 /** Eventos que significam dinheiro recebido. */

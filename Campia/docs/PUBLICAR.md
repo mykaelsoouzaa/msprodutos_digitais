@@ -14,6 +14,14 @@ Passo a passo para colocar a Campia no ar, na ordem. Cada etapa diz onde clicar 
    1. `supabase/migrations/20261026000000_init.sql`
    2. `supabase/migrations/20261026120000_push.sql`
    3. `supabase/migrations/20261026180000_local.sql`
+   4. `supabase/migrations/20261027090000_explorar.sql`
+   5. `supabase/migrations/20261027100000_arenas.sql` (cria também a pasta pública `arenas` para os logos)
+   6. `supabase/migrations/20261027110000_capitao.sql`
+   7. `supabase/migrations/20261027120000_ajudantes.sql`
+   8. `supabase/migrations/20261027130000_wo_cartoes.sql`
+   9. `supabase/migrations/20261027140000_repasse.sql`
+
+   Já rodou alguns antes? Rode só os que faltam, na ordem. Cada arquivo roda uma vez só.
 3. Em *Authentication › URL Configuration*:
    - **Site URL:** `https://campia.app.br`
    - **Redirect URLs:** `https://campia.app.br/auth/callback` e `http://localhost:3000/auth/callback`
@@ -54,6 +62,7 @@ openssl rand -hex 32       # use como ASAAS_WEBHOOK_TOKEN
 | `VAPID_PRIVATE_KEY` | do passo 2 |
 | `VAPID_SUBJECT` | `mailto:contato@campia.app.br` |
 | `CRON_SECRET` | do passo 2 |
+| `CAMPIA_TAXA_PERCENT` | % de cada inscrição que fica com a Campia no repasse automático (ex.: `10`) |
 
 4. Clique em **Deploy**. O site sobe num endereço `*.vercel.app` para você testar.
 
@@ -95,7 +104,23 @@ openssl rand -hex 32       # use como ASAAS_WEBHOOK_TOKEN
 3. Crie o mesmo webhook na conta de produção (a de sandbox não vale).
 4. Teste com um campeonato de inscrição **R$ 5,00** pagando do seu próprio celular.
 
-> **Repasse:** nesta versão, todo o dinheiro das inscrições cai na conta da Campia e o repasse às arenas é manual. Combine isso por contrato com as arenas e valide a parte fiscal com um contador. O repasse automático (subcontas e split da Asaas) fica para a próxima versão.
+### Repasse automático às arenas (split)
+
+- Cada organizador cria a própria conta no Asaas e conecta em **Painel › Recebimentos**, colando a chave de API dele uma vez. A Campia descobre o Wallet ID e **não guarda a chave**.
+- A partir daí, cada PIX de inscrição é dividido na hora: `100 − CAMPIA_TAXA_PERCENT`% do valor líquido vai para a conta do organizador e o resto fica na conta da Campia.
+- Organizador sem conta conectada, ou se o Asaas recusar a divisão: o dinheiro cai inteiro na conta da Campia e o repasse fica **manual**. Para ver o que falta repassar, rode no *SQL Editor*:
+
+```sql
+select c.name as campeonato, t.name as time, p.amount_cents / 100.0 as valor, p.paid_at, u.email as organizador
+  from payments p
+  join championships c on c.id = p.championship_id
+  join teams t on t.id = p.team_id
+  join auth.users u on u.id = c.owner_id
+ where p.status = 'pago' and p.payout = 'manual'
+ order by p.paid_at desc;
+```
+
+> Combine a taxa e o repasse por contrato com as arenas e valide a parte fiscal com um contador.
 
 ## 6. Lembretes de jogo (agendador)
 
