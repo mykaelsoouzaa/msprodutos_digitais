@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { brl, fmtDate, normalizePhone, parsePlayers, shortName, slugify, validCpfCnpj, waLink } from './format';
+import { brl, fmtDate, normalizePhone, parsePlayers, placeLabel, shortName, slugify, validCpfCnpj, waLink } from './format';
+import { allowsOnline } from './domain/sports';
 
 test('slug sem acentos', () => {
   assert.equal(slugify('Copa da Firma 2026 — Edição Verão!'), 'copa-da-firma-2026-edicao-verao');
@@ -35,4 +36,15 @@ test('CPF e CNPJ', () => {
   assert.ok(!validCpfCnpj('529.982.247-26'));
   assert.ok(!validCpfCnpj('111.111.111-11'));
   assert.ok(validCpfCnpj('11.222.333/0001-81'));
+});
+
+test('local do campeonato', () => {
+  const base = { online: false, location: 'Arena Central', city: 'Campinas', state: 'SP' };
+  assert.equal(placeLabel(base), 'Arena Central · Campinas - SP');
+  assert.equal(placeLabel({ ...base, location: '' }), 'Campinas - SP');
+  assert.equal(placeLabel({ ...base, location: '', city: '' }), 'SP');
+  assert.equal(placeLabel({ ...base, online: true }), 'Online');
+  assert.equal(placeLabel({ online: false, location: '', city: '', state: '' }), '');
+  assert.ok(allowsOnline('E-sports (EA FC)'));
+  assert.ok(!allowsOnline('Futebol society'));
 });

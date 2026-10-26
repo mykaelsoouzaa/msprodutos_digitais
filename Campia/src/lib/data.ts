@@ -6,7 +6,7 @@ import type { Championship, Game, Goal, Player, Rules, Schedule, Source, Team } 
 /* ---------- linhas do banco ---------- */
 export interface ChampionshipRow {
   id: string; owner_id: string; slug: string; name: string; sport: string; format: Championship['format'];
-  fee_cents: number; location: string; city: string; visibility: Championship['visibility'];
+  fee_cents: number; location: string; city: string; state: string; online: boolean; visibility: Championship['visibility'];
   rules: Rules; schedule: Schedule; created_at: string;
 }
 export interface TeamRow {
@@ -30,7 +30,7 @@ export interface PaymentRow {
 /* ---------- conversões ---------- */
 export const toChampionship = (r: ChampionshipRow): Championship => ({
   id: r.id, slug: r.slug, name: r.name, sport: r.sport, format: r.format, feeCents: r.fee_cents,
-  location: r.location, city: r.city, visibility: r.visibility, rules: r.rules, schedule: r.schedule,
+  location: r.location, city: r.city, state: r.state ?? '', online: !!r.online, visibility: r.visibility, rules: r.rules, schedule: r.schedule,
 });
 export const toTeam = (r: TeamRow, phone = ''): Team => ({
   id: r.id, slot: r.slot, name: r.name, short: r.short, color: r.color, group: r.grp, status: r.status,

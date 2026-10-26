@@ -4,9 +4,9 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { gameRow, loadChampionship, persistKnockout, teamRow } from '@/lib/data';
 import { buildPlan, teamCountError } from '@/lib/domain/build';
-import { SPORTS } from '@/lib/domain/sports';
+import { SPORTS, allowsOnline } from '@/lib/domain/sports';
 import { scoreError } from '@/lib/domain/standings';
-import { slugify } from '@/lib/format';
+import { UFS, slugify } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
 
 const fail = (path: string, msg: string): never => redirect(`${path}${path.includes('?') ? '&' : '?'}erro=${encodeURIComponent(msg)}`);
@@ -20,14 +20,26 @@ async function requireUser() {
 
 const list = (s: string) => s.split(',').map(x => x.trim()).filter(Boolean).slice(0, 12);
 
+const Place = {
+  online: z.enum(['1', '']).optional(),
+  location: z.string().trim().max(80).default(''),
+  city: z.string().trim().max(60).default(''),
+  state: z.union([z.enum(UFS), z.literal('')]).default(''),
+};
+
+/** Online só para e-sports; campeonato online não guarda endereço. */
+function place(sport: string, f: { online?: '1' | ''; location: string; city: string; state: string }) {
+  const online = f.online === '1' && allowsOnline(sport);
+  return online ? { online, location: '', city: '', state: '' } : { online, location: f.location, city: f.city, state: f.state };
+}
+
 const NewChampionship = z.object({
   name: z.string().trim().min(3, 'Nome muito curto').max(80),
   sport: z.string().refine(s => s in SPORTS, 'Esporte inválido'),
   format: z.enum(['pontos', 'grupos', 'mata']),
   teams: z.coerce.number().int(),
   fee: z.coerce.number().min(0).max(100000),
-  location: z.string().trim().max(80).default(''),
-  city: z.string().trim().max(60).default(''),
+  ...Place,
   start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
   times: z.string().transform(list).refine(a => a.length && a.every(t => /^\d{2}:\d{2}$/.test(t)), 'Horários no formato 09:00, 10:00'),
   fields: z.string().transform(list).refine(a => a.length > 0, 'Informe pelo menos um campo ou quadra'),
@@ -48,7 +60,7 @@ export async function createChampionship(formData: FormData) {
 
   const { data: champ, error } = await supabase.from('championships').insert({
     owner_id: user.id, slug, name: f.name, sport: f.sport, format: f.format, fee_cents: Math.round(f.fee * 100),
-    location: f.location, city: f.city, visibility: f.visibility,
+    ...place(f.sport, f), visibility: f.visibility,
     rules: { qualify: plan.qualify, tiebreak: ['v', 'sg', 'gp', 'cd'] }, schedule,
   }).select('id').single();
   if (error || !champ) fail('/painel/novo', 'Não foi possível criar o campeonato');
@@ -153,6 +165,20 @@ export async function updateVisibility(formData: FormData) {
   await supabase.from('championships').update({ visibility: v.data }).eq('id', champId);
   revalidatePath(`/painel/${champId}`);
   redirect(`/painel/${champId}?aba=ajustes&ok=${encodeURIComponent('Visibilidade atualizada')}`);
+}
+
+export async function updatePlace(formData: FormData) {
+  const { supabase } = await requireUser();
+  const champId = String(formData.get('championship'));
+  const back = `/painel/${champId}?aba=ajustes`;
+  const parsed = z.object(Place).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) fail(back, 'Confira a cidade e o estado');
+  const { data: c } = await supabase.from('championships').select('sport').eq('id', champId).maybeSingle();
+  if (!c) fail(back, 'Campeonato não encontrado');
+  const { error } = await supabase.from('championships').update(place(c!.sport, parsed.data!)).eq('id', champId);
+  if (error) fail(back, 'Não foi possível salvar o local');
+  revalidatePath(`/painel/${champId}`);
+  redirect(`${back}&ok=${encodeURIComponent('Local atualizado')}`);
 }
 
 export async function deleteChampionship(formData: FormData) {

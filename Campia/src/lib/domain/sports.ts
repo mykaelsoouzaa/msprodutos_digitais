@@ -56,6 +56,9 @@ export const sportsIn = (group: SportGroup) => Object.entries(SPORTS).filter(([,
 /** Nome para exibir: "Society", "Vôlei de praia", "EA FC"… */
 export const sportLabel = (sport: string) => SPORTS[sport]?.label ?? sport;
 
+/** Só e-sports podem ser disputados online. */
+export const allowsOnline = (sport: string) => SPORTS[sport]?.group === 'Games';
+
 export const sportRules = (sport: string): SportRules => SPORTS[sport] ?? SPORTS['Futebol society'];
 
 export const FORMATS = {

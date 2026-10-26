@@ -11,5 +11,5 @@ trap '"$PGBIN/pg_ctl" -D "$DIR/data" stop -m fast >/dev/null 2>&1 || true; rm -r
 sleep 2
 ARGS=(-f "$ROOT/supabase/tests/00_supabase_stub.sql")
 for f in "$ROOT"/supabase/migrations/*.sql; do ARGS+=(-f "$f"); done
-ARGS+=(-f "$ROOT/supabase/tests/10_rls_test.sql")
+for f in "$ROOT"/supabase/tests/[1-9]*.sql; do ARGS+=(-f "$f"); done
 psql -h "$DIR" -p 55432 -U postgres -v ON_ERROR_STOP=1 -q "${ARGS[@]}" | grep -E "PASSARAM"

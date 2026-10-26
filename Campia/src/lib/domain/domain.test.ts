@@ -6,7 +6,7 @@ import type { Championship, Game, Goal, Player, Team } from './types';
 
 const schedule = { start: '2026-10-31', times: ['09:00', '10:00'], fields: ['Campo 1', 'Campo 2'] };
 const champ = (over: Partial<Championship> = {}): Championship => ({
-  id: 'c1', slug: 'copa', name: 'Copa', sport: 'Futebol society', format: 'pontos', feeCents: 0, location: '', city: '',
+  id: 'c1', slug: 'copa', name: 'Copa', sport: 'Futebol society', format: 'pontos', feeCents: 0, location: '', city: '', state: '', online: false,
   visibility: 'link', rules: { qualify: 2, tiebreak: ['v', 'sg', 'gp', 'cd'] }, schedule, ...over,
 });
 const play = (g: Game, h: number, a: number, ph: number | null = null, pa: number | null = null) => {

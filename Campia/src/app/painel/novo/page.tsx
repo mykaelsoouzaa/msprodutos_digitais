@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Flash } from '@/components/champ';
+import PlaceFields from '@/components/PlaceFields';
 import SportIcon from '@/components/SportIcon';
 import { FORMATS, SPORT_GROUPS, sportsIn } from '@/lib/domain/sports';
 import { createChampionship } from '../actions';
@@ -49,10 +50,7 @@ export default async function Novo({ searchParams }: { searchParams: Promise<{ e
           <div><label htmlFor="teams">Nº de times</label><input id="teams" name="teams" type="number" min={3} max={16} defaultValue={8} className="inp" required /></div>
           <div><label htmlFor="fee">Inscrição (R$)</label><input id="fee" name="fee" type="number" min={0} step="0.01" defaultValue={300} className="inp" required /></div>
         </div>
-        <div className="grid2">
-          <div><label htmlFor="location">Local</label><input id="location" name="location" className="inp" placeholder="Ex.: Arena Central" /></div>
-          <div><label htmlFor="city">Cidade</label><input id="city" name="city" className="inp" placeholder="Cidade, UF" /></div>
-        </div>
+        <PlaceFields mode="pick" />
         <label htmlFor="start">Primeira rodada</label>
         <input id="start" name="start" type="date" className="inp" defaultValue={nextSaturday()} required />
         <div className="grid2">

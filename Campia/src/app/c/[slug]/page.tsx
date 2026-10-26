@@ -8,7 +8,7 @@ import SportIcon from '@/components/SportIcon';
 import { FORMATS, sportLabel, sportRules } from '@/lib/domain/sports';
 import { champion as getChampion, isDecided, ordered } from '@/lib/domain/standings';
 import { siteUrl } from '@/lib/env';
-import { brl, waLink } from '@/lib/format';
+import { brl, placeLabel, waLink } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -55,7 +55,7 @@ export default async function Publico({ params, searchParams }: {
         <div className="meta">
           <span>{teams.length} times</span>
           <span>{games.filter(isDecided).length} de {games.length} jogos</span>
-          {(champ.location || champ.city) && <span>📍 {[champ.location, champ.city].filter(Boolean).join(' · ')}</span>}
+          {champ.online ? <span className="badge online">🌐 Online</span> : placeLabel(champ) && <span>📍 {placeLabel(champ)}</span>}
         </div>
         <div className="actions">
           <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 ${champ.name}: jogos, tabela e artilharia\n${url}`)}>Compartilhar</a>

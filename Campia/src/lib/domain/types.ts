@@ -82,6 +82,10 @@ export interface Championship {
   feeCents: number;
   location: string;
   city: string;
+  /** UF com 2 letras, ou '' */
+  state: string;
+  /** Disputado pela internet (só e-sports). */
+  online: boolean;
   visibility: Visibility;
   rules: Rules;
   schedule: Schedule;

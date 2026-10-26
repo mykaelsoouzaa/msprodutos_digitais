@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import type { NextRequest } from 'next/server';
 import { loadChampionship } from '@/lib/data';
+import { placeLabel } from '@/lib/format';
 import { sportLabel, sportRules } from '@/lib/domain/sports';
 import { isDecided, labels, ordered, tables, topScorers } from '@/lib/domain/standings';
 import { createClient } from '@/lib/supabase/server';
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           </div>
         )}
         <div style={{ display: 'flex', marginTop: 'auto', justifyContent: 'space-between', fontSize: 28, color: 'rgba(234,244,238,0.65)' }}>
-          <span style={{ display: 'flex' }}>{champ.location}</span>
+          <span style={{ display: 'flex' }}>{placeLabel(champ)}</span>
           <span style={{ display: 'flex' }}>feito com Campia · campia.app.br</span>
         </div>
       </div>

@@ -67,3 +67,15 @@ export function validCpfCnpj(s: string): boolean {
   }
   return false;
 }
+
+export const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI',
+  'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'] as const;
+
+/** "Campinas - SP", "SP", "Campinas" ou "". */
+export const cityState = (city: string, state: string) => [city.trim(), state.trim()].filter(Boolean).join(' - ');
+
+/** Onde o campeonato acontece: "Online" ou "Arena Central · Campinas - SP". */
+export function placeLabel(c: { online: boolean; location: string; city: string; state: string }): string {
+  if (c.online) return 'Online';
+  return [c.location.trim(), cityState(c.city, c.state)].filter(Boolean).join(' · ');
+}

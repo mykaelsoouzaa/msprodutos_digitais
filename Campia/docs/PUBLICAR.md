@@ -13,6 +13,7 @@ Passo a passo para colocar a Campia no ar, na ordem. Cada etapa diz onde clicar 
 2. Em *SQL Editor*, rode **nesta ordem**:
    1. `supabase/migrations/20261026000000_init.sql`
    2. `supabase/migrations/20261026120000_push.sql`
+   3. `supabase/migrations/20261026180000_local.sql`
 3. Em *Authentication › URL Configuration*:
    - **Site URL:** `https://campia.app.br`
    - **Redirect URLs:** `https://campia.app.br/auth/callback` e `http://localhost:3000/auth/callback`
