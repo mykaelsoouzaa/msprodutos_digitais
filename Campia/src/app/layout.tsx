@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
-import MobileNav, { NAV_LINKS } from '@/components/MobileNav';
+import MobileNav from '@/components/MobileNav';
+import { NAV_LINKS } from '@/lib/nav';
 import PwaSetup from '@/components/PwaSetup';
 import Splash from '@/components/Splash';
 import { APP_VERSION } from '@/lib/version';

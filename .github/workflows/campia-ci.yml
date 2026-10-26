@@ -19,13 +19,25 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm test
-      - run: npm run build
+      - name: build
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee /tmp/build.log
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://exemplo.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: chave-de-exemplo
           NEXT_PUBLIC_SITE_URL: https://exemplo.com
       # Depois do build, que gera o next-env.d.ts
-      - run: npm run typecheck
+      - name: typecheck
+        run: |
+          set -o pipefail
+          npm run typecheck 2>&1 | tee /tmp/build.log
+      # Publica o fim do log como anotação, para o erro aparecer no resumo da execução.
+      - name: mostrar erro
+        if: failure()
+        run: |
+          msg=$(tail -n 60 /tmp/build.log | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g')
+          echo "::error title=Falha no build::$msg"
 
   banco:
     runs-on: ubuntu-latest

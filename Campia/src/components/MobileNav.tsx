@@ -1,13 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { NAV_LINKS } from '@/lib/nav';
 
-export const NAV_LINKS: Array<[string, string]> = [
-  ['/campeonatos', 'Campeonatos'],
-  ['/meus-times', 'Meus times'],
-  ['/#como-funciona', 'Como funciona'],
-  ['/novidades', 'Novidades'],
-];
 
 /** Menu do celular. Fecha sozinho ao trocar de página (o `key` recria o elemento). */
 export default function MobileNav() {
