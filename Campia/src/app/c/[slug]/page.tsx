@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Flash, GameRow, GamesList, Scorers, TableTab, Tabs } from '@/components/champ';
 import ReminderButton from '@/components/ReminderButton';
+import { type ArenaRow, initials } from '@/lib/arena';
 import { loadChampionship } from '@/lib/data';
 import SportIcon from '@/components/SportIcon';
 import { FORMATS, sportLabel, sportRules } from '@/lib/domain/sports';
@@ -36,6 +37,7 @@ export default async function Publico({ params, searchParams }: {
   if (!data) notFound();
 
   const { champ, teams, games, goals, players } = data;
+  const { data: arena } = await supabase.from('arenas').select('*').eq('owner_id', data.row.owner_id).maybeSingle<ArenaRow>();
   const rules = sportRules(champ.sport);
   const tabs: Array<[string, string]> = [['jogos', 'Jogos'], ['tabela', champ.format === 'mata' ? 'Chave' : 'Tabela'], ...(rules.scorers ? [['artilharia', rules.unit === 'pontos' ? 'Cestinhas' : 'Artilharia'] as [string, string]] : [])];
   const tab = tabs.some(t => t[0] === sp.aba) ? sp.aba! : 'jogos';
@@ -57,6 +59,12 @@ export default async function Publico({ params, searchParams }: {
           <span>{games.filter(isDecided).length} de {games.length} jogos</span>
           {champ.online ? <span className="badge online">🌐 Online</span> : placeLabel(champ) && <span>📍 {placeLabel(champ)}</span>}
         </div>
+        {arena && (
+          <Link href={`/arena/${arena.slug}`} className="organizer">
+            {arena.logo_url ? <img src={arena.logo_url} alt="" /> : <span className="arena-logo empty">{initials(arena.name)}</span>}
+            Organizado por <b>{arena.name}</b>
+          </Link>
+        )}
         <div className="actions">
           <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 ${champ.name}: jogos, tabela e artilharia\n${url}`)}>Compartilhar</a>
         </div>

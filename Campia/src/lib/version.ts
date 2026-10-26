@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.3.0';
+export const APP_VERSION = '1.4.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.4.0',
+    date: '2026-10-26',
+    title: 'Página da arena',
+    items: [
+      "Cada organizador pode criar a página da sua arena, com logo, endereço, descrição, WhatsApp e Instagram.",
+      "A página mostra os campeonatos atuais e os anteriores, e tem botão de Como chegar.",
+      "Os campeonatos mostram quem organiza, com link para a página da arena.",
+    ],
+  },
   {
     version: '1.3.0',
     date: '2026-10-26',

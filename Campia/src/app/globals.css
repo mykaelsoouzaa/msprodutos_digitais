@@ -331,3 +331,22 @@ form.esports:has(input[name="online"][value="1"]:checked) .presencial { display:
 .explore-cta { padding: 18px; }
 .explore-cta .grow b { font-size: 17px; margin-bottom: 2px; }
 @media (max-width: 559px) { .explore-cta { flex-wrap: wrap; } .explore-cta .btn { width: 100%; } }
+
+/* ---------- arena ---------- */
+.arena-hero { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 22px; padding: 20px; background: radial-gradient(120% 140% at 0% 0%, rgba(34, 197, 94, .25) 0%, var(--panel) 60%); }
+.arena-hero .grow { flex: 1 1 260px; }
+.arena-logo { width: 88px; height: 88px; border-radius: 22px; object-fit: cover; flex: none; background: var(--panel2); border: 1px solid var(--line); }
+.arena-logo.empty { display: grid; place-items: center; font-weight: 800; font-size: 28px; color: var(--accent2); }
+.arena-logo.sm { width: 64px; height: 64px; border-radius: 16px; font-size: 11px; color: var(--muted); font-weight: 600; }
+.arena-bio { margin: 6px 0 0; line-height: 1.55; max-width: 680px; white-space: pre-line; }
+@media (min-width: 1024px) { .arena-hero { padding: 28px 32px; } .arena-logo { width: 112px; height: 112px; } }
+.prefixed { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); overflow: hidden; }
+.prefixed span { display: flex; align-items: center; padding: 0 0 0 12px; color: var(--muted); font-size: 14px; white-space: nowrap; }
+.prefixed .inp { border: 0; border-radius: 0; padding-left: 2px; min-width: 0; }
+@media (max-width: 420px) { .prefixed span { font-size: 12px; } }
+.logo-field { display: flex; gap: 14px; align-items: flex-start; }
+.logo-field .inp { padding: 9px; font-size: 14px; }
+.inline-check { display: flex; gap: 8px; align-items: center; color: var(--text); margin: 8px 0 0; font-weight: 500; }
+.organizer { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); text-decoration: none; margin-top: 10px; }
+.organizer:hover { color: var(--text); }
+.organizer img, .organizer .arena-logo { width: 24px; height: 24px; border-radius: 7px; font-size: 10px; }

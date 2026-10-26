@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import ChampCard from '@/components/ChampCard';
 import { SPORT_GROUPS, type SportGroup, sportsIn } from '@/lib/domain/sports';
+import { arenasByOwner } from '@/lib/arena';
 import { LISTING_SELECT, type ListingRow, likeTerm, toListing } from '@/lib/explore';
 import { UFS } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
@@ -34,6 +35,7 @@ export default async function Campeonatos({ searchParams }: { searchParams: Prom
 
   let items = toListing(data ?? []);
   if (soAbertas) items = items.filter(c => c.status === 'abertas');
+  const arenas = await arenasByOwner(supabase, items.map(c => c.owner_id));
 
   // Cidades para sugerir no campo (as que têm campeonato público no estado escolhido)
   const { data: cityRows } = uf
@@ -95,7 +97,7 @@ export default async function Campeonatos({ searchParams }: { searchParams: Prom
         {items.length ? `${items.length} campeonato${items.length > 1 ? 's' : ''}` : ''}
       </p>
       {items.length ? (
-        <div className="grid-cards">{items.map(c => <ChampCard key={c.id} c={c} />)}</div>
+        <div className="grid-cards">{items.map(c => <ChampCard key={c.id} c={c} organizer={arenas.get(c.owner_id)} />)}</div>
       ) : (
         <div className="card empty">
           {filtered ? 'Nenhum campeonato com esses filtros.' : 'Ainda não há campeonatos públicos.'}

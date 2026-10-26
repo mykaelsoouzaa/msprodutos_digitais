@@ -17,12 +17,16 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
   const { data: { user } } = await supabase.auth.getUser();
   const { data: champs } = await supabase.from('championships').select('*').eq('owner_id', user!.id)
     .order('created_at', { ascending: false }).returns<ChampionshipRow[]>();
+  const { data: arena } = await supabase.from('arenas').select('slug').eq('owner_id', user!.id).maybeSingle();
 
   return (
     <>
       <div className="page-head">
         <div><h1>Seus campeonatos</h1><p className="sub" style={{ margin: 0 }}>{user?.email}</p></div>
-        <Link href="/painel/novo" className="btn">＋ Novo campeonato</Link>
+        <div className="actions" style={{ marginTop: 0 }}>
+          <Link href="/painel/arena" className="btn ghost">{arena ? 'Página da arena' : 'Criar página da arena'}</Link>
+          <Link href="/painel/novo" className="btn">＋ Novo campeonato</Link>
+        </div>
       </div>
       <Flash ok={sp.ok} erro={sp.erro} />
       {champs?.length ? (
