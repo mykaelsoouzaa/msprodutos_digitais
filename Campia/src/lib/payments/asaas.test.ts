@@ -1,11 +1,11 @@
 // Simulação do Asaas: um servidor falso com duas contas (Campia e arena) responde como a API v3
-// e confere o que a Campia envia ao conectar a conta da arena, criar a cobrança com repasse e receber o PIX.
+// e confere o que a Campia envia ao criar a cobrança com repasse para a arena e ao receber o PIX.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { organizerPercent } from '../payout';
-import { createAsaasPixCharge, walletIdForKey } from './asaas';
+import { createAsaasPixCharge } from './asaas';
 
 const CAMPIA_KEY = '$aact_campia_teste';
 const ARENA_KEY = '$aact_arena_teste';
@@ -30,7 +30,6 @@ before(async () => {
     const send = (status: number, data: unknown) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(data)); };
 
     if (!WALLETS[key]) return send(401, { errors: [{ description: 'A chave de API informada não pertence a este ambiente' }] });
-    if (req.method === 'GET' && path === '/wallets') return send(200, { object: 'list', data: [{ object: 'wallet', id: WALLETS[key] }] });
     if (req.method === 'POST' && path === '/customers') return send(200, { id: 'cus_000001' });
     if (req.method === 'POST' && path === '/payments') {
       for (const s of body.split ?? []) {
@@ -74,14 +73,6 @@ function pagar(c: Charge) {
 }
 
 const input = (id: string) => ({ paymentId: id, amountCents: 30000, description: 'Inscrição Real Várzea · Copa Teste', payerName: 'Capitão', payerPhone: '31999999999', payerCpfCnpj: '52998224725' });
-
-test('1. arena conecta a conta: a chave dela é usada só para descobrir o Wallet ID', async () => {
-  const wallet = await walletIdForKey(ARENA_KEY);
-  assert.equal(wallet, WALLETS[ARENA_KEY]);
-  const call = state.calls.at(-1)!;
-  assert.deepEqual([call.method, call.path, call.key], ['GET', '/wallets', ARENA_KEY]);
-  await assert.rejects(walletIdForKey('$aact_errada'), /não pertence/);
-});
 
 test('2. inscrição com repasse: cobrança sai com split de 90% para a arena e o PIX divide o valor', async () => {
   const before = state.calls.length;

@@ -106,7 +106,7 @@ openssl rand -hex 32       # use como ASAAS_WEBHOOK_TOKEN
 
 ### Repasse automático às arenas (split)
 
-- Cada organizador cria a própria conta no Asaas e conecta em **Painel › Recebimentos**, colando a chave de API dele uma vez. A Campia descobre o Wallet ID e **não guarda a chave**.
+- Cada organizador cria a própria conta no Asaas e conecta em **Painel › Recebimentos**, colando o **Wallet ID** da conta dele (fica em Integrações no Asaas). O Wallet ID só identifica quem recebe; não dá acesso à conta.
 - A partir daí, cada PIX de inscrição é dividido na hora: `100 − CAMPIA_TAXA_PERCENT`% do valor líquido vai para a conta do organizador e o resto fica na conta da Campia.
 - Organizador sem conta conectada, ou se o Asaas recusar a divisão: o dinheiro cai inteiro na conta da Campia e o repasse fica **manual**. Para ver o que falta repassar, rode no *SQL Editor*:
 

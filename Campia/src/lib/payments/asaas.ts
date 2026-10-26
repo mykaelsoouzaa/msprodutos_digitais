@@ -4,13 +4,12 @@
 //   2. POST /payments         → cria a cobrança com billingType PIX e externalReference = nosso id
 //   3. GET  /payments/{id}/pixQrCode → encodedImage (PNG base64), payload (copia e cola), expirationDate
 // Autenticação: cabeçalho `access_token`. Contas novas exigem também um User-Agent.
-import { walletFromResponse } from '../payout';
 import type { PixCharge, PixChargeInput } from './index';
 
 const base = () => (process.env.ASAAS_BASE_URL || 'https://api-sandbox.asaas.com/v3').replace(/\/$/, '');
 
-async function asaas<T>(path: string, init: RequestInit = {}, apiKey?: string): Promise<T> {
-  const key = apiKey ?? process.env.ASAAS_API_KEY;
+async function asaas<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const key = process.env.ASAAS_API_KEY;
   if (!key) throw new Error('ASAAS_API_KEY não configurada');
   const res = await fetch(`${base()}${path}`, {
     ...init,
@@ -68,11 +67,6 @@ export async function createAsaasPixCharge(input: PixChargeInput): Promise<PixCh
     throw e;
   }
   return { providerId: payment.id, payload: qr.payload, imageBase64: qr.encodedImage, expiresAt: qr.expirationDate ?? null, splitApplied };
-}
-
-/** Busca o walletId da conta dona da chave informada (GET /wallets). A chave não é guardada. */
-export async function walletIdForKey(apiKey: string): Promise<string | null> {
-  return walletFromResponse(await asaas<unknown>('/wallets', {}, apiKey));
 }
 
 /** Eventos que significam dinheiro recebido. */

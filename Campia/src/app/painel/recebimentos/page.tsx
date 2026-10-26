@@ -73,14 +73,12 @@ export default async function Recebimentos({ searchParams }: { searchParams: Pro
           <summary style={{ fontSize: 14 }}>{account ? 'Trocar a conta Asaas' : 'Conectar minha conta Asaas'}</summary>
           <ol className="howto">
             <li>Crie sua conta grátis em <a href="https://www.asaas.com" target="_blank" rel="noopener">asaas.com</a> (com CPF ou CNPJ) e aguarde a aprovação.</li>
-            <li>No Asaas, vá em <b>Integrações</b> e gere uma <b>chave de API</b>.</li>
-            <li>Cole a chave abaixo: a Campia usa a chave só uma vez para descobrir o seu Wallet ID e <b>não guarda a chave</b>.</li>
+            <li>No Asaas, copie o seu <b>Wallet ID</b> (fica na área de <b>Integrações</b>).</li>
+            <li>Cole abaixo e clique em <b>Conectar</b>. O Wallet ID só serve para receber: com ele ninguém movimenta a sua conta.</li>
           </ol>
           <form action={savePayout}>
-            <label htmlFor="apiKey">Chave de API do Asaas</label>
-            <input id="apiKey" name="apiKey" className="inp" autoComplete="off" spellCheck={false} placeholder="$aact_..." />
-            <label htmlFor="walletId">ou o Wallet ID, se você já tiver</label>
-            <input id="walletId" name="walletId" className="inp" autoComplete="off" spellCheck={false} placeholder="0000aaaa-00aa-00aa-00aa-000000aaaaaa" />
+            <label htmlFor="walletId">Wallet ID do Asaas</label>
+            <input id="walletId" name="walletId" className="inp" required autoComplete="off" spellCheck={false} placeholder="0000aaaa-00aa-00aa-00aa-000000aaaaaa" />
             <div className="actions"><button className="btn">Conectar</button></div>
           </form>
         </details>
