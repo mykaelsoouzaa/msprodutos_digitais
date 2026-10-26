@@ -59,7 +59,14 @@ export async function createAsaasPixCharge(input: PixChargeInput): Promise<PixCh
     payment = await create();
   }
 
-  const qr = await asaas<{ encodedImage: string; payload: string; expirationDate: string }>(`/payments/${payment.id}/pixQrCode`);
+  let qr: { encodedImage: string; payload: string; expirationDate: string };
+  try {
+    qr = await asaas(`/payments/${payment.id}/pixQrCode`);
+  } catch (e) {
+    // Sem QR code a inscrição falha: apaga a cobrança na Asaas para não sobrar uma cobrança pagável sem vaga.
+    await asaas(`/payments/${payment.id}`, { method: 'DELETE' }).catch(() => {});
+    throw e;
+  }
   return { providerId: payment.id, payload: qr.payload, imageBase64: qr.encodedImage, expiresAt: qr.expirationDate ?? null, splitApplied };
 }
 
