@@ -8,6 +8,7 @@ import { buildPlan, teamCountError } from '@/lib/domain/build';
 import { SPORTS, allowsOnline, sportRules } from '@/lib/domain/sports';
 import { scoreError } from '@/lib/domain/standings';
 import { UFS, slugify } from '@/lib/format';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 const fail = (path: string, msg: string): never => redirect(`${path}${path.includes('?') ? '&' : '?'}erro=${encodeURIComponent(msg)}`);
@@ -177,11 +178,15 @@ export async function clearResult(formData: FormData) {
 
 /** O organizador recebeu por fora (dinheiro, transferência) e confirma a vaga manualmente. */
 export async function markPaidManually(formData: FormData) {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
   const champId = String(formData.get('championship'));
   const teamId = String(formData.get('team'));
   const { error } = await supabase.from('teams').update({ paid: true, status: 'inscrita', reserved_until: null }).eq('id', teamId).eq('championship_id', champId);
   if (error) fail(`/painel/${champId}?aba=times`, 'Não foi possível confirmar');
+  // Pago por fora: cancela o PIX pendente. Se ele ainda for pago, o webhook registra como "pago_tarde" (para devolver).
+  // O organizador não altera pagamentos pelo RLS; confere que o campeonato é dele e usa a service role.
+  const { data: own } = await supabase.from('championships').select('id').eq('id', champId).eq('owner_id', user.id).maybeSingle();
+  if (own) await createAdminClient().from('payments').update({ status: 'cancelado' }).eq('team_id', teamId).eq('championship_id', champId).eq('status', 'pendente');
   revalidatePath(`/painel/${champId}`);
   redirect(`/painel/${champId}?aba=times&ok=${encodeURIComponent('Inscrição confirmada')}`);
 }
