@@ -69,5 +69,11 @@ export async function createAsaasPixCharge(input: PixChargeInput): Promise<PixCh
   return { providerId: payment.id, payload: qr.payload, imageBase64: qr.encodedImage, expiresAt: qr.expirationDate ?? null, splitApplied };
 }
 
+/** Wallet ID da própria conta da Campia (GET /wallets), para impedir que um organizador conecte essa carteira. */
+export async function platformWalletId(): Promise<string | null> {
+  const body = await asaas<{ data?: Array<{ id?: string }>; id?: string }>('/wallets');
+  return body.data?.[0]?.id ?? body.id ?? null;
+}
+
 /** Eventos que significam dinheiro recebido. */
 export const PAID_EVENTS = new Set(['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED']);

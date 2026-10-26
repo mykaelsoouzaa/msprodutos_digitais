@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.8.1';
+export const APP_VERSION = '1.8.2';
 
 export interface Release {
   version: string;
@@ -11,6 +11,14 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.8.2',
+    date: '2026-10-26',
+    title: 'Aviso ao conectar a conta errada',
+    items: [
+      "Em Recebimentos, a Campia avisa se o Wallet ID informado for da própria conta da Campia, que o Asaas não aceita para repasse.",
+    ],
+  },
   {
     version: '1.8.1',
     date: '2026-10-26',

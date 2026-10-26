@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { organizerPercent } from '../payout';
-import { createAsaasPixCharge } from './asaas';
+import { createAsaasPixCharge, platformWalletId } from './asaas';
 
 const CAMPIA_KEY = '$aact_campia_teste';
 const ARENA_KEY = '$aact_arena_teste';
@@ -30,6 +30,7 @@ before(async () => {
     const send = (status: number, data: unknown) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(data)); };
 
     if (!WALLETS[key]) return send(401, { errors: [{ description: 'A chave de API informada não pertence a este ambiente' }] });
+    if (req.method === 'GET' && path === '/wallets') return send(200, { object: 'list', data: [{ object: 'wallet', id: WALLETS[key] }] });
     if (req.method === 'POST' && path === '/customers') return send(200, { id: 'cus_000001' });
     if (req.method === 'POST' && path === '/payments') {
       for (const s of body.split ?? []) {
@@ -122,4 +123,8 @@ test('6. sem repasse: a cobrança não leva split', async () => {
   assert.equal(charge.splitApplied, false);
   const post = state.calls.slice(before).find(c => c.method === 'POST' && c.path === '/payments')!;
   assert.equal(post.body.split, undefined);
+});
+
+test('7. a Campia sabe o próprio Wallet ID, para barrar quem tentar conectar essa carteira', async () => {
+  assert.equal(await platformWalletId(), WALLETS[CAMPIA_KEY]);
 });

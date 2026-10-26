@@ -1,6 +1,8 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { paymentProvider } from '@/lib/env';
+import { platformWalletId } from '@/lib/payments/asaas';
 import { WALLET_RE } from '@/lib/payout';
 import { createClient } from '@/lib/supabase/server';
 
@@ -14,6 +16,13 @@ export async function savePayout(formData: FormData) {
 
   const walletId = String(formData.get('walletId') || '').trim();
   if (!WALLET_RE.test(walletId)) back('erro', 'Wallet ID inválido: são 36 caracteres no formato 0000aaaa-00aa-...');
+  if (paymentProvider() === 'asaas') {
+    // O Asaas recusa split para a própria carteira: avisa já na hora de conectar.
+    const own = await platformWalletId().catch(() => null);
+    if (own && own.toLowerCase() === walletId.toLowerCase()) {
+      back('erro', 'Esse Wallet ID é da conta da Campia. Use o Wallet ID da conta Asaas do organizador (outra conta).');
+    }
+  }
 
   const { error } = await supabase.from('payout_accounts')
     .upsert({ owner_id: user!.id, asaas_wallet_id: walletId.toLowerCase(), updated_at: new Date().toISOString() }, { onConflict: 'owner_id' });
