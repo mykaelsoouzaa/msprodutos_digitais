@@ -377,3 +377,6 @@ form.esports:has(input[name="online"][value="1"]:checked) .presencial { display:
 .mnav-panel a:not(.btn):hover, .mnav-panel a.on { background: var(--panel2); }
 .mnav-panel .btn { margin-top: 6px; }
 @media (min-width: 1024px) { .mnav { display: none; } }
+.helper-row { flex-wrap: wrap; }
+.helper-row .grow { overflow-wrap: anywhere; }
+@media (max-width: 519px) { .helper-row .grow { flex-basis: 100%; } }

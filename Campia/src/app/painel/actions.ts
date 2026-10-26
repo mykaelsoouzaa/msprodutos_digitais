@@ -2,6 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import { roleIn } from '@/lib/access';
 import { gameRow, loadChampionship, persistKnockout, teamRow } from '@/lib/data';
 import { buildPlan, teamCountError } from '@/lib/domain/build';
 import { SPORTS, allowsOnline } from '@/lib/domain/sports';
@@ -77,7 +78,7 @@ export async function createChampionship(formData: FormData) {
 const int = (v: FormDataEntryValue | null) => (v === null || v === '' ? null : Number(v));
 
 export async function saveResult(formData: FormData) {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
   const champId = String(formData.get('championship'));
   const gameId = String(formData.get('game'));
   const back = `/painel/${champId}/jogo/${gameId}`;
@@ -85,6 +86,7 @@ export async function saveResult(formData: FormData) {
   const data = await loadChampionship(supabase, { id: champId });
   const g = data?.games.find(x => x.id === gameId);
   if (!data || !g || !g.homeId || !g.awayId) fail(back, 'Jogo não encontrado ou sem os dois times definidos');
+  if (!(await roleIn(supabase, data!.row, user))) fail(back, 'Você não tem acesso a este campeonato');
 
   const date = String(formData.get('date') || '');
   const time = String(formData.get('time') || '');
@@ -134,9 +136,11 @@ export async function saveResult(formData: FormData) {
 }
 
 export async function clearResult(formData: FormData) {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
   const champId = String(formData.get('championship'));
   const gameId = String(formData.get('game'));
+  const { data: c } = await supabase.from('championships').select('id, owner_id').eq('id', champId).maybeSingle();
+  if (!c || !(await roleIn(supabase, c, user))) fail(`/painel/${champId}/jogo/${gameId}`, 'Você não tem acesso a este campeonato');
   const { error } = await supabase.from('games').update({ home_score: null, away_score: null, pen_home: null, pen_away: null }).eq('id', gameId);
   if (error) fail(`/painel/${champId}/jogo/${gameId}`, 'Não foi possível apagar');
   await supabase.from('goals').delete().eq('game_id', gameId);
@@ -169,6 +173,30 @@ export async function setCaptainEmail(formData: FormData) {
   if (error) fail(back, 'Não foi possível salvar o e-mail');
   revalidatePath(`/painel/${champId}`);
   redirect(`${back}&ok=${encodeURIComponent('E-mail do capitão salvo')}`);
+}
+
+const helpersBack = (id: string) => `/painel/${id}?aba=ajustes`;
+
+export async function addHelper(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const champId = String(formData.get('championship'));
+  const email = z.string().trim().toLowerCase().email().max(120).safeParse(formData.get('email'));
+  if (!email.success) fail(helpersBack(champId), 'E-mail do ajudante inválido');
+  if (email.data === (user.email ?? '').toLowerCase()) fail(helpersBack(champId), 'Esse é o seu próprio e-mail');
+  const { count } = await supabase.from('championship_helpers').select('email', { count: 'exact', head: true }).eq('championship_id', champId);
+  if ((count ?? 0) >= 10) fail(helpersBack(champId), 'Limite de 10 ajudantes por campeonato');
+  const { error } = await supabase.from('championship_helpers').insert({ championship_id: champId, email: email.data });
+  if (error) fail(helpersBack(champId), error.code === '23505' ? 'Esse e-mail já é ajudante' : 'Não foi possível adicionar');
+  revalidatePath(`/painel/${champId}`);
+  redirect(`${helpersBack(champId)}&ok=${encodeURIComponent('Ajudante adicionado. Mande o link para ele entrar.')}`);
+}
+
+export async function removeHelper(formData: FormData) {
+  const { supabase } = await requireUser();
+  const champId = String(formData.get('championship'));
+  await supabase.from('championship_helpers').delete().eq('championship_id', champId).eq('email', String(formData.get('email')));
+  revalidatePath(`/painel/${champId}`);
+  redirect(`${helpersBack(champId)}&ok=${encodeURIComponent('Ajudante removido')}`);
 }
 
 export async function updateVisibility(formData: FormData) {

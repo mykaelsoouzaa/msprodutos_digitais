@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Dot, Flash, GamesList, TableTab, Tabs } from '@/components/champ';
+import { roleIn } from '@/lib/access';
 import { loadChampionship } from '@/lib/data';
 import SportIcon from '@/components/SportIcon';
 import { FORMATS, allowsOnline, sportLabel } from '@/lib/domain/sports';
@@ -10,7 +11,7 @@ import { siteUrl } from '@/lib/env';
 import { brl, placeLabel, waLink } from '@/lib/format';
 import PlaceFields from '@/components/PlaceFields';
 import { createClient } from '@/lib/supabase/server';
-import { deleteChampionship, markPaidManually, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
+import { addHelper, deleteChampionship, markPaidManually, removeHelper, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
 
 export const metadata: Metadata = { title: 'Campeonato' };
 export const dynamic = 'force-dynamic';
@@ -26,10 +27,17 @@ export default async function Campeonato({ params, searchParams }: {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const data = await loadChampionship(supabase, { id }, { withContacts: true });
-  if (!data || data.row.owner_id !== user?.id) notFound();
+  const role = data ? await roleIn(supabase, data.row, user) : null;
+  if (!data || !role) notFound();
+  const owner = role === 'dono';
+  const tabs = owner ? TABS : TABS.slice(0, 2);
 
   const { champ, teams, games, players } = data;
-  const tab = TABS.some(t => t[0] === sp.aba) ? sp.aba! : 'jogos';
+  const tab = tabs.some(t => t[0] === sp.aba) ? sp.aba! : 'jogos';
+  const { data: helpers } = owner && tab === 'ajustes'
+    ? await supabase.from('championship_helpers').select('email').eq('championship_id', id).order('created_at').returns<Array<{ email: string }>>()
+    : { data: [] as Array<{ email: string }> };
+  const helperInvite = `Você foi convidado para lançar os resultados do ${champ.name} na Campia.\nEntre com este e-mail: ${siteUrl()}/entrar?voltar=${encodeURIComponent(`/painel/${id}`)}`;
   const base = `/painel/${id}`;
   const publicUrl = `${siteUrl()}/c/${champ.slug}`;
   const signupUrl = `${publicUrl}/inscricao`;
@@ -45,10 +53,11 @@ export default async function Campeonato({ params, searchParams }: {
       <div className="stats">
         <div className="stat"><b>{signed.length}/{teams.length}</b><span>times inscritos</span></div>
         <div className="stat"><b>{done}/{games.length}</b><span>jogos</span></div>
-        <div className="stat"><b className="money">{brl(received)}</b><span>recebido</span></div>
+        {owner && <div className="stat"><b className="money">{brl(received)}</b><span>recebido</span></div>}
       </div>
+      {!owner && <div className="note" style={{ margin: '0 0 16px' }}>Você é <b>ajudante</b> deste campeonato: pode lançar resultados e ajustar data, horário e campo dos jogos.</div>}
       <Flash ok={sp.ok} erro={sp.erro} />
-      <Tabs items={TABS} current={tab} base={base} />
+      <Tabs items={tabs} current={tab} base={base} />
 
       {tab === 'jogos' && (
         <>
@@ -138,6 +147,23 @@ export default async function Campeonato({ params, searchParams }: {
             <PlaceFields mode={allowsOnline(champ.sport) ? 'esports' : 'presencial'} online={champ.online} location={champ.location} city={champ.city} state={champ.state} />
             <div className="actions"><button className="btn sm">Salvar local</button></div>
           </form>
+          <div className="card">
+            <b>Ajudantes</b>
+            <p className="sub" style={{ margin: '4px 0 10px' }}>Pessoas que podem lançar resultados e ajustar horários, sem ver pagamentos, contatos ou ajustes. Elas entram na Campia com o e-mail cadastrado aqui.</p>
+            {helpers?.map(h => (
+              <form action={removeHelper} className="row helper-row" key={h.email}>
+                <input type="hidden" name="championship" value={id} /><input type="hidden" name="email" value={h.email} />
+                <span className="grow"><b style={{ fontWeight: 600 }}>{h.email}</b></span>
+                <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', helperInvite)}>Enviar convite</a>
+                <button className="btn ghost sm" aria-label={`Remover ${h.email}`}>Remover</button>
+              </form>
+            ))}
+            <form action={addHelper} className="mini-form" style={{ marginTop: 10 }}>
+              <input type="hidden" name="championship" value={id} />
+              <input name="email" type="email" className="inp" required placeholder="email@do-ajudante.com" aria-label="E-mail do ajudante" />
+              <button className="btn sm">Adicionar</button>
+            </form>
+          </div>
           <form action={deleteChampionship} className="card">
             <input type="hidden" name="championship" value={id} />
             <b>Excluir campeonato</b>

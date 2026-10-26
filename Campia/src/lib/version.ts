@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.5.0';
+export const APP_VERSION = '1.6.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.6.0',
+    date: '2026-10-26',
+    title: 'Ajudantes do organizador',
+    items: [
+      "Convide ajudantes por e-mail na aba Ajustes do campeonato.",
+      "Ajudantes lançam resultados e ajustam data, horário e campo, sem ver pagamentos, contatos ou ajustes.",
+      "Botão para enviar o convite pelo WhatsApp; o campeonato aparece no painel do ajudante em Você ajuda em.",
+    ],
+  },
   {
     version: '1.5.0',
     date: '2026-10-26',

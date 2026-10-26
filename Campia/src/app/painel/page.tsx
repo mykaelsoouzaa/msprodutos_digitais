@@ -18,6 +18,18 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
   const { data: champs } = await supabase.from('championships').select('*').eq('owner_id', user!.id)
     .order('created_at', { ascending: false }).returns<ChampionshipRow[]>();
   const { data: arena } = await supabase.from('arenas').select('slug').eq('owner_id', user!.id).maybeSingle();
+  // Campeonatos em que esta conta foi convidada como ajudante
+  const { data: invites } = await supabase.from('championship_helpers').select('championship_id').eq('email', (user!.email ?? '').toLowerCase()).returns<Array<{ championship_id: string }>>();
+  const { data: helping } = invites?.length
+    ? await supabase.from('championships').select('*').in('id', invites.map(i => i.championship_id)).returns<ChampionshipRow[]>()
+    : { data: [] as ChampionshipRow[] };
+  const card = (c: ChampionshipRow, helper = false) => (
+    <Link key={c.id} href={`/painel/${c.id}`} className="card link-card">
+      <SportIcon sport={c.sport} />
+      <span className="grow"><b>{c.name}</b><span>{sportLabel(c.sport)} · {FORMATS[c.format]}{c.online ? ' · Online' : cityState(c.city, c.state ?? '') ? ` · ${cityState(c.city, c.state ?? '')}` : ''}</span></span>
+      {helper ? <span className="badge open">Ajudante</span> : <span style={{ color: 'var(--muted)' }}>›</span>}
+    </Link>
+  );
 
   return (
     <>
@@ -31,15 +43,15 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
       <Flash ok={sp.ok} erro={sp.erro} />
       {champs?.length ? (
         <div className="grid-cards">
-          {champs.map(c => (
-            <Link key={c.id} href={`/painel/${c.id}`} className="card link-card">
-              <SportIcon sport={c.sport} />
-              <span className="grow"><b>{c.name}</b><span>{sportLabel(c.sport)} · {FORMATS[c.format]}{c.online ? ' · Online' : cityState(c.city, c.state ?? '') ? ` · ${cityState(c.city, c.state ?? '')}` : ''}</span></span>
-              <span style={{ color: 'var(--muted)' }}>›</span>
-            </Link>
-          ))}
+          {champs.map(c => card(c))}
         </div>
       ) : <div className="card empty">Você ainda não criou nenhum campeonato.</div>}
+      {!!helping?.length && (
+        <>
+          <h2>Você ajuda em</h2>
+          <div className="grid-cards">{helping.map(c => card(c, true))}</div>
+        </>
+      )}
       <form action={signOut} style={{ marginTop: 24 }}><button className="btn ghost sm">Sair</button></form>
     </>
   );

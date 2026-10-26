@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Flash } from '@/components/champ';
+import { roleIn } from '@/lib/access';
 import { loadChampionship } from '@/lib/data';
 import { sportLabel, sportRules } from '@/lib/domain/sports';
 import { createClient } from '@/lib/supabase/server';
@@ -20,7 +21,7 @@ export default async function Jogo({ params, searchParams }: {
   const { data: { user } } = await supabase.auth.getUser();
   const data = await loadChampionship(supabase, { id });
   const g = data?.games.find(x => x.id === gameId);
-  if (!data || data.row.owner_id !== user?.id || !g || !g.homeId || !g.awayId) notFound();
+  if (!data || !g || !g.homeId || !g.awayId || !(await roleIn(supabase, data.row, user))) notFound();
 
   const rules = sportRules(data.champ.sport);
   const home = data.teams.find(t => t.id === g.homeId)!;
@@ -29,8 +30,8 @@ export default async function Jogo({ params, searchParams }: {
   const roster = (teamId: string) => data.players.filter(p => p.teamId === teamId);
 
   return (
-    <>
-      <Link href={`/painel/${id}?aba=jogos`} className="sub" style={{ textDecoration: 'none' }}>← {data.champ.name}</Link>
+    <div className="narrow">
+      <Link href={`/painel/${id}?aba=jogos`} className="back-link">‹ {data.champ.name}</Link>
       <h1>{home.name} × {away.name}</h1>
       <p className="sub">{g.stage === 'ko' ? g.name : `${g.group ? `Grupo ${g.group} · ` : ''}${g.label}`}</p>
       <Flash erro={sp.erro} />
@@ -87,6 +88,6 @@ export default async function Jogo({ params, searchParams }: {
           <button className="btn danger sm">Apagar resultado</button>
         </form>
       )}
-    </>
+    </div>
   );
 }
