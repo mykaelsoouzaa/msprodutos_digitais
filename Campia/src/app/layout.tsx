@@ -26,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <img src="/brand/campia-logo-escuro.svg" alt="Campia" height={30} />
             </Link>
             <nav className="nav" aria-label="Principal">
+              <Link href="/campeonatos">Campeonatos</Link>
               <Link href="/#como-funciona">Como funciona</Link>
               <Link href="/#esportes">Esportes</Link>
               <Link href="/novidades">Novidades</Link>

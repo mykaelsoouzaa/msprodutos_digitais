@@ -82,6 +82,14 @@ export default function Home() {
       </section>
 
       <section className="section">
+        <Link href="/campeonatos" className="card link-card explore-cta">
+          <span className="sport-ico g-futebol" aria-hidden="true">🔎</span>
+          <span className="grow"><b>Procurando campeonato para jogar?</b><span>Veja os campeonatos com inscrições abertas na sua cidade, presenciais ou online.</span></span>
+          <span className="btn ghost sm">Ver campeonatos</span>
+        </Link>
+      </section>
+
+      <section className="section" style={{ paddingTop: 0 }}>
         <div className="final-cta">
           <h2 className="section-title">Pronto para a primeira rodada?</h2>
           <p className="sub">Crie o campeonato agora e mande o link de inscrição no grupo.</p>

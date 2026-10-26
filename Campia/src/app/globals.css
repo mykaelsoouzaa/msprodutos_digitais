@@ -298,3 +298,36 @@ form:has(.sport-pick input[value^="E-sports"]:checked):has(input[name="online"][
 form.esports:has(input[name="online"][value="1"]:checked) .presencial { display: none; }
 .place-chip { display: inline-flex; align-items: center; gap: 6px; }
 .badge.online { background: rgba(168, 85, 247, .18); color: #d8b4fe; }
+
+/* ---------- explorar ---------- */
+.chips { display: flex; gap: 6px; overflow-x: auto; margin: 0 calc(-1 * var(--gutter)) 12px; padding: 0 var(--gutter) 2px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+@media (min-width: 640px) { .chips { margin-left: 0; margin-right: 0; padding: 0; flex-wrap: wrap; } }
+.filters { display: grid; gap: 0 12px; grid-template-columns: 1fr 96px; align-items: end; }
+.filters label { margin-top: 10px; }
+.filters .f-q, .filters .f-city, .filters .f-modo, .filters .f-open, .filters .f-actions { grid-column: 1 / -1; }
+.filters .f-city { grid-column: 1; grid-row: 2; }
+.filters .f-uf { grid-column: 2; grid-row: 2; }
+.filters .f-open { display: flex; gap: 8px; align-items: center; color: var(--text); font-size: 14px; margin-top: 14px; }
+.filters .f-open input { accent-color: var(--accent); width: 18px; height: 18px; }
+.filters .f-actions { display: flex; gap: 8px; margin-top: 14px; }
+@media (min-width: 900px) {
+  .filters { grid-template-columns: 1.4fr 110px 1.2fr 1.2fr auto; }
+  .filters .f-q { grid-column: 1; grid-row: 1; }
+  .filters .f-uf { grid-column: 2; grid-row: 1; }
+  .filters .f-city { grid-column: 3; grid-row: 1; }
+  .filters .f-modo { grid-column: 4; grid-row: 1; }
+  .filters .f-actions { grid-column: 5; grid-row: 1; margin-top: 0; }
+  .filters .f-open { grid-column: 1 / -1; grid-row: 2; }
+}
+.champ-card { display: flex; flex-direction: column; gap: 12px; text-decoration: none; transition: border-color .15s, transform .15s; }
+.champ-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.champ-card-head { display: flex; gap: 12px; align-items: center; }
+.champ-card-head b { display: block; font-size: 16px; line-height: 1.25; }
+.champ-card-head span { font-size: 13px; color: var(--muted); }
+.champ-card-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+.champ-card-foot { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-top: auto; flex-wrap: wrap; }
+.champ-card-foot .small { color: var(--muted); }
+.explore-cta { padding: 18px; }
+.explore-cta .grow b { font-size: 17px; margin-bottom: 2px; }
+@media (max-width: 559px) { .explore-cta { flex-wrap: wrap; } .explore-cta .btn { width: 100%; } }
