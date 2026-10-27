@@ -110,6 +110,8 @@ export interface Championship {
   schedule: Schedule;
   /** Lotes de preço por data (o feeCents vale depois do último lote). */
   priceTiers?: Array<{ until: string; cents: number }>;
+  /** Votação do craque: fechada, aberta ou encerrada. */
+  voting?: 'fechada' | 'aberta' | 'encerrada';
 }
 
 export interface StandingRow {

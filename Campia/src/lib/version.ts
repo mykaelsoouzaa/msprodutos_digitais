@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.20.0';
+export const APP_VERSION = '1.21.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,17 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.21.0',
+    date: '2026-10-27',
+    title: 'Craque do campeonato',
+    items: [
+      "Atletas e torcedores votam no craque, no melhor goleiro e na revelação, direto na página do campeonato",
+      "Um voto por pessoa em cada categoria (precisa entrar com o e-mail); dá para mudar o voto enquanto estiver aberta",
+      "O organizador abre e encerra a votação em Ajustes e acompanha o resultado parcial",
+      "Quando encerra, o resultado aparece com medalhas e sai uma arte pronta para os stories",
+    ],
+  },
   {
     version: '1.20.0',
     date: '2026-10-26',

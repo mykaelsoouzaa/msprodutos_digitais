@@ -482,3 +482,9 @@ form.esports:has(input[name="online"][value="1"]:checked) .presencial { display:
 .live-btns { display: flex; gap: 6px; }
 .live-btns .btn { padding: 10px 16px; font-size: 18px; }
 .live-now { background: rgba(239, 68, 68, .06); border: 1px solid rgba(239, 68, 68, .3); border-radius: 16px; padding: 14px; margin-bottom: 16px; }
+
+/* ---------- votação ---------- */
+.vote-title { display: block; margin-bottom: 4px; }
+.vote-medal { font-size: 22px; width: 28px; text-align: center; }
+.vote-winner .grow b { color: var(--accent2); }
+.vote-cta { text-align: center; border-color: rgba(163, 230, 53, .35); }

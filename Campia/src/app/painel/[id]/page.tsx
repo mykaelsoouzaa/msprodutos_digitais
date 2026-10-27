@@ -14,7 +14,8 @@ import PlaceFields from '@/components/PlaceFields';
 import { createClient } from '@/lib/supabase/server';
 import { refundLatePayment } from '../cancel-actions';
 import { removeFromWaitlist } from '../waitlist-actions';
-import { addCoupon, drawChampionship, rebuildChampionship, removeCoupon, updateBasics, updatePriceTiers, updateSchedule } from '../edit-actions';
+import { addCoupon, drawChampionship, rebuildChampionship, removeCoupon, setVoting, updateBasics, updatePriceTiers, updateSchedule } from '../edit-actions';
+import { type VoteResult, categoriesFor, ranking } from '@/lib/voting';
 import { addHelper, updateYellowLimit, deleteChampionship, markPaidManually, removeHelper, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
 
 export const metadata: Metadata = { title: 'Campeonato' };
@@ -60,6 +61,10 @@ export default async function Campeonato({ params, searchParams }: {
       .returns<Array<{ coupon_code: string }>>()
     : { data: [] as Array<{ coupon_code: string }> };
   const tiers = [...(champ.priceTiers ?? [])].sort((a, b) => a.until.localeCompare(b.until));
+  const { data: voteRows } = owner && tab === 'ajustes' && champ.voting !== 'fechada'
+    ? await supabase.rpc('vote_results', { champ: id })
+    : { data: [] };
+  const votes = (voteRows ?? []) as VoteResult[];
   const base = `/painel/${id}`;
   const publicUrl = `${siteUrl()}/c/${champ.slug}`;
   const signupUrl = `${publicUrl}/inscricao`;
@@ -289,6 +294,27 @@ export default async function Campeonato({ params, searchParams }: {
               <div className="actions"><button className="btn sm">Refazer tabela</button></div>
             </form>
           )}
+          <div className="card">
+            <b>🏅 Votação do craque</b>
+            <p className="sub" style={{ margin: '4px 0 10px' }}>O público vota em {categoriesFor(champ.sport).map(c => c[1].toLowerCase()).join(', ')}, com 1 voto por pessoa (login por e-mail). O resultado só aparece quando você encerrar.</p>
+            <div className="actions" style={{ marginTop: 0 }}>
+              <span className={`badge ${champ.voting === 'aberta' ? 'ok' : champ.voting === 'encerrada' ? 'wait' : 'open'}`}>{champ.voting === 'aberta' ? 'Aberta' : champ.voting === 'encerrada' ? 'Encerrada' : 'Fechada'}</span>
+            </div>
+            {champ.voting !== 'fechada' && (
+              <div style={{ marginTop: 8 }}>
+                {categoriesFor(champ.sport).map(([cat, label]) => {
+                  const top = ranking(votes, players, teams, cat);
+                  return <p className="sub small" key={cat} style={{ margin: '4px 0' }}><b style={{ color: 'var(--text)' }}>{label}:</b> {top.length ? top.map(r => `${r.player.name} (${r.total})`).join(', ') : 'sem votos'}</p>;
+                })}
+              </div>
+            )}
+            <div className="actions">
+              {champ.voting !== 'aberta' && <form action={setVoting}><input type="hidden" name="championship" value={id} /><input type="hidden" name="state" value="aberta" /><button className="btn sm">{champ.voting === 'encerrada' ? 'Reabrir votação' : 'Abrir votação'}</button></form>}
+              {champ.voting === 'aberta' && <form action={setVoting}><input type="hidden" name="championship" value={id} /><input type="hidden" name="state" value="encerrada" /><button className="btn sm">Encerrar e divulgar resultado</button></form>}
+              {champ.voting === 'aberta' && <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🗳 Votação do craque do ${champ.name} aberta! Vote aqui: ${publicUrl}?aba=votacao`)}>Divulgar</a>}
+              {champ.voting !== 'fechada' && <form action={setVoting}><input type="hidden" name="championship" value={id} /><input type="hidden" name="state" value="fechada" /><button className="btn ghost sm">Esconder votação</button></form>}
+            </div>
+          </div>
           <form action={updateVisibility} className="card">
             <input type="hidden" name="championship" value={id} />
             <b>Quem pode ver</b>

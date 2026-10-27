@@ -219,3 +219,15 @@ export async function removeCoupon(formData: FormData) {
   await supabase.from('coupons').delete().eq('id', String(formData.get('coupon'))).eq('championship_id', champId);
   go(back, 'ok', 'Cupom removido');
 }
+
+/* ---------- votação do craque ---------- */
+export async function setVoting(formData: FormData) {
+  const champId = String(formData.get('championship'));
+  const back = `/painel/${champId}?aba=ajustes`;
+  const state = String(formData.get('state'));
+  if (!['fechada', 'aberta', 'encerrada'].includes(state)) go(back, 'erro', 'Opção inválida');
+  const { supabase, data } = await requireOwner(champId, back);
+  await supabase.from('championships').update({ voting: state }).eq('id', champId);
+  revalidatePath(`/c/${data.champ.slug}`);
+  go(back, 'ok', state === 'aberta' ? 'Votação aberta! Divulgue o link da página do campeonato.' : state === 'encerrada' ? 'Votação encerrada: o resultado está na página do campeonato.' : 'Votação fechada');
+}
