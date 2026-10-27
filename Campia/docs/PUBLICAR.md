@@ -26,6 +26,7 @@ Passo a passo para colocar a Campia no ar, na ordem. Cada etapa diz onde clicar 
    13. `supabase/migrations/20261027180000_ao_vivo.sql`
    14. `supabase/migrations/20261027190000_votacao.sql`
    15. `supabase/migrations/20261027200000_visitas.sql`
+   16. `supabase/migrations/20261027210000_patrocinadores.sql`
 
    **Banco já criado e precisa atualizar?** Rode só `supabase/atualizar-banco.sql`. Ele confere o que já existe e cria só o que falta; pode rodar de novo sem problema.
 3. Em *Authentication › URL Configuration*:

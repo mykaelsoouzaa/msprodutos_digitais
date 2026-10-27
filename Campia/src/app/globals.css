@@ -501,3 +501,19 @@ form.esports:has(input[name="online"][value="1"]:checked) .presencial { display:
 .src-track { height: 10px; background: var(--panel2); border-radius: 99px; overflow: hidden; }
 .src-track i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
 .src-num { text-align: right; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* ---------- patrocinadores ---------- */
+.sponsors { margin: 28px 0 0; padding: 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); text-align: center; }
+.sponsors-title { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+.sponsors-row + .sponsors-title { margin-top: 16px; }
+.sponsors-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.sponsor { display: grid; place-items: center; height: 52px; min-width: 88px; max-width: 160px; padding: 8px 12px; border-radius: 12px; background: #fff; text-decoration: none; }
+.sponsor.big { height: 76px; min-width: 120px; max-width: 220px; }
+.sponsor img { max-height: 100%; max-width: 100%; object-fit: contain; display: block; }
+.sponsor.text { background: var(--panel2); border: 1px solid var(--line); color: var(--text); font-weight: 700; font-size: 14px; }
+.sponsor.big.text { font-size: 17px; }
+a.sponsor:hover { outline: 2px solid var(--accent); }
+.sponsor-admin { display: flex; align-items: center; gap: 10px; }
+.sponsor-admin .sponsor { height: 40px; width: 88px; min-width: 88px; max-width: 88px; padding: 4px 8px; flex: none; }
+.sponsor-admin .grow { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media print { .sponsors { border-color: #ccc; background: none; } .sponsor.text { background: none; color: #000; border-color: #ccc; } }

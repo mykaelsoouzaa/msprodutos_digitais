@@ -15,6 +15,9 @@ import PlaceFields from '@/components/PlaceFields';
 import { createClient } from '@/lib/supabase/server';
 import { refundLatePayment } from '../cancel-actions';
 import { removeFromWaitlist } from '../waitlist-actions';
+import { addSponsor, removeSponsor } from '../sponsor-actions';
+import { initials } from '@/lib/arena';
+import { SPONSOR_LIMIT, SPONSOR_SELECT, type Sponsor, sortSponsors } from '@/lib/sponsors';
 import { addCoupon, drawChampionship, rebuildChampionship, removeCoupon, setVoting, updateBasics, updatePriceTiers, updateSchedule } from '../edit-actions';
 import { type VoteResult, categoriesFor, ranking } from '@/lib/voting';
 import { addHelper, updateYellowLimit, deleteChampionship, markPaidManually, removeHelper, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
@@ -61,6 +64,10 @@ export default async function Campeonato({ params, searchParams }: {
     ? await supabase.from('payments').select('coupon_code').eq('championship_id', id).in('status', ['pago', 'pendente']).not('coupon_code', 'is', null)
       .returns<Array<{ coupon_code: string }>>()
     : { data: [] as Array<{ coupon_code: string }> };
+  const { data: sponsorRows } = owner && tab === 'ajustes'
+    ? await supabase.from('sponsors').select(SPONSOR_SELECT).eq('championship_id', id).order('created_at').returns<Sponsor[]>()
+    : { data: [] as Sponsor[] };
+  const sponsors = sortSponsors(sponsorRows ?? []);
   const tiers = [...(champ.priceTiers ?? [])].sort((a, b) => a.until.localeCompare(b.until));
   const { data: voteRows } = owner && tab === 'ajustes' && champ.voting !== 'fechada'
     ? await supabase.rpc('vote_results', { champ: id })
@@ -364,6 +371,40 @@ export default async function Campeonato({ params, searchParams }: {
               <div className="actions"><button className="btn sm">Refazer tabela</button></div>
             </form>
           )}
+          <div className="card" id="patrocinio">
+            <b>🤝 Patrocinadores</b>
+            <p className="sub" style={{ margin: '4px 0 10px' }}>Aparecem na página do campeonato, na versão para imprimir e nas artes para os stories. Venda cotas para bancar a premiação: <b>master</b> sai em destaque, <b>apoio</b> menor.</p>
+            {sponsors.length > 0 && (
+              <div className="stack" style={{ marginBottom: 12 }}>
+                {sponsors.map(sp => (
+                  <form key={sp.id} action={removeSponsor} className="sponsor-admin">
+                    <input type="hidden" name="championship" value={id} />
+                    <input type="hidden" name="sponsor" value={sp.id} />
+                    <span className={`sponsor ${sp.logo_url ? '' : 'text'}`}>{sp.logo_url ? <img src={sp.logo_url} alt="" /> : initials(sp.name)}</span>
+                    <span className="grow"><b>{sp.name}</b> <span className="sub small">· {sp.tier === 'master' ? 'Master' : 'Apoio'}{sp.url ? ` · ${sp.url.replace(/^https?:\/\//, '').replace(/\/$/, '')}` : ''}</span></span>
+                    <button className="btn ghost sm" aria-label={`Remover ${sp.name}`}>Remover</button>
+                  </form>
+                ))}
+              </div>
+            )}
+            {sponsors.length < SPONSOR_LIMIT ? (
+              <form action={addSponsor}>
+                <input type="hidden" name="championship" value={id} />
+                <div className="grid2">
+                  <div><label htmlFor="sp-name">Nome</label><input id="sp-name" name="name" className="inp" required minLength={2} maxLength={60} placeholder="Ex.: Padaria Pão Bom" /></div>
+                  <div>
+                    <label htmlFor="sp-tier">Cota</label>
+                    <select id="sp-tier" name="tier" className="inp" defaultValue="apoio"><option value="master">Master (destaque)</option><option value="apoio">Apoio</option></select>
+                  </div>
+                </div>
+                <label htmlFor="sp-url">Site ou Instagram (opcional)</label>
+                <input id="sp-url" name="url" className="inp" maxLength={200} placeholder="Ex.: instagram.com/paobom" />
+                <label htmlFor="sp-logo">Logo (PNG, JPG ou WEBP até 1 MB, opcional)</label>
+                <input id="sp-logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp" className="inp" />
+                <div style={{ marginTop: 12 }}><button className="btn sm">Adicionar patrocinador</button></div>
+              </form>
+            ) : <p className="sub small">Limite de {SPONSOR_LIMIT} patrocinadores atingido.</p>}
+          </div>
           <div className="card">
             <b>🏅 Votação do craque</b>
             <p className="sub" style={{ margin: '4px 0 10px' }}>O público vota em {categoriesFor(champ.sport).map(c => c[1].toLowerCase()).join(', ')}, com 1 voto por pessoa (login por e-mail). O resultado só aparece quando você encerrar.</p>

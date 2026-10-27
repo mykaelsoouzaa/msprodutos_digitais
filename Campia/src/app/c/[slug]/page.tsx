@@ -5,6 +5,8 @@ import { Discipline, Flash, GameRow, GamesList, Scorers, TableTab, Tabs } from '
 import AutoRefresh from '@/components/AutoRefresh';
 import VotingTab from '@/components/VotingTab';
 import ViewBeacon from '@/components/ViewBeacon';
+import Sponsors from '@/components/Sponsors';
+import { SPONSOR_SELECT, type Sponsor } from '@/lib/sponsors';
 import ReminderButton from '@/components/ReminderButton';
 import { type ArenaRow, initials } from '@/lib/arena';
 import { loadChampionship } from '@/lib/data';
@@ -60,6 +62,7 @@ export default async function Publico({ params, searchParams }: {
   const upcoming = ordered(games).filter(g => !isDecided(g) && !g.live && g.homeId && g.awayId && g.date >= today).slice(0, 4);
 
   const signupOpen = open > 0 && !started;
+  const { data: sponsors } = await supabase.from('sponsors').select(SPONSOR_SELECT).eq('championship_id', champ.id).order('created_at').returns<Sponsor[]>();
   const { data: { user } } = await supabase.auth.getUser();
   const isOwner = !!user && user.id === data.row.owner_id;
   const jsonLd = data.row.visibility === 'publico' ? eventJsonLd({
@@ -124,6 +127,7 @@ export default async function Publico({ params, searchParams }: {
           {tab === 'cartoes' && <Discipline champ={champ} games={games} cards={cards} players={players} teams={teams} />}
         </div>
       </div>
+      <Sponsors list={sponsors ?? []} />
       <p className="sub small" style={{ textAlign: 'center', marginTop: 32 }}>Organiza campeonatos? <Link href="/">Crie o seu na Campia</Link>.</p>
     </>
   );

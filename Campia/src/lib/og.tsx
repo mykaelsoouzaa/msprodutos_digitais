@@ -34,3 +34,24 @@ export function OgFrame({ eyebrow, title, lines, badge }: { eyebrow?: string; ti
     </div>
   );
 }
+
+/** Faixa de patrocinadores nas artes de stories (até 6; logo PNG/JPG ou o nome escrito). */
+export function OgSponsors({ list }: { list: Array<{ name: string; logo_url: string; tier: string }> }) {
+  if (!list.length) return null;
+  const items = [...list].sort((a, b) => (a.tier === b.tier ? 0 : a.tier === 'master' ? -1 : 1)).slice(0, 6);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 40 }}>
+      <span style={{ display: 'flex', fontSize: 24, fontWeight: 800, letterSpacing: 4, textTransform: 'uppercase', color: 'rgba(234,244,238,0.6)', marginBottom: 16 }}>Patrocínio</span>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 16 }}>
+        {items.map(s => (
+          <div key={s.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: s.tier === 'master' ? 110 : 84, minWidth: 180, padding: '12px 22px', borderRadius: 20, background: '#ffffff' }}>
+            {/\.(png|jpe?g)(\?|$)/i.test(s.logo_url)
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={s.logo_url} alt="" style={{ maxHeight: s.tier === 'master' ? 86 : 60, maxWidth: 260, objectFit: 'contain' }} />
+              : <span style={{ display: 'flex', fontSize: s.tier === 'master' ? 34 : 28, fontWeight: 800, color: '#0b1410' }}>{s.name.slice(0, 22)}</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
