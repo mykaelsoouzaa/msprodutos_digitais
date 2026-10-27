@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.7.1';
+export const APP_VERSION = '2.7.2';
 
 export interface Release {
   version: string;
@@ -11,6 +11,14 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.7.2',
+    date: '2026-10-27',
+    title: 'Correção',
+    items: [
+      "O agendador dos lembretes aceita a senha mesmo se ela foi colada com espaço sobrando",
+    ],
+  },
   {
     version: '2.7.1',
     date: '2026-10-27',

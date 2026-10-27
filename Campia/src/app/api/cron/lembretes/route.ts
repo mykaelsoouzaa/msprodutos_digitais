@@ -137,9 +137,16 @@ async function whatsappReminders(db: ReturnType<typeof createAdminClient>, now: 
 }
 
 async function run(request: NextRequest) {
-  const secret = process.env.CRON_SECRET || '';
-  const got = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
-  if (!secret || !safeEqual(got, secret)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  // trim(): espaço ou quebra de linha colados junto com a senha (na Vercel ou no SQL) não podem travar o agendador.
+  const secret = (process.env.CRON_SECRET || '').trim();
+  const got = (request.headers.get('authorization') || '').trim().replace(/^Bearer\s+/i, '').trim();
+  if (!secret || !safeEqual(got, secret)) {
+    // Diagnóstico sem revelar a senha: aparece em net._http_response no Supabase.
+    const motivo = !secret ? 'CRON_SECRET não configurado na Vercel (ou falta Redeploy)'
+      : !got ? 'o agendador não enviou o cabeçalho Authorization: Bearer <senha>'
+      : 'senha diferente do CRON_SECRET da Vercel';
+    return NextResponse.json({ error: 'unauthorized', motivo, recebido: got.length, esperado: secret.length }, { status: 401 });
+  }
 
   const db = createAdminClient();
   const now = Date.now();
