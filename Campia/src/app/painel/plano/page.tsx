@@ -4,7 +4,7 @@ import { Flash } from '@/components/champ';
 import { paymentProvider } from '@/lib/env';
 import { brl } from '@/lib/format';
 import { campiaFeePercent } from '@/lib/payout';
-import { PRO_FEATURES, isProActive, proFeePercent, proPriceCents } from '@/lib/plan';
+import { proFeatures, isProActive, proFeePercent, proPriceCents } from '@/lib/plan';
 import { myPlan } from '@/lib/plan-server';
 import { createClient } from '@/lib/supabase/server';
 import { cancelPro, subscribePro } from '../plan-actions';
@@ -46,7 +46,7 @@ export default async function Plano({ searchParams }: { searchParams: Promise<{ 
           {pro && plan?.paid_until && <span className="sub small">{plan.status === 'cancelado' ? 'termina em' : plan.source === 'cortesia' ? 'cortesia até' : 'pago até'} {date(plan.paid_until)}</span>}
         </div>
         <ul className="plan-list">
-          {PRO_FEATURES.map(([icon, text], i) => (
+          {proFeatures().map(([icon, text], i) => (
             <li key={text}><span>{icon}</span><span>{i === 0 ? <>Taxa por inscrição de <b>{proFeePercent()}%</b> (no grátis é {campiaFeePercent()}%)</> : text}</span></li>
           ))}
         </ul>

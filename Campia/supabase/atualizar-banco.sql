@@ -1,5 +1,5 @@
 -- =============================================================================
--- Campia · atualizar o banco até a versão 2.5.0
+-- Campia · atualizar o banco até a versão 2.6.0
 --
 -- Pode rodar quantas vezes quiser: cada parte só cria o que ainda não existe.
 -- Use no Supabase › SQL Editor quando o banco já tem a primeira migração (init).
@@ -549,4 +549,12 @@ alter table public.payments add column if not exists installments integer check 
 -- Parcelado no Asaas vira um "parcelamento": a devolução é feita nele, não só na 1ª parcela.
 alter table public.payments add column if not exists provider_installment_id text;
 
-select 'Banco da Campia atualizado até a versão 2.5.0' as resultado;
+-- 2.6.0 · WhatsApp oficial ----------------------------------------------
+-- WhatsApp oficial: registro do que já foi enviado (para nunca mandar a mesma mensagem duas vezes).
+create table if not exists public.whatsapp_sent (
+  key         text primary key check (char_length(key) <= 120),
+  created_at  timestamptz not null default now()
+);
+alter table public.whatsapp_sent enable row level security;
+
+select 'Banco da Campia atualizado até a versão 2.6.0' as resultado;

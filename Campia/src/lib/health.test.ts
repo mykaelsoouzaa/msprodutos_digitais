@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { REQUIRED_ENV, healthChecks, shouldAlert } from './health';
 
 const now = Date.parse('2026-10-27T18:00:00Z');
-const env = Object.fromEntries(REQUIRED_ENV.map(([k]) => [k, 'x']));
+const env = { ...Object.fromEntries(REQUIRED_ENV.map(([k]) => [k, 'x'])), WHATSAPP_TOKEN: 'x', WHATSAPP_PHONE_ID: 'x' };
 
 test('alerta no máximo a cada 30 min por tipo', () => {
   assert.ok(shouldAlert(null, now));
@@ -24,4 +24,6 @@ test('quadro de saúde', () => {
   assert.match(by.pix.detail, /^1 em 24 h: Asaas: CPF inválido/);
   assert.equal(by.config.state, 'erro');
   assert.match(by.config.detail, /Brevo/);
+  const semWa = healthChecks({ now, cronAt: '2026-10-27T17:55:00Z', webhookAt: null, events: [], env: { ...env, WHATSAPP_TOKEN: undefined }, provider: 'asaas' });
+  assert.equal(semWa.find(c => c.key === 'whatsapp')!.state, 'atencao');
 });
