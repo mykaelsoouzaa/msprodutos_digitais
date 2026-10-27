@@ -35,7 +35,7 @@ export default async function Inscricao({ params, searchParams }: {
       {!count ? <div className="card empty">As vagas estão preenchidas no momento. Vagas reservadas e não pagas voltam em até 30 minutos.</div> : (
         <form action={registerTeam} className="card">
           <input type="hidden" name="slug" value={slug} />
-          <label htmlFor="name" style={{ marginTop: 0 }}>Nome do {rules.who === 'Dupla' ? 'dupla' : 'time'}</label>
+          <label htmlFor="name" style={{ marginTop: 0 }}>Nome {rules.who === 'Dupla' ? 'da dupla' : 'do time'}</label>
           <input id="name" name="name" className="inp" required minLength={2} maxLength={40} placeholder={rules.who === 'Dupla' ? 'Ex.: Ana & Bia' : 'Ex.: Resenha FC'} />
           <div className="grid2">
             <div><label htmlFor="short">Sigla (3 letras)</label><input id="short" name="short" className="inp" maxLength={3} placeholder="RES" /></div>

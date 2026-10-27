@@ -11,6 +11,7 @@ import { siteUrl } from '@/lib/env';
 import { brl, placeLabel, waLink } from '@/lib/format';
 import PlaceFields from '@/components/PlaceFields';
 import { createClient } from '@/lib/supabase/server';
+import { rebuildChampionship, updateBasics, updateSchedule } from '../edit-actions';
 import { addHelper, updateYellowLimit, deleteChampionship, markPaidManually, removeHelper, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
 
 export const metadata: Metadata = { title: 'Campeonato' };
@@ -102,7 +103,8 @@ export default async function Campeonato({ params, searchParams }: {
                     )}
                   </div>
                   {t.status === 'inscrita' && <span className="badge ok">Pago</span>}
-                  {t.status === 'aberta' && <span className="badge open">Vaga</span>}
+                  {t.status === 'inscrita' && <Link href={`${base}/time/${t.id}`} className="btn ghost sm">Editar</Link>}
+                  {t.status === 'aberta' && <Link href={`${base}/time/${t.id}`} className="btn ghost sm" title="Para quem pagou por fora ou cortesia">Inscrever</Link>}
                   {t.status === 'reservada' && (
                     <form action={markPaidManually} style={{ display: 'flex', gap: 6 }}>
                       <input type="hidden" name="championship" value={id} /><input type="hidden" name="team" value={t.id} />
@@ -134,6 +136,45 @@ export default async function Campeonato({ params, searchParams }: {
 
       {tab === 'ajustes' && (
         <div className="stack">
+          <form action={updateBasics} className="card">
+            <input type="hidden" name="championship" value={id} />
+            <b>Nome e inscrição</b>
+            <div className="grid2">
+              <div><label htmlFor="b-name">Nome</label><input id="b-name" name="name" className="inp" required minLength={3} maxLength={80} defaultValue={champ.name} /></div>
+              <div><label htmlFor="b-fee">Inscrição (R$)</label><input id="b-fee" name="fee" type="number" min={0} step="0.01" className="inp" defaultValue={(champ.feeCents / 100).toFixed(2)} /></div>
+            </div>
+            <p className="sub small" style={{ margin: '6px 0 0' }}>O novo valor vale para as próximas inscrições; quem já pagou não muda.</p>
+            <div className="actions"><button className="btn sm">Salvar</button></div>
+          </form>
+          <form action={updateSchedule} className="card">
+            <input type="hidden" name="championship" value={id} />
+            <b>Agenda</b>
+            <p className="sub" style={{ margin: '4px 0 0' }}>Refaz datas, horários e campos dos jogos que ainda não aconteceram (uma rodada por semana).</p>
+            <label htmlFor="s-start">Primeira rodada</label>
+            <input id="s-start" name="start" type="date" className="inp" required defaultValue={champ.schedule.start} />
+            <div className="grid2">
+              <div><label htmlFor="s-times">Horários (vírgula)</label><input id="s-times" name="times" className="inp" required defaultValue={champ.schedule.times.join(', ')} /></div>
+              <div><label htmlFor="s-fields">Campos/quadras (vírgula)</label><input id="s-fields" name="fields" className="inp" required defaultValue={champ.schedule.fields.join(', ')} /></div>
+            </div>
+            <div className="actions"><button className="btn sm">Refazer agenda</button></div>
+          </form>
+          {teams.every(t => t.status === 'aberta') && !games.some(isDecided) && (
+            <form action={rebuildChampionship} className="card">
+              <input type="hidden" name="championship" value={id} />
+              <b>Formato e número de times</b>
+              <p className="sub" style={{ margin: '4px 0 0' }}>Só dá para mudar enquanto ninguém se inscreveu. A tabela é gerada de novo.</p>
+              <div className="grid2">
+                <div>
+                  <label htmlFor="r-format">Formato</label>
+                  <select id="r-format" name="format" className="inp" defaultValue={champ.format}>
+                    {Object.entries(FORMATS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                  </select>
+                </div>
+                <div><label htmlFor="r-teams">Nº de times</label><input id="r-teams" name="teams" type="number" min={3} max={16} className="inp" defaultValue={teams.length} /></div>
+              </div>
+              <div className="actions"><button className="btn sm">Refazer tabela</button></div>
+            </form>
+          )}
           <form action={updateVisibility} className="card">
             <input type="hidden" name="championship" value={id} />
             <b>Quem pode ver</b>
