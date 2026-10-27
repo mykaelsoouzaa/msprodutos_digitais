@@ -9,13 +9,14 @@ import { sportLabel, sportRules } from '@/lib/domain/sports';
 import { createClient } from '@/lib/supabase/server';
 import { clearResult, saveResult } from '../../../actions';
 import { scoreLive, startLive, stopLive } from '../../../live-actions';
+import { saveCheckin } from '../../../checkin-actions';
 
 export const metadata: Metadata = { title: 'Resultado' };
 export const dynamic = 'force-dynamic';
 
 export default async function Jogo({ params, searchParams }: {
   params: Promise<{ id: string; gameId: string }>;
-  searchParams: Promise<{ erro?: string }>;
+  searchParams: Promise<{ erro?: string; ok?: string }>;
 }) {
   const { id, gameId } = await params;
   const sp = await searchParams;
@@ -33,13 +34,16 @@ export default async function Jogo({ params, searchParams }: {
   const cardOf = (pid: string) => data.cards.find(x => x.gameId === g.id && x.playerId === pid);
   const out = discipline(data.games, data.cards, data.players, data.teams, data.champ.rules.yellowLimit).suspended.get(g.id) ?? new Set<string>();
   const suspendedHere = data.players.filter(p => out.has(p.id));
+  const { data: checkRows } = await supabase.from('checkins').select('player_id').eq('game_id', g.id).returns<Array<{ player_id: string }>>();
+  const present = new Set((checkRows ?? []).map(r => r.player_id));
+  const presentIn = (teamId: string) => roster(teamId).filter(p => present.has(p.id)).length;
 
   return (
     <div className="narrow">
       <Link href={`/painel/${id}?aba=jogos`} className="back-link">‹ {data.champ.name}</Link>
       <h1>{home.name} × {away.name}</h1>
       <p className="sub">{g.stage === 'ko' ? g.name : `${g.group ? `Grupo ${g.group} · ` : ''}${g.label}`}</p>
-      <Flash erro={sp.erro} />
+      <Flash erro={sp.erro} ok={sp.ok} />
 
       {suspendedHere.length > 0 && (
         <div className="alert err">🟥 Suspensos neste jogo: {suspendedHere.map(p => `${p.name} (${data.teams.find(t => t.id === p.teamId)?.short})`).join(', ')}</div>
@@ -73,6 +77,32 @@ export default async function Jogo({ params, searchParams }: {
           </>
         ) : <p className="sub" style={{ margin: '4px 0 0' }}>Jogo com resultado lançado.</p>}
       </section>
+      <details id="presenca" className="card checkin" open={present.size === 0 && g.homeScore === null && !g.wo}>
+        <summary>
+          <b>✅ Presença</b>
+          <span className="sub small">{present.size ? `${home.short} ${presentIn(home.id)} · ${away.short} ${presentIn(away.id)} presentes` : 'marque quem chegou'}</span>
+        </summary>
+        <form action={saveCheckin}>
+          <input type="hidden" name="championship" value={id} />
+          <input type="hidden" name="game" value={g.id} />
+          <p className="sub small" style={{ margin: '8px 0 4px' }}>Toque no nome de quem chegou. Ajuda a decidir W.O. e a conferir se só joga quem está inscrito.</p>
+          <div className="checkin-grid">
+            {[home, away].map(t => (
+              <div key={t.id}>
+                <div className="checkin-team">{t.name}</div>
+                {roster(t.id).length ? roster(t.id).map(p => (
+                  <label key={p.id} className={`checkin-p ${out.has(p.id) ? 'out' : ''}`}>
+                    <input type="checkbox" name={`in_${p.id}`} value="1" defaultChecked={present.has(p.id)} />
+                    <span>{p.number && <b>{p.number} </b>}{p.name}</span>
+                    {out.has(p.id) && <span className="badge wait">suspenso</span>}
+                  </label>
+                )) : <p className="sub small">Sem atletas cadastrados.</p>}
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 12 }}><button className="btn sm">Salvar presença</button></div>
+        </form>
+      </details>
       <form action={saveResult} className="card result-form">
         <input type="hidden" name="championship" value={id} />
         <input type="hidden" name="game" value={g.id} />
