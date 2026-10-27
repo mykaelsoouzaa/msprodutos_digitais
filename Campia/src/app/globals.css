@@ -555,3 +555,13 @@ a.sponsor:hover { outline: 2px solid var(--accent); }
 .roster-row .num { width: 26px; color: var(--muted); font-weight: 700; text-align: right; flex: none; }
 .roster-row a { color: var(--accent); text-decoration: none; font-weight: 600; }
 .claim-btn { font-size: 12px; padding: 5px 10px; }
+
+/* ---------- ranking da arena ---------- */
+.ranking { display: grid; gap: 14px; margin-top: 12px; }
+@media (min-width: 900px) { .ranking { grid-template-columns: 1fr 1fr; align-items: start; } }
+.rank-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.rank-row:first-of-type { border-top: 0; }
+.rank-row .grow { min-width: 0; display: flex; flex-direction: column; }
+.rank-row a { color: inherit; }
+.rank-pos { width: 28px; flex: none; color: var(--muted); font-weight: 800; }
+.rank-total { font-size: 18px; color: var(--accent); font-variant-numeric: tabular-nums; }

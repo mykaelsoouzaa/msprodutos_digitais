@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.28.0';
+export const APP_VERSION = '1.29.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.29.0',
+    date: '2026-10-27',
+    title: 'Ranking da arena',
+    items: [
+      "Nova aba Ranking na página da arena: times mais vencedores, campeões de cada campeonato e craques eleitos",
+      "Artilheiros de todos os campeonatos da arena somados, por esporte",
+      "Atleta com perfil aparece com link para a página dele",
+    ],
+  },
   {
     version: '1.28.0',
     date: '2026-10-27',
