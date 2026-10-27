@@ -25,6 +25,7 @@ export default function Privacidade() {
         <li><b>Pagamentos:</b> valor, situação e identificadores da cobrança no Asaas. A Campia não recebe dados bancários de quem paga.</li>
         <li><b>Lembretes no celular:</b> se você ativar, guardamos o endereço técnico de notificação do seu aparelho e o time que você segue.</li>
         <li><b>Dados técnicos:</b> cookies de sessão para manter você logado e preferências salvas no navegador (por exemplo, se você fechou o aviso de instalar o app). Não usamos cookies de publicidade.</li>
+        <li><b>Verificação em duas etapas (opcional):</b> se você ativar, guardamos só a chave do app autenticador, cifrada pelo nosso provedor de login (Supabase). O código de 6 números nunca é guardado.</li>
         <li><b>Contagem de visitas:</b> quando alguém abre a página de um campeonato, somamos 1 visita no dia e anotamos só a origem geral (por exemplo, WhatsApp ou Google), para o organizador saber onde a divulgação funciona. Não guardamos IP, nome nem nada que identifique quem visitou.</li>
       </ul>
 

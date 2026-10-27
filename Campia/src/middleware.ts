@@ -1,5 +1,6 @@
 import { type CookieOptions, createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { needsMfaStep } from '@/lib/account';
 
 // Renova a sessão do Supabase a cada requisição e protege o painel.
 export async function middleware(request: NextRequest) {
@@ -32,11 +33,23 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user && (request.nextUrl.pathname.startsWith('/painel') || request.nextUrl.pathname.startsWith('/meus-times') || request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname === '/atleta')) {
+  if (!user && (request.nextUrl.pathname.startsWith('/painel') || request.nextUrl.pathname.startsWith('/meus-times') || request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname === '/atleta' || request.nextUrl.pathname.startsWith('/conta'))) {
     const url = request.nextUrl.clone();
     url.pathname = '/entrar';
     url.searchParams.set('voltar', request.nextUrl.pathname);
     return NextResponse.redirect(url);
+  }
+
+  // Verificação em duas etapas: quem ativou precisa digitar o código do app antes das áreas da conta.
+  if (user) {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (needsMfaStep(request.nextUrl.pathname, aal)) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/entrar/2fa';
+      url.search = '';
+      url.searchParams.set('voltar', request.nextUrl.pathname + request.nextUrl.search);
+      return NextResponse.redirect(url);
+    }
   }
 
   // Link de indicação (?indicacao=codigo): guarda por 60 dias para dar o crédito a quem indicou.

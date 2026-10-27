@@ -9,6 +9,8 @@ async function requireAdmin() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!isAdmin(user?.email)) redirect('/painel');
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal?.currentLevel !== 'aal2') redirect('/conta#seguranca');
 }
 
 /** Marca (ou desmarca) que o repasse manual de uma inscrição já foi transferido ao organizador. */

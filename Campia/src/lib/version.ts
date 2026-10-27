@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.6.0';
+export const APP_VERSION = '2.7.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.7.0',
+    date: '2026-10-27',
+    title: 'Conta e segurança',
+    items: [
+      "No topo do site aparece quem está logado, com nome, e-mail e o botão Sair",
+      "Nova página Minha conta: troque o nome que aparece e ative a verificação em duas etapas com um app autenticador",
+      "Com a verificação ativa, depois do link do e-mail a Campia pede o código de 6 números do app",
+    ],
+  },
   {
     version: '2.6.0',
     date: '2026-10-27',

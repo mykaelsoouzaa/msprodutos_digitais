@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import MobileNav from '@/components/MobileNav';
+import AccountMenu from '@/components/AccountMenu';
 import { NAV_LINKS } from '@/lib/nav';
 import PwaSetup from '@/components/PwaSetup';
 import Splash from '@/components/Splash';
@@ -33,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {NAV_LINKS.map(([href, label]) => <Link key={href} href={href}>{label}</Link>)}
             </nav>
             <span className="spacer" />
-            <Link href="/painel" className="btn ghost sm">Painel</Link>
+            <AccountMenu />
             <Link href="/painel/novo" className="btn sm cta-top">Criar campeonato</Link>
             <MobileNav />
           </div>
