@@ -28,6 +28,18 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!isAdmin(user?.email)) notFound();
+  // O /admin mexe com repasses: exige a verificação em duas etapas ativa e confirmada nesta sessão.
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal?.currentLevel !== 'aal2') {
+    return (
+      <div className="card narrow" style={{ textAlign: 'center', marginTop: 20 }}>
+        <div style={{ fontSize: 46 }}>🔐</div>
+        <h1>Ative a verificação em duas etapas</h1>
+        <p className="sub">O Admin mostra pagamentos e repasses de toda a plataforma. Para abrir, ative a verificação em duas etapas em Minha conta.</p>
+        <Link href="/conta#seguranca" className="btn">Ir para Minha conta</Link>
+      </div>
+    );
+  }
 
   // Visão de toda a plataforma: só pelo servidor, com a service role.
   const db = createAdminClient();
