@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.4.0';
+export const APP_VERSION = '2.5.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.5.0',
+    date: '2026-10-27',
+    title: 'Inscrição no cartão',
+    items: [
+      "O organizador pode aceitar cartão de crédito além do PIX, à vista ou parcelado em até 12x (em Ajustes)",
+      "O capitão escolhe PIX ou cartão na inscrição e paga na página segura do Asaas; a vaga confirma sozinha quando o pagamento é aprovado",
+      "Devolução de inscrição no cartão estorna todas as parcelas",
+    ],
+  },
   {
     version: '2.4.0',
     date: '2026-10-27',

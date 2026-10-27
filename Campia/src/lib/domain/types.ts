@@ -112,6 +112,8 @@ export interface Championship {
   priceTiers?: Array<{ until: string; cents: number }>;
   /** Votação do craque: fechada, aberta ou encerrada. */
   voting?: 'fechada' | 'aberta' | 'encerrada';
+  /** Cartão de crédito: 0 = não aceita; 1 = à vista; N = até N parcelas. */
+  cardInstallments?: number;
 }
 
 export interface StandingRow {

@@ -45,8 +45,32 @@ export default async function Pagamento({ params }: { params: Promise<{ id: stri
     return (
       <div className="card narrow" style={{ textAlign: 'center', marginTop: 20 }}>
         <h1>Reserva expirada</h1>
-        <p className="sub">O PIX não foi pago a tempo e a vaga foi liberada. Faça a inscrição de novo se ainda houver vagas.</p>
+        <p className="sub">O pagamento não foi feito a tempo e a vaga foi liberada. Faça a inscrição de novo se ainda houver vagas.</p>
         <Link href={`/c/${champ.slug}/inscricao`} className="btn">Tentar de novo</Link>
+      </div>
+    );
+  }
+
+  if (p.method === 'cartao') {
+    const parcels = p.installments && p.installments > 1 ? ` em ${p.installments}x de ${brl(Math.round(p.amount_cents / p.installments))}` : '';
+    return (
+      <div className="narrow">
+        <AutoRefresh seconds={6} />
+        <h1>Pague {brl(p.amount_cents)} no cartão{parcels}</h1>
+        <p className="sub">{team.name} · {champ.name}. A vaga fica reservada por 30 minutos; esta página atualiza sozinha quando o pagamento for aprovado.</p>
+        <div className="card" style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 46 }}>💳</div>
+          <p className="sub" style={{ margin: '6px 0 14px' }}>Você vai para a página segura do Asaas para digitar o cartão. Depois de pagar, volte para esta página.</p>
+          {p.invoice_url
+            ? <a href={p.invoice_url} target="_blank" rel="noopener" className="btn block">Pagar com cartão</a>
+            : <span className="sub small">Cartão simulado (modo de teste)</span>}
+        </div>
+        {paymentProvider() === 'mock' && p.provider === 'mock' && (
+          <form action={simulatePayment} style={{ marginTop: 12 }}>
+            <input type="hidden" name="payment" value={p.id} />
+            <button className="btn block">Simular pagamento aprovado (modo de teste)</button>
+          </form>
+        )}
       </div>
     );
   }

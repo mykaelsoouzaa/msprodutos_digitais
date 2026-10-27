@@ -612,3 +612,5 @@ a.sponsor:hover { outline: 2px solid var(--accent); }
 .health.atencao .health-dot { background: var(--warn); }
 .health.erro { border-color: rgba(239, 68, 68, .5); }
 .health.erro .health-dot { background: var(--danger); }
+.if-card { display: none; }
+form:has(input[name="method"][value="cartao"]:checked) .if-card { display: block; }

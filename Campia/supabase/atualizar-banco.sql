@@ -1,5 +1,5 @@
 -- =============================================================================
--- Campia · atualizar o banco até a versão 2.4.0
+-- Campia · atualizar o banco até a versão 2.5.0
 --
 -- Pode rodar quantas vezes quiser: cada parte só cria o que ainda não existe.
 -- Use no Supabase › SQL Editor quando o banco já tem a primeira migração (init).
@@ -539,4 +539,14 @@ drop policy if exists "indicacao: quem indicou lê" on public.referrals;
 create policy "indicacao: dono lê código" on public.referral_codes for select using (owner_id = auth.uid());
 create policy "indicacao: quem indicou lê" on public.referrals for select using (referrer_id = auth.uid());
 
-select 'Banco da Campia atualizado até a versão 2.4.0' as resultado;
+-- 2.5.0 · Inscrição no cartão -------------------------------------------
+-- Inscrição no cartão de crédito (pela página de pagamento do Asaas), com parcelamento opcional.
+-- 0 = não aceita cartão; 1 = só à vista; N = até N parcelas.
+alter table public.championships add column if not exists card_installments integer not null default 0 check (card_installments between 0 and 12);
+alter table public.payments add column if not exists method text not null default 'pix' check (method in ('pix', 'cartao'));
+alter table public.payments add column if not exists invoice_url text;
+alter table public.payments add column if not exists installments integer check (installments between 1 and 12);
+-- Parcelado no Asaas vira um "parcelamento": a devolução é feita nele, não só na 1ª parcela.
+alter table public.payments add column if not exists provider_installment_id text;
+
+select 'Banco da Campia atualizado até a versão 2.5.0' as resultado;
