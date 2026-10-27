@@ -30,6 +30,7 @@ Passo a passo para colocar a Campia no ar, na ordem. Cada etapa diz onde clicar 
    17. `supabase/migrations/20261027220000_checkin.sql`
    18. `supabase/migrations/20261027230000_atletas.sql`
    19. `supabase/migrations/20261027240000_avulsos.sql`
+   20. `supabase/migrations/20261027250000_plano_pro.sql`
 
    **Banco já criado e precisa atualizar?** Rode só `supabase/atualizar-banco.sql`. Ele confere o que já existe e cria só o que falta; pode rodar de novo sem problema.
 3. Em *Authentication › URL Configuration*:
@@ -73,6 +74,8 @@ openssl rand -hex 32       # use como ASAAS_WEBHOOK_TOKEN
 | `VAPID_SUBJECT` | `mailto:contato@campia.app.br` |
 | `CRON_SECRET` | do passo 2 |
 | `CAMPIA_TAXA_PERCENT` | % de cada inscrição que fica com a Campia no repasse automático (ex.: `10`) |
+| `CAMPIA_PRO_PRECO` | Mensalidade do Plano Pro em reais (padrão `49.90`) |
+| `CAMPIA_TAXA_PERCENT_PRO` | Taxa por inscrição para quem é Pro (padrão `5`) |
 | `ADMIN_EMAILS` | seu e-mail (separe vários por vírgula): libera o painel /admin |
 | `BREVO_API_KEY` | chave de API do Brevo (SMTP & API › API Keys): lembrete por e-mail do PIX pendente |
 | `NEXT_PUBLIC_EMPRESA_CNPJ` | CNPJ que aparece nos Termos e na Privacidade |

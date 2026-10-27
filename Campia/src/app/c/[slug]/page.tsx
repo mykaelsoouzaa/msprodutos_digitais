@@ -20,6 +20,7 @@ import { brl, placeLabel, waLink } from '@/lib/format';
 import { currentPrice, priceText, todayBr } from '@/lib/pricing';
 import { eventJsonLd, safeJson } from '@/lib/seo';
 import { withOrigin } from '@/lib/visits';
+import { ownerIsPro } from '@/lib/plan-server';
 import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -64,7 +65,8 @@ export default async function Publico({ params, searchParams }: {
   const upcoming = ordered(games).filter(g => !isDecided(g) && !g.live && g.homeId && g.awayId && g.date >= today).slice(0, 4);
 
   const signupOpen = open > 0 && !started;
-  const { data: sponsors } = await supabase.from('sponsors').select(SPONSOR_SELECT).eq('championship_id', champ.id).order('created_at').returns<Sponsor[]>();
+  const pro = await ownerIsPro(supabase, data.row.owner_id);
+  const { data: sponsors } = !pro ? { data: [] as Sponsor[] } : await supabase.from('sponsors').select(SPONSOR_SELECT).eq('championship_id', champ.id).order('created_at').returns<Sponsor[]>();
   const { data: { user } } = await supabase.auth.getUser();
   const isOwner = !!user && user.id === data.row.owner_id;
   const jsonLd = data.row.visibility === 'publico' ? eventJsonLd({
@@ -131,7 +133,7 @@ export default async function Publico({ params, searchParams }: {
         </div>
       </div>
       <Sponsors list={sponsors ?? []} />
-      <p className="sub small" style={{ textAlign: 'center', marginTop: 32 }}>Organiza campeonatos? <Link href="/">Crie o seu na Campia</Link>.</p>
+      {!pro && <p className="sub small" style={{ textAlign: 'center', marginTop: 32 }}>Organiza campeonatos? <Link href="/">Crie o seu na Campia</Link>.</p>}
     </>
   );
 }

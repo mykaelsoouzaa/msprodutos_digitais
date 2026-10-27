@@ -17,6 +17,9 @@ import { refundLatePayment } from '../cancel-actions';
 import { removeFromWaitlist } from '../waitlist-actions';
 import { addSponsor, removeSponsor } from '../sponsor-actions';
 import { initials } from '@/lib/arena';
+import ProLock from '@/components/ProLock';
+import { isProActive } from '@/lib/plan';
+import { myPlan } from '@/lib/plan-server';
 import { SPONSOR_LIMIT, SPONSOR_SELECT, type Sponsor, sortSponsors } from '@/lib/sponsors';
 import { addCoupon, drawChampionship, rebuildChampionship, removeCoupon, setVoting, updateBasics, updatePriceTiers, updateSchedule } from '../edit-actions';
 import { type VoteResult, categoriesFor, ranking } from '@/lib/voting';
@@ -39,6 +42,7 @@ export default async function Campeonato({ params, searchParams }: {
   const role = data ? await roleIn(supabase, data.row, user) : null;
   if (!data || !role) notFound();
   const owner = role === 'dono';
+  const pro = owner && isProActive(await myPlan(supabase, user!.id));
   const cardTab: Array<[string, string]> = sportRules(data.champ.sport).cards ? [['cartoes', 'Cartões']] : [];
   const tabs = [...TABS.slice(0, 2), ...cardTab, ...(owner ? TABS.slice(2) : [])];
 
@@ -205,6 +209,9 @@ export default async function Campeonato({ params, searchParams }: {
               </div>
             </>
           )}
+          {!pro ? (
+            <div style={{ marginTop: 16 }}><ProLock title="Baixar planilhas" text="Times e contatos, atletas, pagamentos e jogos em planilhas que abrem no Excel e no Google Planilhas." /></div>
+          ) : (
           <div className="card" style={{ marginTop: 16 }}>
             <b>Baixar planilhas</b>
             <p className="sub" style={{ margin: '4px 0 10px' }}>Abrem no Excel e no Google Planilhas. Úteis para a contabilidade, o seguro dos atletas e a súmula impressa.</p>
@@ -214,6 +221,7 @@ export default async function Campeonato({ params, searchParams }: {
               ))}
             </div>
           </div>
+          )}
         </>
       )}
 
@@ -235,7 +243,12 @@ export default async function Campeonato({ params, searchParams }: {
         </>
       )}
 
-      {tab === 'visitas' && owner && (
+      {tab === 'visitas' && owner && !pro && (
+        <ProLock title="Estatísticas de visitas" text="Veja quantas pessoas abriram a página por dia, de onde vieram (WhatsApp, Instagram, Google) e quantas foram para a inscrição.">
+          <p style={{ margin: '12px 0 0' }}><b>{visits.total}</b> <span className="sub">visita{visits.total === 1 ? '' : 's'} nos últimos 30 dias: a contagem já está rodando, é só assinar para ver os detalhes.</span></p>
+        </ProLock>
+      )}
+      {tab === 'visitas' && owner && pro && (
         <>
           <nav className="chips" aria-label="Período">
             {([['7', '7 dias'], ['30', '30 dias'], ['90', '90 dias']] as const).map(([d, l]) => (
@@ -387,7 +400,9 @@ export default async function Campeonato({ params, searchParams }: {
                 ))}
               </div>
             )}
-            {sponsors.length < SPONSOR_LIMIT ? (
+            {!pro ? (
+              <ProLock title="Recurso do Plano Pro" text={sponsors.length ? 'Seu Pro acabou: os patrocinadores acima não aparecem mais no site até você renovar.' : 'Assine o Pro para mostrar patrocinadores na página, na impressão e nas artes.'} />
+            ) : sponsors.length < SPONSOR_LIMIT ? (
               <form action={addSponsor}>
                 <input type="hidden" name="championship" value={id} />
                 <div className="grid2">

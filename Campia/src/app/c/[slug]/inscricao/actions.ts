@@ -5,6 +5,8 @@ import { paymentProvider } from '@/lib/env';
 import { normalizePhone, onlyDigits, parsePlayers, shortName, validCpfCnpj } from '@/lib/format';
 import { createPixCharge } from '@/lib/payments';
 import { organizerPercent } from '@/lib/payout';
+import { feeFor } from '@/lib/plan';
+import { ownerIsPro } from '@/lib/plan-server';
 import { type Coupon, type PriceTier, couponDiscount, currentPrice, normalizeCode, todayBr } from '@/lib/pricing';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -84,15 +86,17 @@ export async function registerTeam(formData: FormData) {
     redirect(`/c/${f.slug}?ok=${encodeURIComponent(`${f.name} está inscrito!`)}`);
   }
 
+  // Taxa da Campia: menor para quem é Pro (fica gravada na inscrição).
+  const fee = feeFor(await ownerIsPro(db, champ!.owner_id));
   const { data: payment, error: payError } = await db.from('payments').insert({
     championship_id: champ!.id, team_id: teamId, amount_cents: amount, provider: paymentProvider(),
-    coupon_code: code || null, discount_cents: discount,
+    coupon_code: code || null, discount_cents: discount, fee_percent: fee,
   }).select('id').single();
   if (payError || !payment) fail('Não foi possível criar a cobrança');
 
   // Repasse automático se o organizador cadastrou a conta Asaas dele.
   const { data: payout } = await db.from('payout_accounts').select('asaas_wallet_id').eq('owner_id', champ!.owner_id).maybeSingle();
-  const split = payout?.asaas_wallet_id ? { walletId: payout.asaas_wallet_id as string, percent: organizerPercent() } : undefined;
+  const split = payout?.asaas_wallet_id ? { walletId: payout.asaas_wallet_id as string, percent: organizerPercent(fee) } : undefined;
 
   try {
     const charge = await createPixCharge({

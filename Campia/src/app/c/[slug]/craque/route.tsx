@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import { type VoteResult, categoriesFor, ranking } from '@/lib/voting';
 import { OgSponsors } from '@/lib/og';
 import { SPONSOR_SELECT, type Sponsor } from '@/lib/sponsors';
+import { ownerIsPro } from '@/lib/plan-server';
 
 // Arte de stories (1080×1920) com os vencedores da votação: /c/<slug>/craque
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
@@ -17,7 +18,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
   const { data: rows } = await supabase.rpc('vote_results', { champ: data.champ.id });
   const results = (rows ?? []) as VoteResult[];
   const cats = categoriesFor(data.champ.sport);
-  const { data: sponsors } = await supabase.from('sponsors').select(SPONSOR_SELECT).eq('championship_id', data.champ.id).order('created_at').returns<Sponsor[]>();
+  const pro = await ownerIsPro(supabase, data.row.owner_id);
+  const { data: sponsors } = !pro ? { data: [] as Sponsor[] } : await supabase.from('sponsors').select(SPONSOR_SELECT).eq('championship_id', data.champ.id).order('created_at').returns<Sponsor[]>();
 
   return new ImageResponse(
     (
@@ -42,7 +44,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
           })}
         </div>
         <div style={{ display: 'flex', marginTop: 'auto', flexDirection: 'column' }}><OgSponsors list={sponsors ?? []} /></div>
-        <span style={{ display: 'flex', marginTop: 32, fontSize: 28, color: 'rgba(234,244,238,0.6)' }}>feito com Campia · campia.app.br</span>
+        {!pro && <span style={{ display: 'flex', marginTop: 32, fontSize: 28, color: 'rgba(234,244,238,0.6)' }}>feito com Campia · campia.app.br</span>}
       </div>
     ),
     { width: 1080, height: 1920 },

@@ -569,3 +569,17 @@ a.sponsor:hover { outline: 2px solid var(--accent); }
 .join-free summary { list-style: none; display: inline-flex; }
 .join-free summary::-webkit-details-marker { display: none; }
 .join-free[open] summary { display: none; }
+
+/* ---------- plano Pro ---------- */
+.plan-card.on { border-color: var(--accent); }
+.plan-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.plan-price { font-size: 34px; font-weight: 800; margin-top: 8px; letter-spacing: -1px; }
+.plan-price span { font-size: 15px; color: var(--muted); font-weight: 600; margin-left: 4px; letter-spacing: 0; }
+.plan-list { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 10px; }
+.plan-list li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; }
+.plan-list li > span:first-child { width: 22px; flex: none; text-align: center; }
+.pro-lock { border-style: dashed; }
+.pro-lock .actions { margin-top: 10px; }
+.badge.pro { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #06210f; }
+.plans-grid { display: grid; gap: 14px; }
+@media (min-width: 720px) { .plans-grid { grid-template-columns: 1fr 1fr; } }

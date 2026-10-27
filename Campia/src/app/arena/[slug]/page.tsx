@@ -11,6 +11,7 @@ import { LISTING_SELECT, type ListingRow, toListing } from '@/lib/explore';
 import { siteUrl } from '@/lib/env';
 import { cityState, waLink } from '@/lib/format';
 import { arenaJsonLd, safeJson } from '@/lib/seo';
+import { ownerIsPro } from '@/lib/plan-server';
 import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -57,6 +58,7 @@ export default async function ArenaPage({ params, searchParams }: { params: Prom
   const { data } = await supabase.from('championships').select(LISTING_SELECT)
     .eq('owner_id', arena.owner_id).eq('visibility', 'publico').order('created_at', { ascending: false }).limit(100).returns<ListingRow[]>();
   const items = toListing(data ?? []);
+  const pro = await ownerIsPro(supabase, arena.owner_id);
   const current = items.filter(c => c.status !== 'encerrado');
   const past = items.filter(c => c.status === 'encerrado');
   const place = [arena.address, cityState(arena.city, arena.state)].filter(Boolean).join(' · ');
@@ -91,7 +93,7 @@ export default async function ArenaPage({ params, searchParams }: { params: Prom
         </>
       )}
       </>)}
-      <p className="sub small" style={{ textAlign: 'center', marginTop: 32 }}>Organiza campeonatos? <Link href="/">Crie o seu na Campia</Link>.</p>
+      {!pro && <p className="sub small" style={{ textAlign: 'center', marginTop: 32 }}>Organiza campeonatos? <Link href="/">Crie o seu na Campia</Link>.</p>}
     </>
   );
 }

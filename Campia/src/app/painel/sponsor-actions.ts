@@ -2,6 +2,7 @@
 // Patrocinadores do campeonato (cadastrar e remover).
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { ownerIsPro } from '@/lib/plan-server';
 import { SPONSOR_LIMIT, normalizeUrl } from '@/lib/sponsors';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
@@ -23,6 +24,7 @@ export async function addSponsor(formData: FormData) {
   const champId = String(formData.get('championship'));
   const back = `/painel/${champId}?aba=ajustes#patrocinio`;
   const { supabase, user, champ } = await owner(champId, back);
+  if (!(await ownerIsPro(supabase, user.id))) go(back, 'erro', 'Patrocinadores fazem parte do Plano Pro');
 
   const name = String(formData.get('name') ?? '').trim();
   if (name.length < 2 || name.length > 60) go(back, 'erro', 'Nome do patrocinador: de 2 a 60 letras');

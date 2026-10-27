@@ -29,6 +29,7 @@ export default function Termos() {
         <li>A vaga fica reservada por 30 minutos enquanto o PIX não é pago. Depois disso, ela pode ser ocupada por outro time.</li>
         <li>Quando o organizador conecta a própria conta Asaas, o valor de cada inscrição é dividido automaticamente: a parte do organizador vai direto para a conta dele e a taxa de serviço fica com a Campia. Sem a conta conectada, a Campia recebe o valor e repassa ao organizador, descontada a taxa de serviço.</li>
         <li>O valor da inscrição é definido pelo organizador. A taxa de serviço da Campia é combinada com o organizador.</li>
+        <li><b>Plano Pro:</b> assinatura mensal opcional para organizadores, cobrada pelo Asaas, com taxa de serviço menor e recursos extras. Pode ser cancelada a qualquer momento pelo painel; os recursos continuam até o fim do período já pago e não há devolução proporcional do mês em curso. Se a mensalidade não for paga, o organizador volta ao plano grátis, sem perder campeonatos nem dados.</li>
       </ul>
 
       <h2>5. Cancelamentos e devoluções</h2>

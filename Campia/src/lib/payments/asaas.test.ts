@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { organizerPercent } from '../payout';
-import { createAsaasPixCharge, platformWalletId, refundAsaasPayment } from './asaas';
+import { cancelAsaasSubscription, createAsaasPixCharge, createAsaasSubscription, platformWalletId, refundAsaasPayment } from './asaas';
 
 const CAMPIA_KEY = '$aact_campia_teste';
 const ARENA_KEY = '$aact_arena_teste';
@@ -59,6 +59,12 @@ before(async () => {
       const c = state.charges.find(x => x.id === del[1]); if (c) c.deleted = true;
       return send(200, { deleted: true, id: del[1] });
     }
+    if (req.method === 'POST' && path === '/subscriptions') {
+      if (!body.customer || body.cycle !== 'MONTHLY' || !(body.value > 0)) return send(400, { errors: [{ description: 'assinatura inválida' }] });
+      return send(200, { id: 'sub_000001', status: 'ACTIVE' });
+    }
+    if (req.method === 'GET' && path === '/subscriptions/sub_000001/payments') return send(200, { data: [{ id: 'pay_sub_1', invoiceUrl: 'https://sandbox.asaas.com/i/abc123' }] });
+    if (req.method === 'DELETE' && path === '/subscriptions/sub_000001') return send(200, { deleted: true, id: 'sub_000001' });
     send(404, { errors: [{ description: 'rota não simulada' }] });
   });
   await new Promise<void>(r => server.listen(0, '127.0.0.1', r));
@@ -147,4 +153,17 @@ test('8. devolver o PIX: estorno na cobrança certa; sem saldo, o erro do Asaas 
   state.balances[CAMPIA_KEY] = 0;
   await assert.rejects(refundAsaasPayment(c.id), /Saldo insuficiente/);
   state.balances[CAMPIA_KEY] = saldo;
+});
+
+test('9. Plano Pro: assinatura mensal sem split, link da primeira mensalidade e cancelamento', async () => {
+  const before = state.calls.length;
+  const sub = await createAsaasSubscription({ ownerId: 'u1', name: 'Arena Central', email: 'a@x.com', cpfCnpj: '52998224725', valueCents: 4990 });
+  assert.deepEqual(sub, { customerId: 'cus_000001', subscriptionId: 'sub_000001', invoiceUrl: 'https://sandbox.asaas.com/i/abc123' });
+  const post = state.calls.slice(before).find(c => c.method === 'POST' && c.path === '/subscriptions')!;
+  assert.equal(post.body.value, 49.9);
+  assert.equal(post.body.billingType, 'UNDEFINED');
+  assert.equal(post.body.externalReference, 'plano:u1');
+  assert.equal(post.body.split, undefined);
+  await cancelAsaasSubscription('sub_000001');
+  assert.deepEqual([state.calls.at(-1)!.method, state.calls.at(-1)!.path], ['DELETE', '/subscriptions/sub_000001']);
 });

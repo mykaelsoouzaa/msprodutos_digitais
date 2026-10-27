@@ -1,6 +1,7 @@
 import { type Cell, brDateTime, fileName, money, toCsv } from '@/lib/csv';
 import { loadChampionship } from '@/lib/data';
 import { isDecided } from '@/lib/domain/standings';
+import { ownerIsPro } from '@/lib/plan-server';
 import { createClient } from '@/lib/supabase/server';
 
 const STATUS: Record<string, string> = {
@@ -17,6 +18,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!user) return new Response('Entre na sua conta', { status: 401 });
   const data = await loadChampionship(supabase, { id }, { withContacts: true });
   if (!data || data.row.owner_id !== user.id) return new Response('Campeonato não encontrado', { status: 404 });
+  if (!(await ownerIsPro(supabase, user.id))) return new Response('Planilhas fazem parte do Plano Pro: campia.app.br/painel/plano', { status: 403 });
 
   const { champ, teams, players, games, goals } = data;
   const teamName = new Map(teams.map(t => [t.id, t.name]));

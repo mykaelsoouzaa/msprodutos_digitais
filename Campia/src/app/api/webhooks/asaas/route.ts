@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { PAID_EVENTS } from '@/lib/payments/asaas';
+import { extendPaidUntil } from '@/lib/plan';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 // Webhook da Asaas: confirma o pagamento e a vaga.
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null) as
-    | { id?: string; event?: string; payment?: { id?: string; externalReference?: string } }
+    | { id?: string; event?: string; payment?: { id?: string; externalReference?: string; subscription?: string; dueDate?: string } }
     | null;
   if (!body?.event || !body.payment?.id) return NextResponse.json({ ok: true });
 
@@ -32,7 +33,16 @@ export async function POST(request: NextRequest) {
     if (seen) return NextResponse.json({ ok: true, duplicate: true });
   }
 
-  if (PAID_EVENTS.has(body.event)) {
+  if (PAID_EVENTS.has(body.event) && body.payment.subscription) {
+    // Mensalidade do Plano Pro: estende a validade a partir do vencimento dessa cobrança.
+    const { data: plan } = await db.from('plans').select('owner_id, paid_until').eq('asaas_subscription_id', body.payment.subscription).maybeSingle();
+    if (plan) {
+      const due = /^\d{4}-\d{2}-\d{2}$/.test(body.payment.dueDate ?? '') ? body.payment.dueDate! : new Date().toISOString().slice(0, 10);
+      const { error } = await db.from('plans').update({ status: 'ativo', paid_until: extendPaidUntil(plan.paid_until, due), updated_at: new Date().toISOString() })
+        .eq('owner_id', plan.owner_id);
+      if (error) return NextResponse.json({ error: 'retry' }, { status: 500 });
+    }
+  } else if (PAID_EVENTS.has(body.event)) {
     // Confere que o pagamento é nosso pelos dois lados: id da Asaas e externalReference.
     const { data: p } = await db.from('payments').select('id').eq('provider', 'asaas').eq('provider_id', body.payment.id).maybeSingle();
     if (p && p.id === body.payment.externalReference) {

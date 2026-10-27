@@ -6,6 +6,8 @@ import SportIcon from '@/components/SportIcon';
 import { FORMATS, sportLabel } from '@/lib/domain/sports';
 import { isAdmin } from '@/lib/admin';
 import { cityState } from '@/lib/format';
+import { isProActive } from '@/lib/plan';
+import { myPlan } from '@/lib/plan-server';
 import { createClient } from '@/lib/supabase/server';
 import { signOut } from '../entrar/actions';
 
@@ -18,6 +20,7 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
   const { data: { user } } = await supabase.auth.getUser();
   const { data: champs } = await supabase.from('championships').select('*').eq('owner_id', user!.id)
     .order('created_at', { ascending: false }).returns<ChampionshipRow[]>();
+  const pro = isProActive(await myPlan(supabase, user!.id));
   const { data: arena } = await supabase.from('arenas').select('slug').eq('owner_id', user!.id).maybeSingle();
   // Campeonatos em que esta conta foi convidada como ajudante
   const { data: invites } = await supabase.from('championship_helpers').select('championship_id').eq('email', (user!.email ?? '').toLowerCase()).returns<Array<{ championship_id: string }>>();
@@ -35,10 +38,11 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
   return (
     <>
       <div className="page-head">
-        <div><h1>Seus campeonatos</h1><p className="sub" style={{ margin: 0 }}>{user?.email}</p></div>
+        <div><h1>Seus campeonatos {pro && <span className="badge pro" style={{ verticalAlign: 'middle', fontSize: 13 }}>Pro</span>}</h1><p className="sub" style={{ margin: 0 }}>{user?.email}</p></div>
         <div className="actions" style={{ marginTop: 0 }}>
           <Link href="/painel/arena" className="btn ghost">{arena ? 'Página da arena' : 'Criar página da arena'}</Link>
           <Link href="/painel/recebimentos" className="btn ghost">Recebimentos</Link>
+          <Link href="/painel/plano" className="btn ghost">{pro ? 'Meu plano' : '⭐ Seja Pro'}</Link>
           {isAdmin(user?.email) && <Link href="/admin" className="btn ghost">Admin</Link>}
           <Link href="/painel/novo" className="btn">＋ Novo campeonato</Link>
         </div>

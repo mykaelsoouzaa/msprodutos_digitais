@@ -5,6 +5,7 @@ import { Discipline, Scorers, TableTab } from '@/components/champ';
 import PrintButton from '@/components/PrintButton';
 import Sponsors from '@/components/Sponsors';
 import { SPONSOR_SELECT, type Sponsor } from '@/lib/sponsors';
+import { ownerIsPro } from '@/lib/plan-server';
 import { loadChampionship } from '@/lib/data';
 import { FORMATS, sportLabel, sportRules } from '@/lib/domain/sports';
 import { isDecided, labels, ordered, sourceLabel } from '@/lib/domain/standings';
@@ -26,7 +27,8 @@ export default async function Imprimir({ params }: { params: Promise<{ slug: str
   if (!data) notFound();
   const { champ, teams, games, goals, players, cards } = data;
   const rules = sportRules(champ.sport);
-  const { data: sponsors } = await supabase.from('sponsors').select(SPONSOR_SELECT).eq('championship_id', champ.id).order('created_at').returns<Sponsor[]>();
+  const pro = await ownerIsPro(supabase, data.row.owner_id);
+  const { data: sponsors } = !pro ? { data: [] as Sponsor[] } : await supabase.from('sponsors').select(SPONSOR_SELECT).eq('championship_id', champ.id).order('created_at').returns<Sponsor[]>();
   const name = (id: string | null, src: Parameters<typeof sourceLabel>[1]) => teams.find(t => t.id === id)?.name ?? sourceLabel(games, src, teams);
   const score = (g: (typeof games)[number]) => {
     if (!isDecided(g)) return '×';

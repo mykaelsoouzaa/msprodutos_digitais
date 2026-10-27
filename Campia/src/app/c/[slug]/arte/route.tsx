@@ -6,6 +6,7 @@ import { sportLabel, sportRules } from '@/lib/domain/sports';
 import { isDecided, labels, ordered, tables, topScorers } from '@/lib/domain/standings';
 import { OgSponsors } from '@/lib/og';
 import { SPONSOR_SELECT, type Sponsor } from '@/lib/sponsors';
+import { ownerIsPro } from '@/lib/plan-server';
 import { createClient } from '@/lib/supabase/server';
 
 // Arte de stories (1080×1920) com os resultados de uma rodada: /c/<slug>/arte?rodada=Rodada%202
@@ -28,7 +29,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const leaders = tables(champ, games, teams).map(t => ({ title: t.title ?? 'Líder', row: t.rows[0] }));
   const ko = results[0]?.stage === 'ko';
 
-  const { data: sponsors } = await supabase.from('sponsors').select(SPONSOR_SELECT).eq('championship_id', champ.id).order('created_at').returns<Sponsor[]>();
+  const pro = await ownerIsPro(supabase, data.row.owner_id);
+  const { data: sponsors } = !pro ? { data: [] as Sponsor[] } : await supabase.from('sponsors').select(SPONSOR_SELECT).eq('championship_id', champ.id).order('created_at').returns<Sponsor[]>();
   const box = { display: 'flex', background: 'rgba(255,255,255,0.08)', borderRadius: 28, padding: '26px 30px', alignItems: 'center' } as const;
 
   return new ImageResponse(
@@ -77,7 +79,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         <div style={{ display: 'flex', marginTop: 'auto', flexDirection: 'column' }}><OgSponsors list={sponsors ?? []} /></div>
         <div style={{ display: 'flex', marginTop: 32, justifyContent: 'space-between', fontSize: 28, color: 'rgba(234,244,238,0.65)' }}>
           <span style={{ display: 'flex' }}>{placeLabel(champ)}</span>
-          <span style={{ display: 'flex' }}>feito com Campia · campia.app.br</span>
+          <span style={{ display: 'flex' }}>{pro ? '' : 'feito com Campia · campia.app.br'}</span>
         </div>
       </div>
     ),
