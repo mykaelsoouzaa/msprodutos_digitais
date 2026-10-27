@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.10.0';
+export const APP_VERSION = '1.11.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,14 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.11.0',
+    date: '2026-10-26',
+    title: 'Gestão dos repasses',
+    items: [
+      "Controle interno dos repasses aos organizadores: cada inscrição paga com repasse manual é acompanhada até ser transferida.",
+    ],
+  },
   {
     version: '1.10.0',
     date: '2026-10-26',

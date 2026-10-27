@@ -4,6 +4,7 @@ import { Flash } from '@/components/champ';
 import type { ChampionshipRow } from '@/lib/data';
 import SportIcon from '@/components/SportIcon';
 import { FORMATS, sportLabel } from '@/lib/domain/sports';
+import { isAdmin } from '@/lib/admin';
 import { cityState } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
 import { signOut } from '../entrar/actions';
@@ -38,6 +39,7 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
         <div className="actions" style={{ marginTop: 0 }}>
           <Link href="/painel/arena" className="btn ghost">{arena ? 'Página da arena' : 'Criar página da arena'}</Link>
           <Link href="/painel/recebimentos" className="btn ghost">Recebimentos</Link>
+          {isAdmin(user?.email) && <Link href="/admin" className="btn ghost">Admin</Link>}
           <Link href="/painel/novo" className="btn">＋ Novo campeonato</Link>
         </div>
       </div>

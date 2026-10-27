@@ -413,3 +413,5 @@ form.esports:has(input[name="online"][value="1"]:checked) .presencial { display:
 .legal-body li { margin-bottom: 6px; }
 .legal-body a, .legal a { color: var(--accent); }
 .auth-form .tip a, label a { color: var(--accent); }
+.admin-stats { grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 760px) { .admin-stats { grid-template-columns: repeat(3, 1fr); } }
