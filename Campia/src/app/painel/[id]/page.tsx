@@ -142,6 +142,10 @@ export default async function Campeonato({ params, searchParams }: {
 
       {tab === 'compartilhar' && (
         <>
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <div className="grow"><b>Tabela e jogos para imprimir</b><span>Classificação, jogos, artilharia e cartões numa folha. Dá para salvar em PDF.</span></div>
+            <Link className="btn sm" href={`/c/${champ.slug}/imprimir`} target="_blank">Abrir</Link>
+          </div>
           <p className="sub">Artes no formato de stories (1080×1920) para o grupo do WhatsApp e o Instagram.</p>
           {labels(games).filter(l => games.some(g => g.label === l && isDecided(g))).map(l => (
             <div className="card" key={l} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

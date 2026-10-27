@@ -66,6 +66,7 @@ export default async function Publico({ params, searchParams }: {
           </Link>
         )}
         <div className="actions">
+          <Link href={`/c/${champ.slug}/imprimir`} className="btn ghost sm">🖨 Imprimir / PDF</Link>
           <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 ${champ.name}: jogos, tabela e artilharia\n${url}`)}>Compartilhar</a>
         </div>
       </div>

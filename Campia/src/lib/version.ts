@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.13.0';
+export const APP_VERSION = '1.14.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,15 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.14.0',
+    date: '2026-10-26',
+    title: 'Imprimir ou salvar em PDF',
+    items: [
+      "Nova página de impressão com classificação, chaveamento, todos os jogos, artilharia e cartões, em fundo branco.",
+      "Botão Imprimir / PDF na página do campeonato e na aba Compartilhar do painel.",
+    ],
+  },
   {
     version: '1.13.0',
     date: '2026-10-26',
