@@ -16,7 +16,7 @@ interface PayRow {
 }
 
 const STATUS: Record<string, [string, string]> = {
-  pago: ['Pago', 'ok'], pendente: ['Aguardando', 'wait'], pago_tarde: ['Pago após vencer', 'wait'], expirado: ['Expirou', 'open'], cancelado: ['Cancelado', 'open'],
+  pago: ['Pago', 'ok'], pendente: ['Aguardando', 'wait'], pago_tarde: ['Pago após vencer', 'wait'], expirado: ['Expirou', 'open'], cancelado: ['Cancelado', 'open'], estornado: ['Devolvido', 'open'],
 };
 
 export default async function Recebimentos({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
@@ -27,7 +27,7 @@ export default async function Recebimentos({ searchParams }: { searchParams: Pro
   // RLS: o organizador só lê os pagamentos dos próprios campeonatos.
   const { data: pays } = await supabase.from('payments')
     .select('id, amount_cents, status, payout, created_at, paid_at, teams(name), championships(name)')
-    .in('status', ['pago', 'pago_tarde', 'pendente']).order('created_at', { ascending: false }).limit(50).returns<PayRow[]>();
+    .in('status', ['pago', 'pago_tarde', 'pendente', 'estornado']).order('created_at', { ascending: false }).limit(50).returns<PayRow[]>();
 
   const paid = (pays ?? []).filter(p => p.status === 'pago' || p.status === 'pago_tarde');
   const sum = (rows: PayRow[]) => rows.reduce((s, p) => s + p.amount_cents, 0);

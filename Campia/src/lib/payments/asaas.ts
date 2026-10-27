@@ -75,5 +75,10 @@ export async function platformWalletId(): Promise<string | null> {
   return body.data?.[0]?.id ?? body.id ?? null;
 }
 
+/** Devolve (estorna) uma cobrança paga. O Asaas devolve o valor ao pagador pelo PIX. */
+export async function refundAsaasPayment(providerId: string): Promise<void> {
+  await asaas(`/payments/${providerId}/refund`, { method: 'POST', body: JSON.stringify({}) });
+}
+
 /** Eventos que significam dinheiro recebido. */
 export const PAID_EVENTS = new Set(['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED']);

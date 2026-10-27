@@ -24,8 +24,9 @@ export interface CardRow { game_id: string; player_id: string; team_id: string; 
 export interface GoalRow { game_id: string; player_id: string; team_id: string; championship_id: string; count: number }
 export interface PaymentRow {
   id: string; championship_id: string; team_id: string; amount_cents: number; provider: 'mock' | 'asaas';
-  provider_id: string | null; status: 'pendente' | 'pago' | 'pago_tarde' | 'expirado' | 'cancelado';
+  provider_id: string | null; status: 'pendente' | 'pago' | 'pago_tarde' | 'expirado' | 'cancelado' | 'estornado';
   pix_payload: string | null; pix_image: string | null; expires_at: string | null; created_at: string; paid_at: string | null;
+  payout?: 'automatico' | 'manual'; manual_payout_done_at?: string | null; reminder_sent_at?: string | null; refunded_at?: string | null;
 }
 
 /* ---------- conversões ---------- */

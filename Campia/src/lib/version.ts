@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.11.0';
+export const APP_VERSION = '1.12.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.12.0',
+    date: '2026-10-26',
+    title: 'Cancelar inscrição e devolver o PIX',
+    items: [
+      "O organizador cancela uma inscrição pela tela de edição do time: a vaga volta a ficar livre e o PIX pode ser devolvido pelo Asaas na hora.",
+      "PIX pagos depois de a vaga expirar aparecem na aba Times com o botão Devolver PIX.",
+      "Em Recebimentos, inscrições devolvidas aparecem como Devolvido.",
+    ],
+  },
   {
     version: '1.11.0',
     date: '2026-10-26',

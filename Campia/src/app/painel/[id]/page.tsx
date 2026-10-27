@@ -11,6 +11,7 @@ import { siteUrl } from '@/lib/env';
 import { brl, placeLabel, waLink } from '@/lib/format';
 import PlaceFields from '@/components/PlaceFields';
 import { createClient } from '@/lib/supabase/server';
+import { refundLatePayment } from '../cancel-actions';
 import { rebuildChampionship, updateBasics, updateSchedule } from '../edit-actions';
 import { addHelper, updateYellowLimit, deleteChampionship, markPaidManually, removeHelper, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
 
@@ -40,6 +41,10 @@ export default async function Campeonato({ params, searchParams }: {
     ? await supabase.from('championship_helpers').select('email').eq('championship_id', id).order('created_at').returns<Array<{ email: string }>>()
     : { data: [] as Array<{ email: string }> };
   const helperInvite = `Você foi convidado para lançar os resultados do ${champ.name} na Campia.\nEntre com este e-mail: ${siteUrl()}/entrar?voltar=${encodeURIComponent(`/painel/${id}`)}`;
+  const { data: latePays } = owner && tab === 'times'
+    ? await supabase.from('payments').select('id, amount_cents, paid_at, teams(name)').eq('championship_id', id).eq('status', 'pago_tarde')
+      .returns<Array<{ id: string; amount_cents: number; paid_at: string | null; teams: { name: string } | null }>>()
+    : { data: [] as Array<{ id: string; amount_cents: number; paid_at: string | null; teams: { name: string } | null }> };
   const base = `/painel/${id}`;
   const publicUrl = `${siteUrl()}/c/${champ.slug}`;
   const signupUrl = `${publicUrl}/inscricao`;
@@ -116,7 +121,22 @@ export default async function Campeonato({ params, searchParams }: {
               );
             })}
           </div>
-          <p className="sub small" style={{ marginTop: 8 }}>Vagas reservadas sem pagamento voltam a ficar livres depois de 30 minutos.</p>
+          <p className="sub small" style={{ marginTop: 8 }}>Vagas reservadas sem pagamento voltam a ficar livres depois de 30 minutos. Para cancelar uma inscrição e devolver o PIX, clique em Editar.</p>
+          {!!latePays?.length && (
+            <>
+              <h2>PIX pagos depois de a vaga expirar</h2>
+              <div className="card">
+                <p className="sub" style={{ margin: '0 0 6px' }}>Esses times pagaram quando a reserva já tinha vencido e a vaga foi para outro time. Devolva o valor ou encaixe o time numa vaga livre.</p>
+                {latePays.map(p => (
+                  <form action={refundLatePayment} className="row" key={p.id}>
+                    <input type="hidden" name="championship" value={id} /><input type="hidden" name="payment" value={p.id} />
+                    <div className="grow"><b>{p.teams?.name ?? 'Time'} · {brl(p.amount_cents)}</b><span>pago em {p.paid_at ? new Date(p.paid_at).toLocaleDateString('pt-BR') : ''}</span></div>
+                    <button className="btn ghost sm">Devolver PIX</button>
+                  </form>
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
 

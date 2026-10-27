@@ -1,6 +1,6 @@
 // Cobrança PIX. Em desenvolvimento usa o provedor simulado; em produção, a Asaas.
 import { paymentProvider } from '../env';
-import { createAsaasPixCharge } from './asaas';
+import { createAsaasPixCharge, refundAsaasPayment } from './asaas';
 
 export interface PixChargeInput {
   paymentId: string;      // nosso id, enviado como externalReference
@@ -31,4 +31,11 @@ export async function createPixCharge(input: PixChargeInput): Promise<PixCharge>
     expiresAt: null,
     splitApplied: !!input.split,
   };
+}
+
+/** Devolve um PIX pago. No modo de teste (mock) não há dinheiro, então só confirma. */
+export async function refundPix(provider: 'mock' | 'asaas', providerId: string | null): Promise<void> {
+  if (provider !== 'asaas') return;
+  if (!providerId) throw new Error('Cobrança sem identificador no Asaas');
+  await refundAsaasPayment(providerId);
 }

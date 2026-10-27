@@ -1,5 +1,5 @@
 /* Service worker da Campia: instalação, modo offline e notificações de lembrete. */
-const VERSION = 'campia-v14';
+const VERSION = 'campia-v15';
 const OFFLINE_URL = '/offline';
 const PRECACHE = [OFFLINE_URL, '/icons/icon-192.png', '/icons/badge-96.png'];
 

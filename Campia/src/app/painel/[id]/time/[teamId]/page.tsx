@@ -2,9 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Dot, Flash } from '@/components/champ';
-import { loadChampionship } from '@/lib/data';
+import { loadChampionship, type PaymentRow } from '@/lib/data';
+import { isDecided } from '@/lib/domain/standings';
+import { brl } from '@/lib/format';
 import { sportRules } from '@/lib/domain/sports';
 import { createClient } from '@/lib/supabase/server';
+import { cancelRegistration } from '../../../cancel-actions';
 import { saveTeam } from '../../../edit-actions';
 
 export const metadata: Metadata = { title: 'Editar time' };
@@ -25,6 +28,9 @@ export default async function EditTeam({ params, searchParams }: {
   const rules = sportRules(data.champ.sport);
   const roster = data.players.filter(p => p.teamId === team.id);
   const open = team.status === 'aberta';
+  const { data: pay } = open ? { data: null } : await supabase.from('payments').select('*').eq('team_id', team.id).eq('status', 'pago')
+    .order('paid_at', { ascending: false }).limit(1).maybeSingle<PaymentRow>();
+  const played = data.games.some(g => isDecided(g) && (g.homeId === team.id || g.awayId === team.id));
   const scored = (pid: string) => data.goals.some(g => g.playerId === pid) || data.cards.some(c => c.playerId === pid);
 
   return (
@@ -75,6 +81,29 @@ export default async function EditTeam({ params, searchParams }: {
 
         <div style={{ marginTop: 18 }}><button className="btn block">{open ? 'Inscrever time' : 'Salvar alterações'}</button></div>
       </form>
+
+      {!open && (
+        <form action={cancelRegistration} className="card danger-zone" style={{ marginTop: 16 }}>
+          <input type="hidden" name="championship" value={id} />
+          <input type="hidden" name="team" value={team.id} />
+          <b>Cancelar inscrição</b>
+          {played ? (
+            <p className="sub" style={{ margin: '4px 0 0' }}>{team.name} já tem jogos com resultado, então a vaga não pode ser liberada.</p>
+          ) : (
+            <>
+              <p className="sub" style={{ margin: '4px 0 10px' }}>A vaga volta a ficar livre para o link de inscrição. Os atletas e o contato do capitão são apagados.</p>
+              {pay ? (
+                <label className="inline-check" style={{ marginBottom: 10 }}>
+                  <input type="checkbox" name="refund" value="1" defaultChecked />
+                  Devolver o PIX de {brl(pay.amount_cents)} pelo Asaas (precisa ter saldo na conta)
+                </label>
+              ) : <p className="sub small" style={{ margin: '0 0 10px' }}>Esta inscrição não foi paga pelo PIX da Campia; se houver devolução, faça por fora.</p>}
+              <input name="confirm" className="inp" placeholder="Digite CANCELAR" aria-label="Digite CANCELAR para confirmar" />
+              <div className="actions"><button className="btn danger sm">Cancelar inscrição</button></div>
+            </>
+          )}
+        </form>
+      )}
     </div>
   );
 }

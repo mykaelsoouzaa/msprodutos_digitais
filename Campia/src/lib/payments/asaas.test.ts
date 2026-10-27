@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { organizerPercent } from '../payout';
-import { createAsaasPixCharge, platformWalletId } from './asaas';
+import { createAsaasPixCharge, platformWalletId, refundAsaasPayment } from './asaas';
 
 const CAMPIA_KEY = '$aact_campia_teste';
 const ARENA_KEY = '$aact_arena_teste';
@@ -45,6 +45,14 @@ before(async () => {
     if (req.method === 'GET' && qr) {
       if (state.failQr) return send(400, { errors: [{ description: 'Você não possui uma chave Pix cadastrada para recebimentos de cobranças via Pix.' }] });
       return send(200, { encodedImage: 'iVBORw0KGgo=', payload: '00020126...6304ABCD', expirationDate: '2026-10-27 23:59:59' });
+    }
+    const refund = path.match(/^\/payments\/(pay_\d+)\/refund$/);
+    if (req.method === 'POST' && refund) {
+      const c = state.charges.find(x => x.id === refund[1]);
+      if (!c) return send(404, { errors: [{ description: 'Cobrança não encontrada' }] });
+      if ((state.balances[key] ?? 0) <= 0) return send(400, { errors: [{ description: 'Saldo insuficiente para realizar o estorno' }] });
+      (c as Charge & { refunded?: boolean }).refunded = true;
+      return send(200, { id: c.id, status: 'REFUNDED' });
     }
     const del = path.match(/^\/payments\/(pay_\d+)$/);
     if (req.method === 'DELETE' && del) {
@@ -127,4 +135,16 @@ test('6. sem repasse: a cobrança não leva split', async () => {
 
 test('7. a Campia sabe o próprio Wallet ID, para barrar quem tentar conectar essa carteira', async () => {
   assert.equal(await platformWalletId(), WALLETS[CAMPIA_KEY]);
+});
+
+test('8. devolver o PIX: estorno na cobrança certa; sem saldo, o erro do Asaas aparece', async () => {
+  const c = state.charges.find(x => x.externalReference === 'inscricao-1')!;
+  await refundAsaasPayment(c.id);
+  assert.equal((c as Charge & { refunded?: boolean }).refunded, true);
+  const call = state.calls.at(-1)!;
+  assert.deepEqual([call.method, call.path, call.key], ['POST', `/payments/${c.id}/refund`, CAMPIA_KEY]);
+  const saldo = state.balances[CAMPIA_KEY];
+  state.balances[CAMPIA_KEY] = 0;
+  await assert.rejects(refundAsaasPayment(c.id), /Saldo insuficiente/);
+  state.balances[CAMPIA_KEY] = saldo;
 });
