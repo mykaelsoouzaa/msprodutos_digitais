@@ -63,6 +63,9 @@ openssl rand -hex 32       # use como ASAAS_WEBHOOK_TOKEN
 | `VAPID_SUBJECT` | `mailto:contato@campia.app.br` |
 | `CRON_SECRET` | do passo 2 |
 | `CAMPIA_TAXA_PERCENT` | % de cada inscrição que fica com a Campia no repasse automático (ex.: `10`) |
+| `ADMIN_EMAILS` | seu e-mail (separe vários por vírgula): libera o painel /admin |
+| `BREVO_API_KEY` | chave de API do Brevo (SMTP & API › API Keys): lembrete por e-mail do PIX pendente |
+| `NEXT_PUBLIC_EMPRESA_CNPJ` | CNPJ que aparece nos Termos e na Privacidade |
 
 4. Clique em **Deploy**. O site sobe num endereço `*.vercel.app` para você testar.
 
@@ -125,7 +128,7 @@ select c.name as campeonato, t.name as time, p.amount_cents / 100.0 as valor, p.
 
 > Combine a taxa e o repasse por contrato com as arenas e valide a parte fiscal com um contador.
 
-## 6. Lembretes de jogo (agendador)
+## 6. Agendador: lembretes de jogo e de PIX pendente
 
 No Supabase, em *Database › Extensions*, ative **pg_cron** e **pg_net**. Depois, no *SQL Editor*:
 

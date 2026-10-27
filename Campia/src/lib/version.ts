@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.14.0';
+export const APP_VERSION = '1.15.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,15 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.15.0',
+    date: '2026-10-26',
+    title: 'Lembrete do PIX pendente',
+    items: [
+      "Quem reservou a vaga e ainda não pagou recebe um e-mail com o link do PIX, cerca de 10 minutos depois da inscrição.",
+      "O lembrete sai uma vez só e só quando ainda dá tempo de pagar antes de a vaga expirar.",
+    ],
+  },
   {
     version: '1.14.0',
     date: '2026-10-26',
