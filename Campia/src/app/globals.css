@@ -588,3 +588,18 @@ a.sponsor:hover { outline: 2px solid var(--accent); }
 .demo-banner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 12px 0 14px; padding: 12px 14px; border-radius: 14px; background: rgba(163, 230, 53, .1); border: 1px solid rgba(163, 230, 53, .35); font-size: 14px; }
 .demo-banner .grow { flex: 1 1 220px; }
 .demo-banner span { color: var(--muted); }
+
+/* ---------- primeiros passos ---------- */
+.onboarding { margin-bottom: 18px; border-color: rgba(34, 197, 94, .4); }
+.onb-head { display: flex; align-items: center; gap: 10px; }
+.onb-head .grow { display: flex; flex-direction: column; }
+.onb-bar { height: 6px; border-radius: 99px; background: var(--panel2); margin: 12px 0 6px; overflow: hidden; }
+.onb-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 99px; }
+.onb-list { list-style: none; padding: 0; margin: 0; }
+.onb-list li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.onb-list li:first-child { border-top: 0; }
+.onb-list .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.onb-list li.done b { color: var(--muted); text-decoration: line-through; font-weight: 500; }
+.onb-check { width: 24px; height: 24px; flex: none; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; font-size: 13px; font-weight: 800; }
+.onb-list li.done .onb-check { background: var(--accent); border-color: var(--accent); color: #06210f; }
+.onb-list li.next .onb-check { border-color: var(--accent); }

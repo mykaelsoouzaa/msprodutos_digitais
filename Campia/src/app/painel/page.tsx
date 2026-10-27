@@ -9,6 +9,9 @@ import { cityState } from '@/lib/format';
 import { isProActive } from '@/lib/plan';
 import { myPlan } from '@/lib/plan-server';
 import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
+import { onboardingSteps, progress } from '@/lib/onboarding';
+import { hideOnboarding } from './onboarding-actions';
 import { signOut } from '../entrar/actions';
 
 export const metadata: Metadata = { title: 'Painel' };
@@ -27,6 +30,21 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
   const { data: helping } = invites?.length
     ? await supabase.from('championships').select('*').in('id', invites.map(i => i.championship_id)).returns<ChampionshipRow[]>()
     : { data: [] as ChampionshipRow[] };
+  // Primeiros passos: some quando tudo estiver feito ou se o organizador esconder.
+  const hidden = (await cookies()).get('campia-passos')?.value === 'ocultar';
+  const ids = (champs ?? []).map(c => c.id);
+  const [{ data: payout }, { count: signedTeams }, { count: results }] = hidden ? [{ data: null }, { count: 1 }, { count: 1 }] : await Promise.all([
+    supabase.from('payout_accounts').select('owner_id').eq('owner_id', user!.id).maybeSingle(),
+    ids.length ? supabase.from('teams').select('id', { count: 'exact', head: true }).in('championship_id', ids).eq('status', 'inscrita') : Promise.resolve({ count: 0 }),
+    ids.length ? supabase.from('games').select('id', { count: 'exact', head: true }).in('championship_id', ids).not('home_score', 'is', null) : Promise.resolve({ count: 0 }),
+  ]);
+  const steps = onboardingSteps({
+    hasArena: !!arena, hasPayout: !!payout, championships: ids.length, signedTeams: signedTeams ?? 0, results: results ?? 0,
+    firstChampionshipId: champs?.[champs.length - 1]?.id,
+  });
+  const prog = progress(steps);
+  const showSteps = !hidden && !prog.complete;
+
   const card = (c: ChampionshipRow, helper = false) => (
     <Link key={c.id} href={`/painel/${c.id}`} className="card link-card">
       <SportIcon sport={c.sport} />
@@ -48,6 +66,24 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
         </div>
       </div>
       <Flash ok={sp.ok} erro={sp.erro} />
+      {showSteps && (
+        <section className="card onboarding">
+          <div className="onb-head">
+            <div className="grow"><b>Primeiros passos</b><span className="sub small">{prog.done} de {prog.total} feitos</span></div>
+            <form action={hideOnboarding}><button className="btn ghost sm" aria-label="Esconder primeiros passos">Esconder</button></form>
+          </div>
+          <div className="onb-bar"><i style={{ width: `${(prog.done / prog.total) * 100}%` }} /></div>
+          <ol className="onb-list">
+            {steps.map(st => (
+              <li key={st.key} className={st.done ? 'done' : st.key === prog.next?.key ? 'next' : ''}>
+                <span className="onb-check">{st.done ? '✓' : ''}</span>
+                <div className="grow"><b>{st.title}</b>{st.key === prog.next?.key && <span className="sub small">{st.text}</span>}</div>
+                {!st.done && <Link href={st.href} className={`btn sm ${st.key === prog.next?.key ? '' : 'ghost'}`}>{st.cta}</Link>}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
       {champs?.length ? (
         <div className="grid-cards">
           {champs.map(c => card(c))}

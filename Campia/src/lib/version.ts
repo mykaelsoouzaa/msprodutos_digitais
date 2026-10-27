@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.1.0';
+export const APP_VERSION = '2.2.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,15 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.2.0',
+    date: '2026-10-27',
+    title: 'Primeiros passos',
+    items: [
+      "Quem começa na Campia vê no painel um passo a passo: campeonato, página da arena, conta para receber, divulgar e lançar o primeiro resultado",
+      "Cada passo se marca sozinho quando é feito, e dá para esconder a lista",
+    ],
+  },
   {
     version: '2.1.0',
     date: '2026-10-27',
