@@ -53,6 +53,8 @@ export async function registerTeam(formData: FormData) {
   if (!teamId) fail('As vagas esgotaram');
 
   await db.from('team_contacts').update({ captain_email: f.email }).eq('team_id', teamId);
+  // Se o time estava na lista de espera, sai dela.
+  await db.from('waitlist').delete().eq('championship_id', champ!.id).eq('email', f.email);
   await db.from('players').insert(players.map(p => ({ championship_id: champ!.id, team_id: teamId, name: p.name, number: p.number })));
 
   // Inscrição grátis: confirma direto.

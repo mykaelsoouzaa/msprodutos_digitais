@@ -12,6 +12,7 @@ import { brl, placeLabel, waLink } from '@/lib/format';
 import PlaceFields from '@/components/PlaceFields';
 import { createClient } from '@/lib/supabase/server';
 import { refundLatePayment } from '../cancel-actions';
+import { removeFromWaitlist } from '../waitlist-actions';
 import { drawChampionship, rebuildChampionship, updateBasics, updateSchedule } from '../edit-actions';
 import { addHelper, updateYellowLimit, deleteChampionship, markPaidManually, removeHelper, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
 
@@ -45,6 +46,10 @@ export default async function Campeonato({ params, searchParams }: {
     ? await supabase.from('payments').select('id, amount_cents, paid_at, teams(name)').eq('championship_id', id).eq('status', 'pago_tarde')
       .returns<Array<{ id: string; amount_cents: number; paid_at: string | null; teams: { name: string } | null }>>()
     : { data: [] as Array<{ id: string; amount_cents: number; paid_at: string | null; teams: { name: string } | null }> };
+  const { data: waitlist } = owner && tab === 'times'
+    ? await supabase.from('waitlist').select('id, team_name, captain_name, email, phone, notified_at, created_at').eq('championship_id', id).order('created_at')
+      .returns<Array<{ id: string; team_name: string; captain_name: string; email: string; phone: string; notified_at: string | null; created_at: string }>>()
+    : { data: [] as Array<{ id: string; team_name: string; captain_name: string; email: string; phone: string; notified_at: string | null; created_at: string }> };
   const base = `/painel/${id}`;
   const publicUrl = `${siteUrl()}/c/${champ.slug}`;
   const signupUrl = `${publicUrl}/inscricao`;
@@ -134,6 +139,23 @@ export default async function Campeonato({ params, searchParams }: {
             })}
           </div>
           <p className="sub small" style={{ marginTop: 8 }}>Vagas reservadas sem pagamento voltam a ficar livres depois de 30 minutos. Para cancelar uma inscrição e devolver o PIX, clique em Editar.</p>
+          {!!waitlist?.length && (
+            <>
+              <h2>Lista de espera ({waitlist.length})</h2>
+              <div className="card">
+                <p className="sub" style={{ margin: '0 0 6px' }}>Quando abre vaga, a Campia avisa por e-mail os primeiros da fila. Você também pode chamar pelo WhatsApp.</p>
+                {waitlist.map((w, i) => (
+                  <form action={removeFromWaitlist} className="row helper-row" key={w.id}>
+                    <input type="hidden" name="championship" value={id} /><input type="hidden" name="entry" value={w.id} />
+                    <div className="grow"><b>{i + 1}. {w.team_name}</b><span>{[w.captain_name, w.phone, w.email].filter(Boolean).join(' · ')}</span></div>
+                    {w.notified_at && <span className="badge ok">Avisado</span>}
+                    {w.phone && <a className="btn wa sm" target="_blank" rel="noopener" href={waLink(w.phone, `Olá! Abriu vaga no ${champ.name}. Inscreva o ${w.team_name}: ${signupUrl}`)}>Chamar</a>}
+                    <button className="btn ghost sm">Remover</button>
+                  </form>
+                ))}
+              </div>
+            </>
+          )}
           {!!latePays?.length && (
             <>
               <h2>PIX pagos depois de a vaga expirar</h2>

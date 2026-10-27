@@ -6,6 +6,7 @@ import { type GameRow, toGame } from '@/lib/data';
 import { fmtDate } from '@/lib/format';
 import { sendEmail } from '@/lib/email';
 import { duePixReminders, pixReminderEmail } from '@/lib/payment-reminder';
+import { freeSlots, waitlistEmail, waitlistToNotify } from '@/lib/waitlist';
 import { sendPush } from '@/lib/push';
 import { siteUrl } from '@/lib/env';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -48,6 +49,32 @@ async function remindPendingPix(db: ReturnType<typeof createAdminClient>, now: n
   return { sent };
 }
 
+/** Avisa a lista de espera quando abre vaga (desistência ou PIX não pago). */
+async function notifyWaitlist(db: ReturnType<typeof createAdminClient>, now: number) {
+  const { data: entries } = await db.from('waitlist').select('id, championship_id, team_name, email, created_at, notified_at').limit(1000)
+    .returns<Array<{ id: string; championship_id: string; team_name: string; email: string; created_at: string; notified_at: string | null }>>();
+  const champIds = [...new Set((entries ?? []).filter(e => !e.notified_at).map(e => e.championship_id))];
+  let sent = 0;
+  for (const cid of champIds) {
+    const [{ data: champ }, { data: teams }, { data: started }] = await Promise.all([
+      db.from('championships').select('name, slug, fee_cents').eq('id', cid).maybeSingle<{ name: string; slug: string; fee_cents: number }>(),
+      db.from('teams').select('status, reserved_until').eq('championship_id', cid).returns<Array<{ status: string; reserved_until: string | null }>>(),
+      db.from('games').select('id').eq('championship_id', cid).not('home_score', 'is', null).limit(1),
+    ]);
+    if (!champ || started?.length) continue; // campeonato começou: não abre mais vaga
+    const fila = (entries ?? []).filter(e => e.championship_id === cid);
+    for (const e of waitlistToNotify(fila, freeSlots(teams ?? [], now), now)) {
+      const { data: claimed } = await db.from('waitlist').update({ notified_at: new Date(now).toISOString() }).eq('id', e.id).is('notified_at', null).select('id');
+      if (!claimed?.length) continue;
+      const msg = waitlistEmail({ team: e.team_name, championship: champ.name, feeCents: champ.fee_cents, url: `${siteUrl()}/c/${champ.slug}/inscricao` });
+      const r = await sendEmail({ to: e.email, subject: msg.subject, html: msg.html });
+      if (r === 'ok') sent++;
+      if (r === 'skipped') await db.from('waitlist').update({ notified_at: null }).eq('id', e.id);
+    }
+  }
+  return { sent };
+}
+
 async function run(request: NextRequest) {
   const secret = process.env.CRON_SECRET || '';
   const got = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
@@ -56,6 +83,7 @@ async function run(request: NextRequest) {
   const db = createAdminClient();
   const now = Date.now();
   const pix = await remindPendingPix(db, now).catch(e => { console.error('Lembrete de PIX falhou', e); return { error: true }; });
+  const espera = await notifyWaitlist(db, now).catch(e => { console.error('Lista de espera falhou', e); return { error: true }; });
   const todayBr = new Date(now - 3 * 3600_000).toISOString().slice(0, 10);
   const leads = [...new Set([...DEFAULT_LEADS, 180, 30])];
 
@@ -66,7 +94,7 @@ async function run(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const due = dueReminders((rows ?? []).map(toGame), now, leads);
-  if (!due.length) return NextResponse.json({ ok: true, sent: 0, pix });
+  if (!due.length) return NextResponse.json({ ok: true, sent: 0, pix, espera });
 
   const champIds = [...new Set(due.map(d => (rows ?? []).find(r => r.id === d.game.id)!.championship_id))];
   const [{ data: subs }, { data: champs }, { data: teams }] = await Promise.all([
@@ -100,7 +128,7 @@ async function run(request: NextRequest) {
       if (result === 'error') await db.from('push_deliveries').delete().match({ subscription_id: s.id, game_id: game.id, lead });
     }
   }
-  return NextResponse.json({ ok: true, due: due.length, sent, removed, pix });
+  return NextResponse.json({ ok: true, due: due.length, sent, removed, pix, espera });
 }
 
 export const GET = run;
