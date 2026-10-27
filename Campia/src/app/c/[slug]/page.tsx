@@ -21,6 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!data) return { title: 'Campeonato' };
   return {
     title: data.name,
+    openGraph: { title: data.name, description: `${sportLabel(data.sport)}: jogos, tabela, inscrição e resultados na Campia.`, type: 'website' },
     description: `${sportLabel(data.sport)}: jogos, tabela e artilharia ao vivo.`,
     robots: data.visibility === 'publico' ? undefined : { index: false, follow: false },
   };

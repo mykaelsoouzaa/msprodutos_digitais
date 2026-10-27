@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   title: { default: 'Campia · campeonatos organizados em 2 minutos', template: '%s · Campia' },
   description: 'Campeonatos amadores organizados em minutos: tabela automática, inscrição com PIX e resultados no WhatsApp.',
   applicationName: 'Campia',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://campia.app.br'),
+  openGraph: { siteName: 'Campia', locale: 'pt_BR', type: 'website' },
   appleWebApp: { capable: true, title: 'Campia', statusBarStyle: 'black-translucent' },
   icons: { icon: [{ url: '/icons/favicon-32.png', sizes: '32x32' }, { url: '/icons/icon-192.png', sizes: '192x192' }], apple: '/icons/apple-touch-icon.png' },
 };
