@@ -9,8 +9,16 @@ import { sportLabel, sportRules } from '@/lib/domain/sports';
 import { siteUrl } from '@/lib/env';
 import { waLink } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
+import { createPublicClient } from '@/lib/supabase/public';
+import { unstable_cache } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
+
+/** Números do perfil guardados por 5 minutos (carrega vários campeonatos; igual para todo visitante). */
+const entriesOf = (userId: string) => unstable_cache(
+  async () => (await loadAthleteEntries(createPublicClient(), userId)).map(r => r.e),
+  ['atleta-perfil', userId], { revalidate: 300, tags: [`atleta:${userId}`] },
+)();
 
 async function getAthlete(handle: string) {
   const supabase = await createClient();
@@ -32,8 +40,7 @@ export default async function AtletaPublico({ params }: { params: Promise<{ hand
   const { handle } = await params;
   const { supabase, athlete } = await getAthlete(handle);
   if (!athlete) notFound();
-  const rows = await loadAthleteEntries(supabase, athlete.user_id);
-  const entries = rows.map(r => r.e);
+  const entries = await entriesOf(athlete.user_id);
   const t = athleteTotals(entries);
   const { data: { user } } = await supabase.auth.getUser();
   const url = `${siteUrl()}/atleta/${athlete.handle}`;

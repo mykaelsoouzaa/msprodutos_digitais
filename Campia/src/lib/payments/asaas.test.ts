@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { organizerPercent } from '../payout';
+import { quote, webhookAction } from '../signup';
 import { cancelAsaasSubscription, createAsaasPixCharge, createAsaasSubscription, platformWalletId, refundAsaasPayment } from './asaas';
 
 const CAMPIA_KEY = '$aact_campia_teste';
@@ -166,4 +167,25 @@ test('9. Plano Pro: assinatura mensal sem split, link da primeira mensalidade e 
   assert.equal(post.body.split, undefined);
   await cancelAsaasSubscription('sub_000001');
   assert.deepEqual([state.calls.at(-1)!.method, state.calls.at(-1)!.path], ['DELETE', '/subscriptions/sub_000001']);
+});
+
+test('10. fluxo inteiro: preço com cupom → PIX com repasse → Asaas avisa → a Campia sabe qual inscrição confirmar', async () => {
+  // 1. preço: lote de R$ 250 com cupom de R$ 50, organizador Pro com conta conectada
+  const q = quote({ baseCents: 30000, tiers: [{ until: '2099-01-01', cents: 25000 }], today: '2026-10-27', couponCode: 'DESC50',
+    coupon: { code: 'DESC50', percent: null, amount_cents: 5000, max_uses: null }, couponUses: 0, pro: true, walletId: WALLETS[ARENA_KEY] });
+  assert.ok(q.ok);
+  if (!q.ok) return;
+  assert.equal(q.amount, 20000);
+  // 2. cobrança no Asaas com o split do Pro (95% do líquido para a arena)
+  const charge = await createAsaasPixCharge({ ...input('fluxo-1'), amountCents: q.amount, split: q.split });
+  assert.equal(charge.splitApplied, true);
+  const c = state.charges.find(x => x.id === charge.providerId)!;
+  assert.deepEqual([c.value, c.split?.[0].percentualValue], [200, 95]);
+  // 3. capitão paga: o Asaas divide o líquido
+  const antes = state.balances[ARENA_KEY] ?? 0;
+  const net = pagar(c);
+  assert.equal(Math.round((state.balances[ARENA_KEY] - antes) * 100), Math.round(net * 95));
+  // 4. o aviso que o Asaas manda aponta para a nossa inscrição
+  const action = webhookAction({ event: 'PAYMENT_RECEIVED', payment: { id: c.id, externalReference: c.externalReference } }, '2026-10-27');
+  assert.deepEqual(action, { type: 'inscricao', asaasId: charge.providerId, reference: 'fluxo-1' });
 });

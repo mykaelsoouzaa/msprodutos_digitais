@@ -5,7 +5,7 @@ Passo a passo para colocar a Campia no ar, na ordem. Cada etapa diz onde clicar 
 ## 0. Antes de começar
 
 - [ ] **Pagar o domínio** campia.app.br no Registro.br. O status "Registro pendente" significa que o pagamento ainda não foi compensado.
-- [ ] Ter acesso a: GitHub (o código já está em `msprodutos_digitais/Campia`), um e-mail para as contas e, de preferência, o **CNPJ da MS Suporte TI** para a Asaas.
+- [ ] Ter acesso a: GitHub (o código já está em `msprodutos_digitais/Campia`), um e-mail para as contas e, de preferência, o **CNPJ da MS Soluções Tecnológicas** para a Asaas.
 
 ## 1. Banco de dados e login (Supabase)
 
@@ -117,7 +117,7 @@ openssl rand -hex 32       # use como ASAAS_WEBHOOK_TOKEN
 
 **Depois em produção:**
 
-1. Abra a conta Asaas de produção, de preferência com o **CNPJ da MS Suporte TI**, envie os documentos e cadastre uma **chave PIX** na conta.
+1. Abra a conta Asaas de produção, de preferência com o **CNPJ da MS Soluções Tecnológicas**, envie os documentos e cadastre uma **chave PIX** na conta.
 2. Gere a chave de API de produção e troque na Vercel:
    - `ASAAS_API_KEY` = a chave de produção
    - `ASAAS_BASE_URL` = `https://api.asaas.com/v3`

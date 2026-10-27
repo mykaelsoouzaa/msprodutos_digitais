@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { paymentProvider } from '@/lib/env';
 import { normalizePhone, onlyDigits, parsePlayers, shortName, validCpfCnpj } from '@/lib/format';
 import { createPixCharge } from '@/lib/payments';
-import { organizerPercent } from '@/lib/payout';
-import { feeFor } from '@/lib/plan';
 import { ownerIsPro } from '@/lib/plan-server';
-import { type Coupon, type PriceTier, couponDiscount, currentPrice, normalizeCode, todayBr } from '@/lib/pricing';
+import { type Coupon, type PriceTier, normalizeCode, todayBr } from '@/lib/pricing';
+import { quote } from '@/lib/signup';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logEvent } from '@/lib/monitor';
 
@@ -50,22 +49,20 @@ export async function registerTeam(formData: FormData) {
   const { data: hasResults } = await db.from('games').select('id').eq('championship_id', champ!.id).not('home_score', 'is', null).limit(1);
   if (hasResults?.length) fail('As inscrições estão encerradas: o campeonato já começou');
 
-  // Preço de hoje (lote) e cupom, validados antes de reservar a vaga.
-  const price = currentPrice(champ!.fee_cents, champ!.price_tiers as PriceTier[], todayBr()).cents;
-  let discount = 0;
+  // Preço de hoje (lote), cupom, taxa e repasse, validados antes de reservar a vaga.
   const code = normalizeCode(f.coupon);
-  if (code) {
-    const { data: coupon } = await db.from('coupons').select('code, percent, amount_cents, max_uses')
-      .eq('championship_id', champ!.id).eq('code', code).maybeSingle<Coupon>();
-    if (!coupon) fail('Cupom inválido para este campeonato');
-    if (coupon!.max_uses) {
-      const { count } = await db.from('payments').select('id', { count: 'exact', head: true })
-        .eq('championship_id', champ!.id).eq('coupon_code', code).in('status', ['pago', 'pendente']);
-      if ((count ?? 0) >= coupon!.max_uses) fail('Esse cupom já foi usado o número máximo de vezes');
-    }
-    discount = couponDiscount(price, coupon!);
-  }
-  const amount = price - discount;
+  const [{ data: coupon }, { count: couponUses }, pro, { data: payout }] = await Promise.all([
+    code ? db.from('coupons').select('code, percent, amount_cents, max_uses').eq('championship_id', champ!.id).eq('code', code).maybeSingle<Coupon>() : Promise.resolve({ data: null }),
+    code ? db.from('payments').select('id', { count: 'exact', head: true }).eq('championship_id', champ!.id).eq('coupon_code', code).in('status', ['pago', 'pendente']) : Promise.resolve({ count: 0 }),
+    ownerIsPro(db, champ!.owner_id),
+    db.from('payout_accounts').select('asaas_wallet_id').eq('owner_id', champ!.owner_id).maybeSingle(),
+  ]);
+  const q = quote({
+    baseCents: champ!.fee_cents, tiers: champ!.price_tiers as PriceTier[], today: todayBr(), couponCode: f.coupon,
+    coupon: coupon ?? null, couponUses: couponUses ?? 0, pro, walletId: (payout?.asaas_wallet_id as string | undefined) ?? null,
+  });
+  if (!q.ok) fail(q.error);
+  const { amount, discount, fee, split } = q as Extract<typeof q, { ok: true }>;
 
   const { data: teamId, error: reserveError } = await db.rpc('reserve_slot', {
     p_championship: champ!.id, p_name: f.name, p_short: shortName(f.name, f.short), p_captain: f.captain,
@@ -87,17 +84,11 @@ export async function registerTeam(formData: FormData) {
     redirect(`/c/${f.slug}?ok=${encodeURIComponent(`${f.name} está inscrito!`)}`);
   }
 
-  // Taxa da Campia: menor para quem é Pro (fica gravada na inscrição).
-  const fee = feeFor(await ownerIsPro(db, champ!.owner_id));
   const { data: payment, error: payError } = await db.from('payments').insert({
     championship_id: champ!.id, team_id: teamId, amount_cents: amount, provider: paymentProvider(),
     coupon_code: code || null, discount_cents: discount, fee_percent: fee,
   }).select('id').single();
   if (payError || !payment) fail('Não foi possível criar a cobrança');
-
-  // Repasse automático se o organizador cadastrou a conta Asaas dele.
-  const { data: payout } = await db.from('payout_accounts').select('asaas_wallet_id').eq('owner_id', champ!.owner_id).maybeSingle();
-  const split = payout?.asaas_wallet_id ? { walletId: payout.asaas_wallet_id as string, percent: organizerPercent(fee) } : undefined;
 
   try {
     const charge = await createPixCharge({

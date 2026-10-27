@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.3.0';
+export const APP_VERSION = '2.3.1';
 
 export interface Release {
   version: string;
@@ -11,6 +11,15 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.3.1',
+    date: '2026-10-27',
+    title: 'Ajustes',
+    items: [
+      "A Campia agora aparece como um produto da MS Soluções Tecnológicas",
+      "Perfil do atleta e ranking da arena abrem mais rápido",
+    ],
+  },
   {
     version: '2.3.0',
     date: '2026-10-27',

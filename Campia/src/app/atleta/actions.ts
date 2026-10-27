@@ -1,6 +1,6 @@
 'use server';
 // Perfil do atleta: "Sou eu", aprovação pelo capitão/organizador e edição do perfil.
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { HANDLE_RE, handleFrom } from '@/lib/athlete';
@@ -81,6 +81,7 @@ export async function claimPlayer(formData: FormData) {
     });
   }
   revalidatePath(`/atleta/${handle}`);
+  revalidateTag(`atleta:${user!.id}`);
   go(back, 'ok', trusted ? 'Pronto! Esse atleta agora está no seu perfil.' : 'Pedido enviado. Assim que o capitão aprovar, aparece no seu perfil.');
 }
 
@@ -96,6 +97,7 @@ export async function decideClaim(formData: FormData) {
   if (error || !data?.length) go(back, 'erro', 'Você não pode decidir esse pedido');
   const { data: a } = await supabase.from('athletes').select('handle').eq('user_id', data![0].user_id).maybeSingle();
   if (a) revalidatePath(`/atleta/${a.handle}`);
+  revalidateTag(`atleta:${data![0].user_id}`);
   go(back, 'ok', approve ? 'Atleta ligado ao perfil' : 'Pedido recusado');
 }
 
@@ -103,6 +105,7 @@ export async function leaveClaim(formData: FormData) {
   const { supabase, user } = await session();
   if (!user) redirect('/entrar');
   await supabase.from('player_claims').delete().eq('player_id', String(formData.get('player') ?? '')).eq('user_id', user!.id);
+  revalidateTag(`atleta:${user!.id}`);
   go('/atleta', 'ok', 'Atleta removido do seu perfil');
 }
 

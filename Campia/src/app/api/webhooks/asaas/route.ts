@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
-import { PAID_EVENTS } from '@/lib/payments/asaas';
 import { extendPaidUntil } from '@/lib/plan';
+import { webhookAction } from '@/lib/signup';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { beat, logEvent } from '@/lib/monitor';
 
@@ -35,19 +35,19 @@ export async function POST(request: NextRequest) {
     if (seen) return NextResponse.json({ ok: true, duplicate: true });
   }
 
-  if (PAID_EVENTS.has(body.event) && body.payment.subscription) {
+  const action = webhookAction(body, new Date().toISOString().slice(0, 10));
+  if (action.type === 'plano') {
     // Mensalidade do Plano Pro: estende a validade a partir do vencimento dessa cobrança.
-    const { data: plan } = await db.from('plans').select('owner_id, paid_until').eq('asaas_subscription_id', body.payment.subscription).maybeSingle();
+    const { data: plan } = await db.from('plans').select('owner_id, paid_until').eq('asaas_subscription_id', action.subscription).maybeSingle();
     if (plan) {
-      const due = /^\d{4}-\d{2}-\d{2}$/.test(body.payment.dueDate ?? '') ? body.payment.dueDate! : new Date().toISOString().slice(0, 10);
-      const { error } = await db.from('plans').update({ status: 'ativo', paid_until: extendPaidUntil(plan.paid_until, due), updated_at: new Date().toISOString() })
+      const { error } = await db.from('plans').update({ status: 'ativo', paid_until: extendPaidUntil(plan.paid_until, action.dueDate), updated_at: new Date().toISOString() })
         .eq('owner_id', plan.owner_id);
       if (error) { await logEvent('webhook', `Mensalidade do Pro não registrada: ${error.message}`); return NextResponse.json({ error: 'retry' }, { status: 500 }); }
     }
-  } else if (PAID_EVENTS.has(body.event)) {
+  } else if (action.type === 'inscricao') {
     // Confere que o pagamento é nosso pelos dois lados: id da Asaas e externalReference.
-    const { data: p } = await db.from('payments').select('id').eq('provider', 'asaas').eq('provider_id', body.payment.id).maybeSingle();
-    if (p && p.id === body.payment.externalReference) {
+    const { data: p } = await db.from('payments').select('id').eq('provider', 'asaas').eq('provider_id', action.asaasId).maybeSingle();
+    if (p && p.id === action.reference) {
       const { error } = await db.rpc('confirm_payment', { p_payment: p.id });
       // Erro: responde 500 para a Asaas reenviar (confirm_payment é idempotente).
       if (error) { await logEvent('webhook', `Pagamento ${p.id} não confirmado: ${error.message}`); return NextResponse.json({ error: 'retry' }, { status: 500 }); }

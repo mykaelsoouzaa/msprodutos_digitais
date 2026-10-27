@@ -6,6 +6,8 @@ import { Tabs } from '@/components/champ';
 import { arenaRanking } from '@/lib/arena-ranking';
 import { type ChampData, loadChampionship } from '@/lib/data';
 import type { VoteResult } from '@/lib/voting';
+import { unstable_cache } from 'next/cache';
+import { createPublicClient } from '@/lib/supabase/public';
 import { type ArenaRow, initials } from '@/lib/arena';
 import { LISTING_SELECT, type ListingRow, toListing } from '@/lib/explore';
 import { siteUrl } from '@/lib/env';
@@ -28,7 +30,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return { title: arena.name, description: arena.bio || `Campeonatos organizados por ${arena.name} na Campia.`, alternates: { canonical: `/arena/${arena.slug}` } };
 }
 
-async function loadRanking(supabase: Awaited<ReturnType<typeof createClient>>, ids: string[]) {
+async function computeRanking(ids: string[]) {
+  const supabase = createPublicClient();
   const datas = (await Promise.all(ids.slice(0, 30).map(id => loadChampionship(supabase, { id })))).filter((d): d is ChampData => !!d);
   const { data: claims } = datas.length
     ? await supabase.from('player_claims').select('player_id, user_id').in('championship_id', datas.map(d => d.champ.id)).eq('status', 'aprovado')
@@ -48,6 +51,9 @@ async function loadRanking(supabase: Awaited<ReturnType<typeof createClient>>, i
   }));
   return arenaRanking(datas, linked, votes);
 }
+
+/** Ranking guardado por 10 minutos: soma muitos campeonatos e é igual para todo visitante. */
+const loadRanking = unstable_cache(computeRanking, ['arena-ranking'], { revalidate: 600 });
 
 export default async function ArenaPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ aba?: string }> }) {
   const { slug } = await params;
@@ -81,7 +87,7 @@ export default async function ArenaPage({ params, searchParams }: { params: Prom
       </section>
 
       <div style={{ marginTop: 24 }}><Tabs items={[['campeonatos', 'Campeonatos'], ['ranking', '🏆 Ranking']]} current={tab} base={`/arena/${arena.slug}`} /></div>
-      {tab === 'ranking' ? <RankingView r={await loadRanking(supabase, items.map(c => c.id))} /> : (<>
+      {tab === 'ranking' ? <RankingView r={await loadRanking(items.map(c => c.id))} /> : (<>
       <h2 className="section-title" style={{ marginTop: 12 }}>Campeonatos</h2>
       {current.length ? <div className="grid-cards" style={{ marginTop: 12 }}>{current.map(c => <ChampCard key={c.id} c={c} />)}</div>
         : <div className="card empty" style={{ marginTop: 12 }}>Nenhum campeonato acontecendo agora.</div>}
