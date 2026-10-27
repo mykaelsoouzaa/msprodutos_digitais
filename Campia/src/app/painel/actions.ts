@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { roleIn } from '@/lib/access';
+import { canManage, roleIn } from '@/lib/access';
 import { gameRow, loadChampionship, persistKnockout, teamRow } from '@/lib/data';
 import { buildPlan, teamCountError } from '@/lib/domain/build';
 import { SPORTS, allowsOnline, sportRules } from '@/lib/domain/sports';
@@ -234,8 +234,8 @@ export async function markPaidManually(formData: FormData) {
   if (error) fail(`/painel/${champId}?aba=times`, 'Não foi possível confirmar');
   // Pago por fora: cancela o PIX pendente. Se ele ainda for pago, o webhook registra como "pago_tarde" (para devolver).
   // O organizador não altera pagamentos pelo RLS; confere que o campeonato é dele e usa a service role.
-  const { data: own } = await supabase.from('championships').select('id').eq('id', champId).eq('owner_id', user.id).maybeSingle();
-  if (own) await createAdminClient().from('payments').update({ status: 'cancelado' }).eq('team_id', teamId).eq('championship_id', champId).eq('status', 'pendente');
+  const { data: own } = await supabase.from('championships').select('id, owner_id').eq('id', champId).maybeSingle<{ id: string; owner_id: string }>();
+  if (own && (await canManage(supabase, own, user))) await createAdminClient().from('payments').update({ status: 'cancelado' }).eq('team_id', teamId).eq('championship_id', champId).eq('status', 'pendente');
   revalidatePath(`/painel/${champId}`);
   redirect(`/painel/${champId}?aba=times&ok=${encodeURIComponent('Inscrição confirmada')}`);
 }

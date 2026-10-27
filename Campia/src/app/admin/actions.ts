@@ -42,3 +42,18 @@ export async function grantCourtesy(formData: FormData) {
   revalidatePath('/admin');
   redirect(`/admin?ok=${encodeURIComponent(months ? `Pro de cortesia para ${email} por ${months} ${months > 1 ? 'meses' : 'mês'}` : `Cortesia de ${email} encerrada`)}`);
 }
+
+/** Apaga qualquer campeonato (com tudo que é dele). Pede EXCLUIR digitado. */
+export async function adminDeleteChampionship(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get('championship') ?? '');
+  if (formData.get('confirm') !== 'EXCLUIR') redirect(`/admin?ok=${encodeURIComponent('Digite EXCLUIR para confirmar')}#campeonatos`);
+  const db = createAdminClient();
+  const { data: c } = await db.from('championships').select('name, slug').eq('id', id).maybeSingle<{ name: string; slug: string }>();
+  if (!c) redirect(`/admin?ok=${encodeURIComponent('Campeonato não encontrado')}#campeonatos`);
+  const { error } = await db.from('championships').delete().eq('id', id);
+  if (error) redirect(`/admin?ok=${encodeURIComponent(`Não foi possível excluir: ${error.message}`)}#campeonatos`);
+  revalidatePath('/admin');
+  revalidatePath(`/c/${c!.slug}`);
+  redirect(`/admin?ok=${encodeURIComponent(`"${c!.name}" excluído`)}#campeonatos`);
+}

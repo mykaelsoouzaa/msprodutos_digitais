@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.7.2';
+export const APP_VERSION = '2.8.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.8.0',
+    date: '2026-10-27',
+    title: 'Admin com poderes de dono',
+    items: [
+      "O admin da Campia abre o painel de qualquer campeonato e faz tudo que o organizador faz: editar, times, resultados, cancelar inscrição e excluir",
+      "No /admin, lista de todos os campeonatos com busca e botões Painel, Página e Excluir",
+      "Só funciona para os e-mails de admin, com a verificação em duas etapas confirmada",
+    ],
+  },
   {
     version: '2.7.2',
     date: '2026-10-27',

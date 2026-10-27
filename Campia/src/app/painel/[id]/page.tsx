@@ -19,7 +19,7 @@ import { addSponsor, removeSponsor } from '../sponsor-actions';
 import { initials } from '@/lib/arena';
 import ProLock from '@/components/ProLock';
 import { isProActive } from '@/lib/plan';
-import { myPlan } from '@/lib/plan-server';
+import { myPlan, ownerIsPro } from '@/lib/plan-server';
 import { SPONSOR_LIMIT, SPONSOR_SELECT, type Sponsor, sortSponsors } from '@/lib/sponsors';
 import { addCoupon, drawChampionship, rebuildChampionship, removeCoupon, setVoting, updateBasics, updateCardOption, updatePriceTiers, updateSchedule } from '../edit-actions';
 import { type VoteResult, categoriesFor, ranking } from '@/lib/voting';
@@ -42,7 +42,8 @@ export default async function Campeonato({ params, searchParams }: {
   const role = data ? await roleIn(supabase, data.row, user) : null;
   if (!data || !role) notFound();
   const owner = role === 'dono';
-  const pro = owner && isProActive(await myPlan(supabase, user!.id));
+  const pro = owner && (data!.row.owner_id === user!.id ? isProActive(await myPlan(supabase, user!.id)) : await ownerIsPro(supabase, data!.row.owner_id));
+  const adminMode = owner && data!.row.owner_id !== user!.id;
   const cardTab: Array<[string, string]> = sportRules(data.champ.sport).cards ? [['cartoes', 'Cartões']] : [];
   const tabs = [...TABS.slice(0, 2), ...cardTab, ...(owner ? TABS.slice(2) : [])];
 
@@ -105,6 +106,7 @@ export default async function Campeonato({ params, searchParams }: {
         <div className="stat"><b>{done}/{games.length}</b><span>jogos</span></div>
         {owner && <div className="stat"><b className="money">{brl(received)}</b><span>recebido pelo PIX</span></div>}
       </div>
+      {adminMode && <div className="note admin-note" style={{ margin: '0 0 16px' }}>⚙️ <b>Modo admin:</b> você está mexendo no campeonato de outro organizador. Tudo que fizer aqui vale de verdade.</div>}
       {!owner && <div className="note" style={{ margin: '0 0 16px' }}>Você é <b>ajudante</b> deste campeonato: pode lançar resultados e ajustar data, horário e campo dos jogos.</div>}
       <Flash ok={sp.ok} erro={sp.erro} />
       <Tabs items={tabs} current={tab} base={base} />

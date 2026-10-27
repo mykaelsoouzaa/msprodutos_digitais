@@ -8,6 +8,7 @@ import { refundPix } from '@/lib/payments';
 import { logEvent } from '@/lib/monitor';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
+import { canManage } from '@/lib/access';
 
 const go = (path: string, k: 'ok' | 'erro', msg: string): never =>
   redirect(`${path}${path.includes('?') ? '&' : '?'}${k}=${encodeURIComponent(msg)}`);
@@ -17,7 +18,7 @@ async function requireOwner(champId: string, back: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/entrar');
   const data = await loadChampionship(supabase, { id: champId });
-  if (!data || data.row.owner_id !== user!.id) go(back, 'erro', 'Campeonato não encontrado');
+  if (!data || !(await canManage(supabase, data.row, user))) go(back, 'erro', 'Campeonato não encontrado');
   return { supabase, data: data! };
 }
 
