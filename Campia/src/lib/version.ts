@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.29.0';
+export const APP_VERSION = '1.30.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.30.0',
+    date: '2026-10-27',
+    title: 'Procuro time',
+    items: [
+      "Atleta sem time coloca o nome na lista Procuram time, na aba Times do campeonato",
+      "Os capitães do campeonato e o organizador veem o WhatsApp e chamam com um toque",
+      "Para o resto do público aparecem só nome, posição e recado",
+    ],
+  },
   {
     version: '1.29.0',
     date: '2026-10-27',

@@ -5,6 +5,7 @@ import { Discipline, Flash, GameRow, GamesList, Scorers, TableTab, Tabs } from '
 import AutoRefresh from '@/components/AutoRefresh';
 import VotingTab from '@/components/VotingTab';
 import TeamsTab from '@/components/TeamsTab';
+import FreeAgents from '@/components/FreeAgents';
 import ViewBeacon from '@/components/ViewBeacon';
 import Sponsors from '@/components/Sponsors';
 import { SPONSOR_SELECT, type Sponsor } from '@/lib/sponsors';
@@ -124,7 +125,7 @@ export default async function Publico({ params, searchParams }: {
           {tab === 'jogos' && <GamesList games={games} teams={teams} />}
           {tab === 'tabela' && <TableTab champ={champ} games={games} teams={teams} />}
           {tab === 'artilharia' && <Scorers champ={champ} games={games} goals={goals} players={players} teams={teams} />}
-          {tab === 'times' && <TeamsTab champ={champ} teams={teams} players={players} />}
+          {tab === 'times' && <><TeamsTab champ={champ} teams={teams} players={players} /><FreeAgents champ={champ} finished={!!champion} isOwner={isOwner} /></>}
           {tab === 'votacao' && <VotingTab champ={champ} players={players} teams={teams} />}
           {tab === 'cartoes' && <Discipline champ={champ} games={games} cards={cards} players={players} teams={teams} />}
         </div>

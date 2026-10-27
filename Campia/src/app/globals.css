@@ -565,3 +565,7 @@ a.sponsor:hover { outline: 2px solid var(--accent); }
 .rank-row a { color: inherit; }
 .rank-pos { width: 28px; flex: none; color: var(--muted); font-weight: 800; }
 .rank-total { font-size: 18px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.athlete-avatar.sm { width: 36px; height: 36px; font-size: 15px; }
+.join-free summary { list-style: none; display: inline-flex; }
+.join-free summary::-webkit-details-marker { display: none; }
+.join-free[open] summary { display: none; }
