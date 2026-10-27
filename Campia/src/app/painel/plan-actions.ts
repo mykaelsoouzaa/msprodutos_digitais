@@ -9,6 +9,7 @@ import { extendPaidUntil, isProActive, proPriceCents } from '@/lib/plan';
 import { myPlan } from '@/lib/plan-server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
+import { attributeReferral, rewardReferrer } from '@/lib/referral-server';
 
 const go = (k: 'ok' | 'erro', msg: string): never => redirect(`/painel/plano?${k}=${encodeURIComponent(msg)}`);
 
@@ -25,11 +26,13 @@ export async function subscribePro(formData: FormData) {
   if (current?.status === 'ativo' && current.source === 'asaas' && current.asaas_subscription_id) go('erro', 'Você já tem o Pro ativo');
   if (current?.status === 'pendente' && current.invoice_url) redirect(current.invoice_url);
 
+  if (!current) await attributeReferral(user!.id);
   const admin = createAdminClient();
   const now = new Date().toISOString();
   if (paymentProvider() !== 'asaas') {
     // Modo de teste: libera o Pro na hora, por um mês.
     await admin.from('plans').upsert({ owner_id: user!.id, status: 'ativo', source: 'asaas', paid_until: extendPaidUntil(current?.paid_until ?? null, now.slice(0, 10)), updated_at: now });
+    await rewardReferrer(user!.id);
     revalidatePath('/painel');
     go('ok', 'Pro ativado (modo de teste, sem cobrança)');
   }

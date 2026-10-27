@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.3.1';
+export const APP_VERSION = '2.4.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,15 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.4.0',
+    date: '2026-10-27',
+    title: 'Indique uma arena',
+    items: [
+      "Em Plano Pro, cada organizador tem um link de indicação para mandar a outras arenas",
+      "Quando a arena indicada assina o Pro, quem indicou ganha 1 mês de Pro de presente, quantas vezes indicar",
+    ],
+  },
   {
     version: '2.3.1',
     date: '2026-10-27',

@@ -13,6 +13,7 @@ import { siteUrl } from '@/lib/env';
 import { UFS, slugify } from '@/lib/format';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
+import { attributeReferral } from '@/lib/referral-server';
 
 const fail = (path: string, msg: string): never => redirect(`${path}${path.includes('?') ? '&' : '?'}erro=${encodeURIComponent(msg)}`);
 
@@ -66,6 +67,10 @@ export async function createChampionship(formData: FormData) {
   const { data: source } = f.from
     ? await supabase.from('championships').select('id, name, rules').eq('id', f.from).eq('owner_id', user.id).maybeSingle<{ id: string; name: string; rules: Record<string, unknown> }>()
     : { data: null };
+
+  // Primeiro campeonato de quem chegou por indicação: registra quem indicou.
+  const { count: owned } = await supabase.from('championships').select('id', { count: 'exact', head: true }).eq('owner_id', user.id);
+  if (!owned) await attributeReferral(user.id);
 
   const schedule = { start: f.start, times: f.times, fields: f.fields };
   const plan = buildPlan({ format: f.format, teamCount: f.teams, schedule });

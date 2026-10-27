@@ -8,6 +8,10 @@ import { PRO_FEATURES, isProActive, proFeePercent, proPriceCents } from '@/lib/p
 import { myPlan } from '@/lib/plan-server';
 import { createClient } from '@/lib/supabase/server';
 import { cancelPro, subscribePro } from '../plan-actions';
+import CopyButton from '@/components/CopyButton';
+import { siteUrl } from '@/lib/env';
+import { waLink } from '@/lib/format';
+import { ensureReferralCode } from '@/lib/referral-server';
 
 export const metadata: Metadata = { title: 'Plano Pro' };
 export const dynamic = 'force-dynamic';
@@ -21,6 +25,10 @@ export default async function Plano({ searchParams }: { searchParams: Promise<{ 
   const plan = user ? await myPlan(supabase, user.id) : null;
   const pro = isProActive(plan);
   const price = brl(proPriceCents());
+  const code = user ? await ensureReferralCode(user.id) : null;
+  const refLink = code ? `${siteUrl()}/para-arenas?indicacao=${code}` : '';
+  const { data: refs } = user ? await supabase.from('referrals').select('rewarded_at').eq('referrer_id', user.id).returns<Array<{ rewarded_at: string | null }>>() : { data: [] };
+  const earned = (refs ?? []).filter(r => r.rewarded_at).length;
 
   return (
     <div className="narrow">
@@ -67,6 +75,18 @@ export default async function Plano({ searchParams }: { searchParams: Promise<{ 
           </form>
         )}
       </section>
+      {code && (
+        <section className="card" id="indique" style={{ marginTop: 16 }}>
+          <b>🎁 Indique uma arena e ganhe 1 mês de Pro</b>
+          <p className="sub" style={{ margin: '4px 0 10px' }}>Mande seu link para outra arena ou organizador. Quando ela assinar o Pro, você ganha 1 mês de Pro de presente, quantas vezes indicar.</p>
+          <div className="copybox">{refLink}</div>
+          <div className="actions">
+            <CopyButton text={refLink} label="Copiar link" />
+            <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `Uso a Campia para organizar os campeonatos: inscrição com PIX, tabela automática e placar ao vivo. Dá uma olhada: ${refLink}`)}>Mandar no WhatsApp</a>
+          </div>
+          <p className="sub small" style={{ margin: '10px 0 0' }}>{(refs ?? []).length ? `${(refs ?? []).length} indicada${(refs ?? []).length > 1 ? 's' : ''} · ${earned} mês${earned === 1 ? '' : 'es'} ganho${earned === 1 ? '' : 's'}` : 'Nenhuma indicação ainda.'}</p>
+        </section>
+      )}
       <p className="sub small" style={{ textAlign: 'center', marginTop: 16 }}>Dúvidas? <a href="mailto:contato@campia.app.br">contato@campia.app.br</a></p>
     </div>
   );
