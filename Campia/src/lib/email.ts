@@ -4,7 +4,7 @@
 export const escapeHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-export async function sendEmail(msg: { to: string; name?: string; subject: string; html: string }): Promise<'ok' | 'skipped' | 'error'> {
+export async function sendEmail(msg: { to: string; name?: string; subject: string; html: string }, opts: { log?: boolean } = {}): Promise<'ok' | 'skipped' | 'error'> {
   const key = process.env.BREVO_API_KEY;
   if (!key) return 'skipped';
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -19,7 +19,12 @@ export async function sendEmail(msg: { to: string; name?: string; subject: strin
     cache: 'no-store',
   }).catch(() => null);
   if (!res?.ok) {
-    console.error('Brevo recusou o e-mail', res?.status, await res?.text().catch(() => ''));
+    const detail = `Brevo respondeu ${res?.status ?? 'sem resposta'}: ${(await res?.text().catch(() => '')) ?? ''}`.slice(0, 300);
+    console.error('Brevo recusou o e-mail', detail);
+    if (opts.log !== false) {
+      const { logEvent } = await import('./monitor');
+      await logEvent('email', detail, { alert: false });
+    }
     return 'error';
   }
   return 'ok';

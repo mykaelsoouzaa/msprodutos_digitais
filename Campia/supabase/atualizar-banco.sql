@@ -1,5 +1,5 @@
 -- =============================================================================
--- Campia · atualizar o banco até a versão 2.0.0
+-- Campia · atualizar o banco até a versão 2.3.0
 --
 -- Pode rodar quantas vezes quiser: cada parte só cria o que ainda não existe.
 -- Use no Supabase › SQL Editor quando o banco já tem a primeira migração (init).
@@ -496,4 +496,23 @@ grant execute on function public.pro_owner(uuid) to anon, authenticated;
 -- Taxa da Campia gravada em cada inscrição (o Pro paga menos; muda se o plano mudar depois).
 alter table public.payments add column if not exists fee_percent numeric(7, 4) check (fee_percent between 0 and 100);
 
-select 'Banco da Campia atualizado até a versão 2.0.0' as resultado;
+-- 2.3.0 · Saúde do sistema ----------------------------------------------
+-- Saúde do sistema: registro de falhas (PIX, webhook, agendador, e-mail) e último sinal de vida de cada parte.
+-- Só o servidor (service role) lê e grava: nenhuma política de acesso para usuários.
+create table if not exists public.system_events (
+  id          bigint generated always as identity primary key,
+  kind        text not null check (char_length(kind) between 1 and 30),
+  message     text not null default '' check (char_length(message) <= 500),
+  created_at  timestamptz not null default now()
+);
+create index if not exists system_events_kind_idx on public.system_events (kind, created_at desc);
+alter table public.system_events enable row level security;
+
+create table if not exists public.system_status (
+  key   text primary key check (char_length(key) <= 60),
+  at    timestamptz not null default now(),
+  info  text not null default '' check (char_length(info) <= 300)
+);
+alter table public.system_status enable row level security;
+
+select 'Banco da Campia atualizado até a versão 2.3.0' as resultado;

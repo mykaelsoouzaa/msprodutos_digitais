@@ -9,6 +9,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { grantCourtesy, togglePayoutDone } from './actions';
 import { type PlanRow, isProActive, proPriceCents } from '@/lib/plan';
+import { healthChecks } from '@/lib/health';
+import { paymentProvider } from '@/lib/env';
 
 export const metadata: Metadata = { title: 'Admin', robots: { index: false, follow: false } };
 export const dynamic = 'force-dynamic';
@@ -29,7 +31,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
 
   // Visão de toda a plataforma: só pelo servidor, com a service role.
   const db = createAdminClient();
-  const [{ data: pays }, { data: champs }, { count: arenas }, { data: payouts }, users, { data: plans }] = await Promise.all([
+  const [{ data: pays }, { data: champs }, { count: arenas }, { data: payouts }, users, { data: plans }, { data: status }, { data: events }] = await Promise.all([
     db.from('payments').select('id, amount_cents, status, payout, paid_at, created_at, manual_payout_done_at, fee_percent, teams(name), championships(id, name, owner_id)')
       .in('status', ['pago', 'pago_tarde']).order('paid_at', { ascending: false }).limit(500).returns<Pay[]>(),
     db.from('championships').select('id, name, slug, owner_id, visibility, created_at, fee_cents').order('created_at', { ascending: false }).limit(200).returns<Champ[]>(),
@@ -37,7 +39,13 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
     db.from('payout_accounts').select('owner_id').returns<Array<{ owner_id: string }>>(),
     db.auth.admin.listUsers({ perPage: 1000 }),
     db.from('plans').select('owner_id, status, source, paid_until, asaas_subscription_id, invoice_url').order('updated_at', { ascending: false }).returns<PlanRow[]>(),
+    db.from('system_status').select('key, at, info').returns<Array<{ key: string; at: string; info: string }>>(),
+    db.from('system_events').select('kind, message, created_at').order('created_at', { ascending: false }).limit(50)
+      .returns<Array<{ kind: string; message: string; created_at: string }>>(),
   ]);
+  const statusAt = (key: string) => status?.find(x => x.key === key)?.at ?? null;
+  const checks = healthChecks({ now: Date.now(), cronAt: statusAt('agendador'), webhookAt: statusAt('webhook'), events: events ?? [], env: process.env, provider: paymentProvider() });
+  const problems = checks.filter(c => c.state !== 'ok').length;
   const emailOf = new Map((users.data?.users ?? []).map((u: { id: string; email?: string }) => [u.id, u.email ?? ''] as [string, string]));
   const connected = new Set((payouts ?? []).map(p => p.owner_id));
   const fee = campiaFeePercent();
@@ -64,6 +72,28 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
         <div><h1>Admin da Campia</h1><p className="sub" style={{ margin: 0 }}>Visão de toda a plataforma. Só os e-mails em ADMIN_EMAILS veem esta página.</p></div>
       </div>
       <Flash ok={sp.ok} />
+
+      <h2 style={{ marginTop: 8 }}>Saúde {problems ? <span className="badge wait">{problems} ponto{problems > 1 ? 's' : ''} de atenção</span> : <span className="badge ok">tudo certo</span>}</h2>
+      <div className="health-grid">
+        {checks.map(c => (
+          <div key={c.key} className={`card health ${c.state}`}>
+            <b><span className="health-dot" />{c.label}</b>
+            <span className="sub small">{c.detail}</span>
+          </div>
+        ))}
+      </div>
+      {(events ?? []).length > 0 && (
+        <details className="card" style={{ marginTop: 10 }}>
+          <summary><b>Últimas falhas registradas ({events!.length})</b></summary>
+          {events!.map((e, i) => (
+            <div className="row" key={i}>
+              <div className="grow"><b style={{ fontWeight: 600 }}>{e.kind}</b><span>{e.message}</span></div>
+              <span className="sub small">{new Date(e.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+          ))}
+        </details>
+      )}
+      <p className="sub small" style={{ marginTop: 8 }}>Quando algo falha, os e-mails de ADMIN_EMAILS recebem um alerta (no máximo um a cada 30 min por tipo).</p>
 
       <div className="stats admin-stats">
         <div className="stat"><b className="money">{brl(gross)}</b><span>inscrições pagas ({paid.length})</span></div>

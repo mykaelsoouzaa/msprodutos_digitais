@@ -21,3 +21,15 @@ do $$ begin
 end $$;
 reset role;
 select 'TESTES DO PLANO PRO PASSARAM';
+-- Saúde: usuário comum não lê nem grava os registros internos.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000c701', false);
+do $$ begin
+  begin
+    insert into public.system_events (kind, message) values ('x', 'y');
+    raise exception 'usuário gravou evento interno';
+  exception when insufficient_privilege then null; end;
+  if (select count(*) from public.system_status) <> 0 then raise exception 'usuário leu status interno'; end if;
+end $$;
+reset role;
+select 'TESTES DE SAÚDE PASSARAM';

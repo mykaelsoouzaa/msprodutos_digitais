@@ -9,6 +9,7 @@ import { feeFor } from '@/lib/plan';
 import { ownerIsPro } from '@/lib/plan-server';
 import { type Coupon, type PriceTier, couponDiscount, currentPrice, normalizeCode, todayBr } from '@/lib/pricing';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { logEvent } from '@/lib/monitor';
 
 const RESERVE_MINUTES = 30;
 
@@ -109,9 +110,11 @@ export async function registerTeam(formData: FormData) {
       provider_id: charge.providerId, pix_payload: charge.payload, pix_image: charge.imageBase64,
       expires_at: new Date(Date.now() + RESERVE_MINUTES * 60_000).toISOString(),
     }).eq('id', payment!.id);
+    if (split && !charge.splitApplied) await logEvent('repasse', `Asaas recusou o split para a carteira ${split.walletId} (${champ!.name}); cobrança saiu sem repasse automático`);
   } catch (e) {
     await db.from('payments').update({ status: 'cancelado' }).eq('id', payment!.id);
     await db.from('teams').update({ reserved_until: new Date(0).toISOString() }).eq('id', teamId); // libera a vaga
+    await logEvent('pix', `${champ!.name}: ${e instanceof Error ? e.message : String(e)}`);
     fail(e instanceof Error ? `PIX: ${e.message}` : 'Falha ao gerar o PIX');
   }
 

@@ -603,3 +603,12 @@ a.sponsor:hover { outline: 2px solid var(--accent); }
 .onb-check { width: 24px; height: 24px; flex: none; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; font-size: 13px; font-weight: 800; }
 .onb-list li.done .onb-check { background: var(--accent); border-color: var(--accent); color: #06210f; }
 .onb-list li.next .onb-check { border-color: var(--accent); }
+
+/* ---------- saúde (admin) ---------- */
+.health-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.health { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; }
+.health b { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.health-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex: none; }
+.health.atencao .health-dot { background: var(--warn); }
+.health.erro { border-color: rgba(239, 68, 68, .5); }
+.health.erro .health-dot { background: var(--danger); }
