@@ -516,6 +516,8 @@ a.sponsor:hover { outline: 2px solid var(--accent); }
 .sponsor-admin { display: flex; align-items: center; gap: 10px; }
 .sponsor-admin .sponsor { height: 40px; width: 88px; min-width: 88px; max-width: 88px; padding: 4px 8px; flex: none; }
 .sponsor-admin .grow { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sponsor-admin .grow.wrap { white-space: normal; display: flex; flex-direction: column; gap: 4px; }
+.sponsor-admin .grow.wrap .badge { margin-left: 2px; }
 @media print { .sponsors { border-color: #ccc; background: none; } .sponsor.text { background: none; color: #000; border-color: #ccc; } }
 
 /* ---------- presença (check-in) ---------- */
@@ -533,3 +535,23 @@ a.sponsor:hover { outline: 2px solid var(--accent); }
 .checkin-p b { color: var(--muted); }
 .checkin-p:has(input:checked) { border-color: var(--accent); background: rgba(34, 197, 94, .1); }
 .checkin-p.out:has(input:checked) { border-color: var(--danger); background: rgba(239, 68, 68, .1); }
+
+/* ---------- perfil do atleta ---------- */
+.athlete-hero { display: flex; gap: 16px; align-items: flex-start; margin: 8px 0 4px; }
+.athlete-avatar { width: 76px; height: 76px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 26px; font-weight: 800; color: #06210f; background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+.athlete-stats { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 480px) { .athlete-stats { grid-template-columns: repeat(2, 1fr); } }
+.athlete-entry header { display: flex; align-items: center; gap: 10px; }
+.athlete-entry header .grow { display: flex; flex-direction: column; min-width: 0; }
+.athlete-entry header a { text-decoration: none; }
+.athlete-entry header .sub { display: inline-flex; align-items: center; gap: 4px; }
+.athlete-line { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; color: var(--muted); font-size: 14px; align-items: center; }
+.athlete-line b { color: var(--text); }
+.athlete-awards { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.roster-team { margin: 0; }
+.roster-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.roster-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.roster-row .grow { min-width: 0; }
+.roster-row .num { width: 26px; color: var(--muted); font-weight: 700; text-align: right; flex: none; }
+.roster-row a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.claim-btn { font-size: 12px; padding: 5px 10px; }

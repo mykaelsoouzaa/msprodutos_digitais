@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.27.0';
+export const APP_VERSION = '1.28.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,17 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.28.0',
+    date: '2026-10-27',
+    title: 'Perfil do atleta',
+    items: [
+      "Cada atleta pode ter sua página com gols, jogos, títulos e prêmios de todos os campeonatos na Campia",
+      "Nova aba Times na página do campeonato, com o elenco de cada time",
+      "O atleta toca em Sou eu no próprio nome e o capitão confirma em Meus times (capitão que se marca entra direto)",
+      "Perfil pronto para compartilhar no WhatsApp",
+    ],
+  },
   {
     version: '1.27.0',
     date: '2026-10-27',

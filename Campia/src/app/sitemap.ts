@@ -24,14 +24,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-    const [{ data: champs }, { data: arenas }] = await Promise.all([
+    const [{ data: champs }, { data: arenas }, { data: athletes }] = await Promise.all([
       db.from('championships').select('slug, created_at').eq('visibility', 'publico').order('created_at', { ascending: false }).limit(5000),
       db.from('arenas').select('slug, created_at').limit(5000),
+      db.from('athletes').select('handle, created_at').limit(5000),
     ]);
     return [
       ...fixed,
       ...(champs ?? []).map(c => ({ url: `${base}/c/${c.slug}`, lastModified: c.created_at, changeFrequency: 'daily' as const, priority: 0.7 })),
       ...(arenas ?? []).map(a => ({ url: `${base}/arena/${a.slug}`, lastModified: a.created_at, changeFrequency: 'weekly' as const, priority: 0.6 })),
+      ...(athletes ?? []).map(a => ({ url: `${base}/atleta/${a.handle}`, lastModified: a.created_at, changeFrequency: 'weekly' as const, priority: 0.4 })),
     ];
   } catch {
     return fixed;

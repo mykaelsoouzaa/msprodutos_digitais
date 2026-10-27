@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [{
       userAgent: '*',
       allow: '/',
-      disallow: ['/painel', '/admin', '/meus-times', '/pagamento', '/entrar', '/auth', '/api', '/offline', '/c/*/imprimir', '/c/*/arte', '/c/*/craque'],
+      disallow: ['/painel', '/admin', '/meus-times', '/pagamento', '/entrar', '/auth', '/api', '/offline', '/c/*/imprimir', '/c/*/arte', '/c/*/craque', '/atleta$'],
     }],
     sitemap: `${siteUrl()}/sitemap.xml`,
     host: siteUrl(),

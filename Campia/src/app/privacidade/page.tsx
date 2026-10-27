@@ -18,6 +18,7 @@ export default function Privacidade() {
       <ul>
         <li><b>Organizadores e ajudantes:</b> e-mail de acesso; dados da página da arena (nome, logo, endereço, WhatsApp e Instagram, se informados); Wallet ID do Asaas, se o repasse automático for ligado.</li>
         <li><b>Capitães:</b> nome, WhatsApp e e-mail. O CPF ou CNPJ é enviado direto ao Asaas para gerar o PIX e <b>não é guardado pela Campia</b>.</li>
+        <li><b>Perfil de atleta (opcional):</b> nome, cidade e texto que você mesmo preencher, e os campeonatos que você ligar ao perfil. Essa página é pública; você pode tirar campeonatos ou apagar o perfil quando quiser.</li>
         <li><b>Lista de espera:</b> nome do time, do capitão, e-mail e WhatsApp, para avisar quando abrir vaga.</li>
         <li><b>Atletas:</b> nome, número da camisa, gols, cartões e outras estatísticas do campeonato.</li>
         <li><b>Pagamentos:</b> valor, situação e identificadores da cobrança no Asaas. A Campia não recebe dados bancários de quem paga.</li>

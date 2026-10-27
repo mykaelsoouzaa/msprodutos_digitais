@@ -9,13 +9,16 @@ import { FORMATS, sportLabel } from '@/lib/domain/sports';
 import { placeLabel } from '@/lib/format';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
+import { Flash } from '@/components/champ';
+import { decideClaim } from '../atleta/actions';
 
 export const metadata: Metadata = { title: 'Meus times' };
 export const dynamic = 'force-dynamic';
 
 const OUTCOME = { V: ['Vitória', 'ok'], E: ['Empate', 'open'], D: ['Derrota', 'wait'] } as const;
 
-export default async function MeusTimes() {
+export default async function MeusTimes({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
+  const sp = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const email = (user?.email ?? '').toLowerCase();
@@ -31,6 +34,15 @@ export default async function MeusTimes() {
   const { data: pending } = contacts?.length
     ? await admin.from('payments').select('id, team_id').in('team_id', contacts.map(c => c.team_id)).eq('status', 'pendente').returns<Array<{ id: string; team_id: string }>>()
     : { data: [] as Array<{ id: string; team_id: string }> };
+
+  // Pedidos "Sou eu" de atletas dos times deste capitão.
+  type Req = { player_id: string; team_id: string; user_id: string; players: { name: string } | null };
+  const { data: reqs } = contacts?.length
+    ? await admin.from('player_claims').select('player_id, team_id, user_id, players(name)').in('team_id', contacts.map(c => c.team_id)).eq('status', 'pendente').returns<Req[]>()
+    : { data: [] as Req[] };
+  const { data: reqAthletes } = reqs?.length
+    ? await admin.from('athletes').select('user_id, handle, name').in('user_id', reqs.map(r => r.user_id)).returns<Array<{ user_id: string; handle: string; name: string }>>()
+    : { data: [] as Array<{ user_id: string; handle: string; name: string }> };
 
   const cards = (contacts ?? []).flatMap(c => {
     const d = loaded.find(x => x.champ.id === c.championship_id);
@@ -48,8 +60,33 @@ export default async function MeusTimes() {
           <h1>Meus times</h1>
           <p className="sub" style={{ margin: 0 }}>Times inscritos com o e-mail {email}.</p>
         </div>
-        <Link href="/campeonatos" className="btn ghost">Procurar campeonatos</Link>
+        <div className="actions" style={{ marginTop: 0 }}>
+          <Link href="/atleta" className="btn ghost">Meu perfil de atleta</Link>
+          <Link href="/campeonatos" className="btn ghost">Procurar campeonatos</Link>
+        </div>
       </div>
+      <Flash ok={sp.ok} erro={sp.erro} />
+      {(reqs ?? []).length > 0 && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <b>Atletas pedindo para ligar o perfil</b>
+          <p className="sub" style={{ margin: '4px 0 10px' }}>Confirme só se for mesmo o atleta do seu time: os gols e títulos vão para o perfil dessa pessoa.</p>
+          <div className="stack">
+            {reqs!.map(r => {
+              const a = reqAthletes?.find(x => x.user_id === r.user_id);
+              const team = loaded.flatMap(d => d.teams).find(t => t.id === r.team_id);
+              return (
+                <form key={r.player_id} action={decideClaim} className="sponsor-admin">
+                  <input type="hidden" name="player" value={r.player_id} />
+                  <input type="hidden" name="back" value="/meus-times" />
+                  <span className="grow"><b>{r.players?.name ?? 'Atleta'}</b> <span className="sub small">· {team?.name} · pedido por {a ? <Link href={`/atleta/${a.handle}`} target="_blank">{a.name}</Link> : 'um usuário'}</span></span>
+                  <button name="decision" value="recusar" className="btn ghost sm">Recusar</button>
+                  <button name="decision" value="aprovar" className="btn sm">Aprovar</button>
+                </form>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {cards.length ? (
         <div className="grid-cards wide">

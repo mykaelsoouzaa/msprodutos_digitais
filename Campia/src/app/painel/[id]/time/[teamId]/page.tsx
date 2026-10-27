@@ -9,13 +9,14 @@ import { sportRules } from '@/lib/domain/sports';
 import { createClient } from '@/lib/supabase/server';
 import { cancelRegistration } from '../../../cancel-actions';
 import { saveTeam } from '../../../edit-actions';
+import { decideClaim } from '@/app/atleta/actions';
 
 export const metadata: Metadata = { title: 'Editar time' };
 export const dynamic = 'force-dynamic';
 
 export default async function EditTeam({ params, searchParams }: {
   params: Promise<{ id: string; teamId: string }>;
-  searchParams: Promise<{ erro?: string }>;
+  searchParams: Promise<{ erro?: string; ok?: string }>;
 }) {
   const { id, teamId } = await params;
   const sp = await searchParams;
@@ -31,6 +32,12 @@ export default async function EditTeam({ params, searchParams }: {
   const { data: pay } = open ? { data: null } : await supabase.from('payments').select('*').eq('team_id', team.id).eq('status', 'pago')
     .order('paid_at', { ascending: false }).limit(1).maybeSingle<PaymentRow>();
   const played = data.games.some(g => isDecided(g) && (g.homeId === team.id || g.awayId === team.id));
+  const { data: claims } = await supabase.from('player_claims').select('player_id, user_id, status').eq('team_id', team.id)
+    .returns<Array<{ player_id: string; user_id: string; status: string }>>();
+  const { data: claimers } = claims?.length
+    ? await supabase.from('athletes').select('user_id, handle, name').in('user_id', claims.map(c => c.user_id)).returns<Array<{ user_id: string; handle: string; name: string }>>()
+    : { data: [] as Array<{ user_id: string; handle: string; name: string }> };
+  const back = `/painel/${id}/time/${teamId}`;
   const scored = (pid: string) => data.goals.some(g => g.playerId === pid) || data.cards.some(c => c.playerId === pid);
 
   return (
@@ -43,7 +50,7 @@ export default async function EditTeam({ params, searchParams }: {
       <p className="sub">{open
         ? 'Use para times que pagaram por fora (dinheiro, transferência) ou cortesias. A vaga fica confirmada como paga.'
         : 'Corrija o nome, os dados do capitão e a lista de atletas.'}</p>
-      <Flash erro={sp.erro} />
+      <Flash erro={sp.erro} ok={sp.ok} />
 
       <form action={saveTeam} className="card">
         <input type="hidden" name="championship" value={id} />
@@ -81,6 +88,32 @@ export default async function EditTeam({ params, searchParams }: {
 
         <div style={{ marginTop: 18 }}><button className="btn block">{open ? 'Inscrever time' : 'Salvar alterações'}</button></div>
       </form>
+
+      {(claims ?? []).length > 0 && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <b>Perfis de atleta ligados</b>
+          <p className="sub" style={{ margin: '4px 0 10px' }}>Atletas que tocaram em “Sou eu”. O capitão também pode aprovar pelo Meus times.</p>
+          <div className="stack">
+            {claims!.map(c => {
+              const a = claimers?.find(x => x.user_id === c.user_id);
+              const p = roster.find(x => x.id === c.player_id);
+              return (
+                <form key={c.player_id} action={decideClaim} className="sponsor-admin">
+                  <input type="hidden" name="player" value={c.player_id} />
+                  <input type="hidden" name="back" value={back} />
+                  <span className="grow"><b>{p?.name}</b> <span className="sub small">· {a ? <Link href={`/atleta/${a.handle}`} target="_blank">{a.name}</Link> : 'usuário'}</span></span>
+                  {c.status === 'pendente' ? (
+                    <>
+                      <button name="decision" value="recusar" className="btn ghost sm">Recusar</button>
+                      <button name="decision" value="aprovar" className="btn sm">Aprovar</button>
+                    </>
+                  ) : <button name="decision" value="recusar" className="btn ghost sm">Desligar</button>}
+                </form>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {!open && (
         <form action={cancelRegistration} className="card danger-zone" style={{ marginTop: 16 }}>

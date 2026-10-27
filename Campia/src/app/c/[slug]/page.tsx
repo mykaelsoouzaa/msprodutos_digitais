@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { Discipline, Flash, GameRow, GamesList, Scorers, TableTab, Tabs } from '@/components/champ';
 import AutoRefresh from '@/components/AutoRefresh';
 import VotingTab from '@/components/VotingTab';
+import TeamsTab from '@/components/TeamsTab';
 import ViewBeacon from '@/components/ViewBeacon';
 import Sponsors from '@/components/Sponsors';
 import { SPONSOR_SELECT, type Sponsor } from '@/lib/sponsors';
@@ -51,7 +52,7 @@ export default async function Publico({ params, searchParams }: {
   const { champ, teams, games, goals, players, cards } = data;
   const { data: arena } = await supabase.from('arenas').select('*').eq('owner_id', data.row.owner_id).maybeSingle<ArenaRow>();
   const rules = sportRules(champ.sport);
-  const tabs: Array<[string, string]> = [['jogos', 'Jogos'], ['tabela', champ.format === 'mata' ? 'Chave' : 'Tabela'], ...(rules.scorers ? [['artilharia', rules.unit === 'pontos' ? 'Cestinhas' : 'Artilharia'] as [string, string]] : []), ...(rules.cards ? [['cartoes', 'Cartões'] as [string, string]] : []), ...(champ.voting && champ.voting !== 'fechada' ? [['votacao', champ.voting === 'aberta' ? '🗳 Votação' : '🏅 Craques'] as [string, string]] : [])];
+  const tabs: Array<[string, string]> = [['jogos', 'Jogos'], ['tabela', champ.format === 'mata' ? 'Chave' : 'Tabela'], ...(rules.scorers ? [['artilharia', rules.unit === 'pontos' ? 'Cestinhas' : 'Artilharia'] as [string, string]] : []), ...(rules.cards ? [['cartoes', 'Cartões'] as [string, string]] : []), ['times', 'Times'], ...(champ.voting && champ.voting !== 'fechada' ? [['votacao', champ.voting === 'aberta' ? '🗳 Votação' : '🏅 Craques'] as [string, string]] : [])];
   const tab = tabs.some(t => t[0] === sp.aba) ? sp.aba! : 'jogos';
   const open = teams.filter(t => t.status !== 'inscrita').length;
   const started = games.some(isDecided);
@@ -123,6 +124,7 @@ export default async function Publico({ params, searchParams }: {
           {tab === 'jogos' && <GamesList games={games} teams={teams} />}
           {tab === 'tabela' && <TableTab champ={champ} games={games} teams={teams} />}
           {tab === 'artilharia' && <Scorers champ={champ} games={games} goals={goals} players={players} teams={teams} />}
+          {tab === 'times' && <TeamsTab champ={champ} teams={teams} players={players} />}
           {tab === 'votacao' && <VotingTab champ={champ} players={players} teams={teams} />}
           {tab === 'cartoes' && <Discipline champ={champ} games={games} cards={cards} players={players} teams={teams} />}
         </div>
