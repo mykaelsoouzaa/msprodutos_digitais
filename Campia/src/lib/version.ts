@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.7.0';
+export const APP_VERSION = '2.7.1';
 
 export interface Release {
   version: string;
@@ -11,6 +11,15 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.7.1',
+    date: '2026-10-27',
+    title: 'Acesso do admin',
+    items: [
+      "Quem é admin da Campia vê o atalho Admin no menu da conta",
+      "Para os outros, a página do admin simplesmente não existe: não pede login nem código",
+    ],
+  },
   {
     version: '2.7.0',
     date: '2026-10-27',

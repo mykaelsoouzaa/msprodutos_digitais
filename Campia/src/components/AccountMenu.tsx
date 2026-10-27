@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { signOut } from '@/app/entrar/actions';
 import { initialsOf } from '@/lib/account';
 
-type Me = { logged: false } | { logged: true; name: string; email: string };
+type Me = { logged: false } | { logged: true; name: string; email: string; admin?: boolean };
 
 /** Topo do site: "Entrar" para quem não está logado; nome, e-mail e "Sair" para quem está. */
 export default function AccountMenu() {
@@ -36,6 +36,7 @@ export default function AccountMenu() {
         <Link href="/meus-times">Meus times</Link>
         <Link href="/atleta">Meu perfil de atleta</Link>
         <Link href="/conta">Minha conta e segurança</Link>
+        {me.admin && <Link href="/admin" className="acct-admin">⚙️ Admin da Campia</Link>}
         <form action={signOut}><button className="acct-out">Sair</button></form>
       </div>
     </details>
