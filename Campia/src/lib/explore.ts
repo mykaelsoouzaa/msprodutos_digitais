@@ -34,10 +34,10 @@ export const likeTerm = (s: string) => `%${s.trim().slice(0, 60).replace(/[%_\\,
 
 /** Campos que as listagens leem do banco (inclui times e jogos embutidos). */
 export const LISTING_SELECT =
-  'id, slug, name, sport, format, fee_cents, location, city, state, online, schedule, owner_id, teams(status), games(home_score)';
+  'id, slug, name, sport, format, fee_cents, price_tiers, location, city, state, online, schedule, owner_id, teams(status), games(home_score)';
 
 export interface ListingRow {
-  id: string; slug: string; name: string; sport: string; format: 'pontos' | 'grupos' | 'mata'; fee_cents: number;
+  id: string; slug: string; name: string; sport: string; format: 'pontos' | 'grupos' | 'mata'; fee_cents: number; price_tiers?: Array<{ until: string; cents: number }>;
   location: string; city: string; state: string; online: boolean; schedule: { start: string }; owner_id: string;
   teams: Array<{ status: string }>; games: Array<{ home_score: number | null }>;
 }

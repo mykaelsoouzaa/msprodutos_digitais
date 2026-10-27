@@ -8,13 +8,15 @@ import { discipline } from '@/lib/domain/discipline';
 import { sportLabel, sportRules } from '@/lib/domain/sports';
 import { createClient } from '@/lib/supabase/server';
 import { clearResult, saveResult } from '../../../actions';
+import { scoreLive, startLive, stopLive } from '../../../live-actions';
+import { saveCheckin } from '../../../checkin-actions';
 
 export const metadata: Metadata = { title: 'Resultado' };
 export const dynamic = 'force-dynamic';
 
 export default async function Jogo({ params, searchParams }: {
   params: Promise<{ id: string; gameId: string }>;
-  searchParams: Promise<{ erro?: string }>;
+  searchParams: Promise<{ erro?: string; ok?: string }>;
 }) {
   const { id, gameId } = await params;
   const sp = await searchParams;
@@ -32,17 +34,75 @@ export default async function Jogo({ params, searchParams }: {
   const cardOf = (pid: string) => data.cards.find(x => x.gameId === g.id && x.playerId === pid);
   const out = discipline(data.games, data.cards, data.players, data.teams, data.champ.rules.yellowLimit).suspended.get(g.id) ?? new Set<string>();
   const suspendedHere = data.players.filter(p => out.has(p.id));
+  const { data: checkRows } = await supabase.from('checkins').select('player_id').eq('game_id', g.id).returns<Array<{ player_id: string }>>();
+  const present = new Set((checkRows ?? []).map(r => r.player_id));
+  const presentIn = (teamId: string) => roster(teamId).filter(p => present.has(p.id)).length;
 
   return (
     <div className="narrow">
       <Link href={`/painel/${id}?aba=jogos`} className="back-link">‹ {data.champ.name}</Link>
       <h1>{home.name} × {away.name}</h1>
       <p className="sub">{g.stage === 'ko' ? g.name : `${g.group ? `Grupo ${g.group} · ` : ''}${g.label}`}</p>
-      <Flash erro={sp.erro} />
+      <Flash erro={sp.erro} ok={sp.ok} />
 
       {suspendedHere.length > 0 && (
         <div className="alert err">🟥 Suspensos neste jogo: {suspendedHere.map(p => `${p.name} (${data.teams.find(t => t.id === p.teamId)?.short})`).join(', ')}</div>
       )}
+      <section id="ao-vivo" className="card live-card">
+        <div className="live-head">
+          <b>{g.live ? <><span className="live-dot" /> Ao vivo</> : 'Placar ao vivo'}</b>
+          {g.live?.since && <span className="sub small">começou às {new Date(g.live.since).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}</span>}
+        </div>
+        {g.live ? (
+          <>
+            <div className="live-board">
+              {(['home', 'away'] as const).map(side => (
+                <div className="live-side" key={side}>
+                  <span className="live-name">{side === 'home' ? home.name : away.name}</span>
+                  <span className="live-score">{g.live![side]}</span>
+                  <div className="live-btns">
+                    <form action={scoreLive}><input type="hidden" name="championship" value={id} /><input type="hidden" name="game" value={g.id} /><input type="hidden" name="side" value={side} /><input type="hidden" name="delta" value="-1" /><button className="btn ghost" aria-label={`Tirar 1 de ${side === 'home' ? home.name : away.name}`}>−1</button></form>
+                    <form action={scoreLive}><input type="hidden" name="championship" value={id} /><input type="hidden" name="game" value={g.id} /><input type="hidden" name="side" value={side} /><input type="hidden" name="delta" value="1" /><button className="btn" aria-label={`Somar 1 para ${side === 'home' ? home.name : away.name}`}>+1</button></form>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="sub small" style={{ margin: '10px 0 0' }}>A página do campeonato mostra esse placar em tempo real. Ao final, confira o placar abaixo e clique em <b>Salvar resultado</b>.</p>
+            <form action={stopLive} className="actions"><input type="hidden" name="championship" value={id} /><input type="hidden" name="game" value={g.id} /><button className="btn ghost sm">Parar o ao vivo sem salvar</button></form>
+          </>
+        ) : g.homeScore === null && !g.wo ? (
+          <>
+            <p className="sub" style={{ margin: '4px 0 10px' }}>Vá atualizando o placar durante o jogo pelo celular: quem estiver na página do campeonato acompanha em tempo real.</p>
+            <form action={startLive}><input type="hidden" name="championship" value={id} /><input type="hidden" name="game" value={g.id} /><button className="btn">▶ Começar ao vivo</button></form>
+          </>
+        ) : <p className="sub" style={{ margin: '4px 0 0' }}>Jogo com resultado lançado.</p>}
+      </section>
+      <details id="presenca" className="card checkin" open={present.size === 0 && g.homeScore === null && !g.wo}>
+        <summary>
+          <b>✅ Presença</b>
+          <span className="sub small">{present.size ? `${home.short} ${presentIn(home.id)} · ${away.short} ${presentIn(away.id)} presentes` : 'marque quem chegou'}</span>
+        </summary>
+        <form action={saveCheckin}>
+          <input type="hidden" name="championship" value={id} />
+          <input type="hidden" name="game" value={g.id} />
+          <p className="sub small" style={{ margin: '8px 0 4px' }}>Toque no nome de quem chegou. Ajuda a decidir W.O. e a conferir se só joga quem está inscrito.</p>
+          <div className="checkin-grid">
+            {[home, away].map(t => (
+              <div key={t.id}>
+                <div className="checkin-team">{t.name}</div>
+                {roster(t.id).length ? roster(t.id).map(p => (
+                  <label key={p.id} className={`checkin-p ${out.has(p.id) ? 'out' : ''}`}>
+                    <input type="checkbox" name={`in_${p.id}`} value="1" defaultChecked={present.has(p.id)} />
+                    <span>{p.number && <b>{p.number} </b>}{p.name}</span>
+                    {out.has(p.id) && <span className="badge wait">suspenso</span>}
+                  </label>
+                )) : <p className="sub small">Sem atletas cadastrados.</p>}
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 12 }}><button className="btn sm">Salvar presença</button></div>
+        </form>
+      </details>
       <form action={saveResult} className="card result-form">
         <input type="hidden" name="championship" value={id} />
         <input type="hidden" name="game" value={g.id} />
@@ -58,9 +118,9 @@ export default async function Jogo({ params, searchParams }: {
         </fieldset>
         <div className="if-played">
         <div className="scorebox" style={{ marginTop: 16 }}>
-          <div><input name="home" type="number" min={0} className="inp" defaultValue={g.homeScore ?? ''} aria-label={`Placar ${home.name}`} /><div className="nm">{home.name}</div></div>
+          <div><input name="home" type="number" min={0} className="inp" defaultValue={g.homeScore ?? g.live?.home ?? ''} aria-label={`Placar ${home.name}`} /><div className="nm">{home.name}</div></div>
           <b style={{ color: 'var(--muted)' }}>×</b>
-          <div><input name="away" type="number" min={0} className="inp" defaultValue={g.awayScore ?? ''} aria-label={`Placar ${away.name}`} /><div className="nm">{away.name}</div></div>
+          <div><input name="away" type="number" min={0} className="inp" defaultValue={g.awayScore ?? g.live?.away ?? ''} aria-label={`Placar ${away.name}`} /><div className="nm">{away.name}</div></div>
         </div>
         <p className="sub small" style={{ margin: '8px 0 0' }}>Placar em {rules.unit}.{rules.draws ? '' : ` ${sportLabel(data.champ.sport)} não tem empate.`}</p>
 

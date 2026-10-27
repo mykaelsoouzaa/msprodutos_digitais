@@ -8,6 +8,7 @@ import { UFS } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/campeonatos' },
   title: 'Campeonatos',
   description: 'Encontre campeonatos amadores com inscrições abertas perto de você: futebol, quadra, areia, raquete e e-sports.',
 };

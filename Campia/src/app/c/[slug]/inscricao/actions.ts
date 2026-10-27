@@ -4,8 +4,11 @@ import { z } from 'zod';
 import { paymentProvider } from '@/lib/env';
 import { normalizePhone, onlyDigits, parsePlayers, shortName, validCpfCnpj } from '@/lib/format';
 import { createPixCharge } from '@/lib/payments';
-import { organizerPercent } from '@/lib/payout';
+import { ownerIsPro } from '@/lib/plan-server';
+import { type Coupon, type PriceTier, normalizeCode, todayBr } from '@/lib/pricing';
+import { quote } from '@/lib/signup';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { logEvent } from '@/lib/monitor';
 
 const RESERVE_MINUTES = 30;
 
@@ -17,6 +20,7 @@ const Signup = z.object({
   phone: z.string().transform(s => normalizePhone(s)).refine(Boolean, 'WhatsApp com DDD inválido'),
   email: z.string().trim().toLowerCase().email('E-mail do capitão inválido').max(120),
   cpf: z.string().default(''),
+  coupon: z.string().default(''),
   players: z.string().max(4000).default(''),
   consent: z.literal('on', { errorMap: () => ({ message: 'É preciso aceitar os Termos de Uso e a Política de Privacidade' }) }),
 });
@@ -39,11 +43,26 @@ export async function registerTeam(formData: FormData) {
   if (needsCpf && !validCpfCnpj(f.cpf)) fail('CPF ou CNPJ inválido (exigido para gerar o PIX)');
 
   const db = createAdminClient();
-  const { data: champ } = await db.from('championships').select('id, name, fee_cents, owner_id').eq('slug', f.slug).maybeSingle();
+  const { data: champ } = await db.from('championships').select('id, name, fee_cents, owner_id, price_tiers').eq('slug', f.slug).maybeSingle();
   if (!champ) fail('Campeonato não encontrado');
 
   const { data: hasResults } = await db.from('games').select('id').eq('championship_id', champ!.id).not('home_score', 'is', null).limit(1);
   if (hasResults?.length) fail('As inscrições estão encerradas: o campeonato já começou');
+
+  // Preço de hoje (lote), cupom, taxa e repasse, validados antes de reservar a vaga.
+  const code = normalizeCode(f.coupon);
+  const [{ data: coupon }, { count: couponUses }, pro, { data: payout }] = await Promise.all([
+    code ? db.from('coupons').select('code, percent, amount_cents, max_uses').eq('championship_id', champ!.id).eq('code', code).maybeSingle<Coupon>() : Promise.resolve({ data: null }),
+    code ? db.from('payments').select('id', { count: 'exact', head: true }).eq('championship_id', champ!.id).eq('coupon_code', code).in('status', ['pago', 'pendente']) : Promise.resolve({ count: 0 }),
+    ownerIsPro(db, champ!.owner_id),
+    db.from('payout_accounts').select('asaas_wallet_id').eq('owner_id', champ!.owner_id).maybeSingle(),
+  ]);
+  const q = quote({
+    baseCents: champ!.fee_cents, tiers: champ!.price_tiers as PriceTier[], today: todayBr(), couponCode: f.coupon,
+    coupon: coupon ?? null, couponUses: couponUses ?? 0, pro, walletId: (payout?.asaas_wallet_id as string | undefined) ?? null,
+  });
+  if (!q.ok) fail(q.error);
+  const { amount, discount, fee, split } = q as Extract<typeof q, { ok: true }>;
 
   const { data: teamId, error: reserveError } = await db.rpc('reserve_slot', {
     p_championship: champ!.id, p_name: f.name, p_short: shortName(f.name, f.short), p_captain: f.captain,
@@ -58,23 +77,22 @@ export async function registerTeam(formData: FormData) {
   await db.from('players').insert(players.map(p => ({ championship_id: champ!.id, team_id: teamId, name: p.name, number: p.number })));
 
   // Inscrição grátis: confirma direto.
-  if (champ!.fee_cents === 0) {
+  if (amount === 0) {
+    // Cupom de 100%: registra o uso para contar no limite do cupom.
+    if (code) await db.from('payments').insert({ championship_id: champ!.id, team_id: teamId, amount_cents: 0, provider: 'mock', status: 'pago', paid_at: new Date().toISOString(), coupon_code: code, discount_cents: discount });
     await db.from('teams').update({ status: 'inscrita', paid: true, reserved_until: null }).eq('id', teamId);
     redirect(`/c/${f.slug}?ok=${encodeURIComponent(`${f.name} está inscrito!`)}`);
   }
 
   const { data: payment, error: payError } = await db.from('payments').insert({
-    championship_id: champ!.id, team_id: teamId, amount_cents: champ!.fee_cents, provider: paymentProvider(),
+    championship_id: champ!.id, team_id: teamId, amount_cents: amount, provider: paymentProvider(),
+    coupon_code: code || null, discount_cents: discount, fee_percent: fee,
   }).select('id').single();
   if (payError || !payment) fail('Não foi possível criar a cobrança');
 
-  // Repasse automático se o organizador cadastrou a conta Asaas dele.
-  const { data: payout } = await db.from('payout_accounts').select('asaas_wallet_id').eq('owner_id', champ!.owner_id).maybeSingle();
-  const split = payout?.asaas_wallet_id ? { walletId: payout.asaas_wallet_id as string, percent: organizerPercent() } : undefined;
-
   try {
     const charge = await createPixCharge({
-      paymentId: payment!.id, amountCents: champ!.fee_cents, description: `Inscrição ${f.name} · ${champ!.name}`,
+      paymentId: payment!.id, amountCents: amount, description: `Inscrição ${f.name} · ${champ!.name}`,
       payerName: f.captain, payerPhone: f.phone!, payerCpfCnpj: needsCpf ? onlyDigits(f.cpf) : undefined, split,
     });
     await db.from('payments').update({
@@ -83,9 +101,11 @@ export async function registerTeam(formData: FormData) {
       provider_id: charge.providerId, pix_payload: charge.payload, pix_image: charge.imageBase64,
       expires_at: new Date(Date.now() + RESERVE_MINUTES * 60_000).toISOString(),
     }).eq('id', payment!.id);
+    if (split && !charge.splitApplied) await logEvent('repasse', `Asaas recusou o split para a carteira ${split.walletId} (${champ!.name}); cobrança saiu sem repasse automático`);
   } catch (e) {
     await db.from('payments').update({ status: 'cancelado' }).eq('id', payment!.id);
     await db.from('teams').update({ reserved_until: new Date(0).toISOString() }).eq('id', teamId); // libera a vaga
+    await logEvent('pix', `${champ!.name}: ${e instanceof Error ? e.message : String(e)}`);
     fail(e instanceof Error ? `PIX: ${e.message}` : 'Falha ao gerar o PIX');
   }
 

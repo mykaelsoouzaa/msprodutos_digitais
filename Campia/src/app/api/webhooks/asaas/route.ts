@@ -1,7 +1,9 @@
 import { timingSafeEqual } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
-import { PAID_EVENTS } from '@/lib/payments/asaas';
+import { extendPaidUntil } from '@/lib/plan';
+import { webhookAction } from '@/lib/signup';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { beat, logEvent } from '@/lib/monitor';
 
 // Webhook da Asaas: confirma o pagamento e a vaga.
 // A Asaas envia o token configurado no cabeçalho `asaas-access-token` e pode repetir o mesmo evento,
@@ -17,14 +19,15 @@ export async function POST(request: NextRequest) {
     const motivo = !expected ? 'ASAAS_WEBHOOK_TOKEN não configurado na Vercel'
       : !got ? 'o Asaas não enviou token (webhook sem token de autenticação)'
       : 'token diferente do ASAAS_WEBHOOK_TOKEN da Vercel';
-    console.warn(`Webhook Asaas recusado: ${motivo} (recebido ${got.length} caracteres, esperado ${expected.length})`);
+    await logEvent('webhook', `Recusado (401): ${motivo}`);
     return NextResponse.json({ error: 'unauthorized', motivo, recebido: got.length, esperado: expected.length }, { status: 401 });
   }
 
   const body = await request.json().catch(() => null) as
-    | { id?: string; event?: string; payment?: { id?: string; externalReference?: string } }
+    | { id?: string; event?: string; payment?: { id?: string; externalReference?: string; subscription?: string; dueDate?: string } }
     | null;
   if (!body?.event || !body.payment?.id) return NextResponse.json({ ok: true });
+  await beat('webhook', body.event);
 
   const db = createAdminClient();
   if (body.id) {
@@ -32,13 +35,22 @@ export async function POST(request: NextRequest) {
     if (seen) return NextResponse.json({ ok: true, duplicate: true });
   }
 
-  if (PAID_EVENTS.has(body.event)) {
+  const action = webhookAction(body, new Date().toISOString().slice(0, 10));
+  if (action.type === 'plano') {
+    // Mensalidade do Plano Pro: estende a validade a partir do vencimento dessa cobrança.
+    const { data: plan } = await db.from('plans').select('owner_id, paid_until').eq('asaas_subscription_id', action.subscription).maybeSingle();
+    if (plan) {
+      const { error } = await db.from('plans').update({ status: 'ativo', paid_until: extendPaidUntil(plan.paid_until, action.dueDate), updated_at: new Date().toISOString() })
+        .eq('owner_id', plan.owner_id);
+      if (error) { await logEvent('webhook', `Mensalidade do Pro não registrada: ${error.message}`); return NextResponse.json({ error: 'retry' }, { status: 500 }); }
+    }
+  } else if (action.type === 'inscricao') {
     // Confere que o pagamento é nosso pelos dois lados: id da Asaas e externalReference.
-    const { data: p } = await db.from('payments').select('id').eq('provider', 'asaas').eq('provider_id', body.payment.id).maybeSingle();
-    if (p && p.id === body.payment.externalReference) {
+    const { data: p } = await db.from('payments').select('id').eq('provider', 'asaas').eq('provider_id', action.asaasId).maybeSingle();
+    if (p && p.id === action.reference) {
       const { error } = await db.rpc('confirm_payment', { p_payment: p.id });
       // Erro: responde 500 para a Asaas reenviar (confirm_payment é idempotente).
-      if (error) return NextResponse.json({ error: 'retry' }, { status: 500 });
+      if (error) { await logEvent('webhook', `Pagamento ${p.id} não confirmado: ${error.message}`); return NextResponse.json({ error: 'retry' }, { status: 500 }); }
     }
   }
   // Só registra o evento depois de processado, para que uma falha no meio seja reenviada.

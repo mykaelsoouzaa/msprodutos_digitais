@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user && (request.nextUrl.pathname.startsWith('/painel') || request.nextUrl.pathname.startsWith('/meus-times') || request.nextUrl.pathname.startsWith('/admin'))) {
+  if (!user && (request.nextUrl.pathname.startsWith('/painel') || request.nextUrl.pathname.startsWith('/meus-times') || request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname === '/atleta')) {
     const url = request.nextUrl.clone();
     url.pathname = '/entrar';
     url.searchParams.set('voltar', request.nextUrl.pathname);

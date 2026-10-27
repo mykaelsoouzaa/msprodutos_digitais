@@ -2,10 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Flash } from '@/components/champ';
+import ViewBeacon from '@/components/ViewBeacon';
 import SportIcon from '@/components/SportIcon';
 import { sportLabel, sportRules } from '@/lib/domain/sports';
 import { paymentProvider } from '@/lib/env';
 import { brl, placeLabel } from '@/lib/format';
+import { priceText } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase/server';
 import { registerTeam } from './actions';
 import { joinWaitlist } from './waitlist-actions';
@@ -20,19 +22,21 @@ export default async function Inscricao({ params, searchParams }: {
   const { slug } = await params;
   const sp = await searchParams;
   const supabase = await createClient();
-  const { data: champ } = await supabase.from('championships').select('id, name, sport, fee_cents, location, city, state, online').eq('slug', slug).maybeSingle();
+  const { data: champ } = await supabase.from('championships').select('id, owner_id, name, sport, fee_cents, price_tiers, location, city, state, online').eq('slug', slug).maybeSingle();
   if (!champ) notFound();
   const { count } = await supabase.from('teams').select('id', { count: 'exact', head: true }).eq('championship_id', champ.id).neq('status', 'inscrita');
   const { data: started } = await supabase.from('games').select('id').eq('championship_id', champ.id).not('home_score', 'is', null).limit(1);
   const rules = sportRules(champ.sport);
   const place = placeLabel({ online: champ.online, location: champ.location, city: champ.city, state: champ.state ?? '' });
   const needsCpf = paymentProvider() === 'asaas';
+  const { data: { user } } = await supabase.auth.getUser();
 
   return (
     <div className="narrow">
+      {user?.id !== champ.owner_id && <ViewBeacon slug={slug} page="inscricao" />}
       <Link href={`/c/${slug}`} className="back-link">‹ {champ.name}</Link>
       <h1>Inscrição de {rules.who === 'Dupla' ? 'dupla' : 'time'}</h1>
-      <p className="sub" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><SportIcon sport={champ.sport} size={16} plain />{sportLabel(champ.sport)} · {brl(champ.fee_cents)} · {count ?? 0} vaga{count === 1 ? '' : 's'} em aberto{place ? ` · ${place}` : ''}</p>
+      <p className="sub" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><SportIcon sport={champ.sport} size={16} plain />{sportLabel(champ.sport)} · {priceText(champ.fee_cents, champ.price_tiers, brl).long} · {count ?? 0} vaga{count === 1 ? '' : 's'} em aberto{place ? ` · ${place}` : ''}</p>
       <Flash erro={sp.erro} ok={sp.ok} />
       {started?.length ? <div className="card empty">As inscrições estão encerradas: o campeonato já começou.</div> : !count ? (
         sp.ok ? null : (
@@ -70,6 +74,8 @@ export default async function Inscricao({ params, searchParams }: {
           <input id="email" name="email" type="email" className="inp" required autoComplete="email" inputMode="email" placeholder="voce@exemplo.com" />
           <p className="sub small" style={{ margin: '6px 0 0' }}>Com esse e-mail você acompanha o time em <b>Meus times</b>: próximos jogos, resultados e posição.</p>
           {needsCpf && <><label htmlFor="cpf">CPF ou CNPJ do responsável (para o PIX)</label><input id="cpf" name="cpf" className="inp" inputMode="numeric" required /></>}
+          <label htmlFor="coupon">Cupom de desconto (se tiver)</label>
+          <input id="coupon" name="coupon" className="inp" maxLength={20} autoCapitalize="characters" placeholder="Ex.: PARCEIRO10" />
           <label htmlFor="players">{rules.who} (um por linha, com o número se quiser)</label>
           <textarea id="players" name="players" className="inp" required placeholder={'10 João\n7 Pedro\nCarlos'} />
           <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', color: 'var(--text)', fontSize: 13 }}>

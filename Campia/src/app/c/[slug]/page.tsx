@@ -2,6 +2,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Discipline, Flash, GameRow, GamesList, Scorers, TableTab, Tabs } from '@/components/champ';
+import AutoRefresh from '@/components/AutoRefresh';
+import VotingTab from '@/components/VotingTab';
+import TeamsTab from '@/components/TeamsTab';
+import FreeAgents from '@/components/FreeAgents';
+import ViewBeacon from '@/components/ViewBeacon';
+import Sponsors from '@/components/Sponsors';
+import { SPONSOR_SELECT, type Sponsor } from '@/lib/sponsors';
 import ReminderButton from '@/components/ReminderButton';
 import { type ArenaRow, initials } from '@/lib/arena';
 import { loadChampionship } from '@/lib/data';
@@ -10,6 +17,10 @@ import { FORMATS, sportLabel, sportRules } from '@/lib/domain/sports';
 import { champion as getChampion, isDecided, ordered } from '@/lib/domain/standings';
 import { siteUrl } from '@/lib/env';
 import { brl, placeLabel, waLink } from '@/lib/format';
+import { currentPrice, priceText, todayBr } from '@/lib/pricing';
+import { eventJsonLd, safeJson } from '@/lib/seo';
+import { withOrigin } from '@/lib/visits';
+import { ownerIsPro } from '@/lib/plan-server';
 import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -17,19 +28,22 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data } = await supabase.from('championships').select('name, sport, visibility').eq('slug', slug).maybeSingle();
+  const { data } = await supabase.from('championships').select('name, sport, visibility, city, state').eq('slug', slug).maybeSingle();
   if (!data) return { title: 'Campeonato' };
+  const where = [data.city, data.state].filter(Boolean).join(' - ');
+  const description = `${data.name}: campeonato de ${sportLabel(data.sport).toLowerCase()}${where ? ` em ${where}` : ''}. Jogos, tabela, artilharia e inscrição na Campia.`;
   return {
     title: data.name,
-    openGraph: { title: data.name, description: `${sportLabel(data.sport)}: jogos, tabela, inscrição e resultados na Campia.`, type: 'website' },
-    description: `${sportLabel(data.sport)}: jogos, tabela e artilharia ao vivo.`,
+    description,
+    alternates: { canonical: `/c/${slug}` },
+    openGraph: { title: data.name, description, type: 'website' },
     robots: data.visibility === 'publico' ? undefined : { index: false, follow: false },
   };
 }
 
 export default async function Publico({ params, searchParams }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ aba?: string; ok?: string }>;
+  searchParams: Promise<{ aba?: string; ok?: string; erro?: string }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -40,18 +54,31 @@ export default async function Publico({ params, searchParams }: {
   const { champ, teams, games, goals, players, cards } = data;
   const { data: arena } = await supabase.from('arenas').select('*').eq('owner_id', data.row.owner_id).maybeSingle<ArenaRow>();
   const rules = sportRules(champ.sport);
-  const tabs: Array<[string, string]> = [['jogos', 'Jogos'], ['tabela', champ.format === 'mata' ? 'Chave' : 'Tabela'], ...(rules.scorers ? [['artilharia', rules.unit === 'pontos' ? 'Cestinhas' : 'Artilharia'] as [string, string]] : []), ...(rules.cards ? [['cartoes', 'Cartões'] as [string, string]] : [])];
+  const tabs: Array<[string, string]> = [['jogos', 'Jogos'], ['tabela', champ.format === 'mata' ? 'Chave' : 'Tabela'], ...(rules.scorers ? [['artilharia', rules.unit === 'pontos' ? 'Cestinhas' : 'Artilharia'] as [string, string]] : []), ...(rules.cards ? [['cartoes', 'Cartões'] as [string, string]] : []), ['times', 'Times'], ...(champ.voting && champ.voting !== 'fechada' ? [['votacao', champ.voting === 'aberta' ? '🗳 Votação' : '🏅 Craques'] as [string, string]] : [])];
   const tab = tabs.some(t => t[0] === sp.aba) ? sp.aba! : 'jogos';
   const open = teams.filter(t => t.status !== 'inscrita').length;
   const started = games.some(isDecided);
   const url = `${siteUrl()}/c/${champ.slug}`;
   const today = new Date().toISOString().slice(0, 10);
   const champion = getChampion(champ, games, teams);
-  const upcoming = ordered(games).filter(g => !isDecided(g) && g.homeId && g.awayId && g.date >= today).slice(0, 4);
+  const liveNow = ordered(games).filter(g => g.live && !isDecided(g));
+  const upcoming = ordered(games).filter(g => !isDecided(g) && !g.live && g.homeId && g.awayId && g.date >= today).slice(0, 4);
 
   const signupOpen = open > 0 && !started;
+  const pro = await ownerIsPro(supabase, data.row.owner_id);
+  const { data: sponsors } = !pro ? { data: [] as Sponsor[] } : await supabase.from('sponsors').select(SPONSOR_SELECT).eq('championship_id', champ.id).order('created_at').returns<Sponsor[]>();
+  const { data: { user } } = await supabase.auth.getUser();
+  const isOwner = !!user && user.id === data.row.owner_id;
+  const jsonLd = data.row.visibility === 'publico' ? eventJsonLd({
+    champ, games, url, imageUrl: `${url}/opengraph-image`, finished: !!champion,
+    organizer: arena ? { name: arena.name, url: `${siteUrl()}/arena/${arena.slug}` } : null,
+    offerCents: signupOpen ? currentPrice(champ.feeCents, champ.priceTiers ?? [], todayBr()).cents : null,
+    signupUrl: `${url}/inscricao`,
+  }) : null;
   return (
     <>
+      {!isOwner && <ViewBeacon slug={champ.slug} page="pagina" />}
+      {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJson(jsonLd) }} />}
       <div className="hero">
         <div className="tag"><SportIcon sport={champ.sport} size={18} />{sportLabel(champ.sport)} · {FORMATS[champ.format]}</div>
         <h1>{champ.name}</h1>
@@ -68,15 +95,15 @@ export default async function Publico({ params, searchParams }: {
         )}
         <div className="actions">
           <Link href={`/c/${champ.slug}/imprimir`} className="btn ghost sm">🖨 Imprimir / PDF</Link>
-          <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 ${champ.name}: jogos, tabela e artilharia\n${url}`)}>Compartilhar</a>
+          <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 ${champ.name}: jogos, tabela e artilharia\n${withOrigin(url, 'whatsapp')}`)}>Compartilhar</a>
         </div>
       </div>
-      <Flash ok={sp.ok} />
+      <Flash ok={sp.ok} erro={sp.erro} />
       <div className="split">
         <aside className="side">
           {signupOpen && (
             <div className="cta">
-              <div className="grow"><b>Inscrições abertas</b><span>{open} vaga{open > 1 ? 's' : ''} · {brl(champ.feeCents)} por time</span></div>
+              <div className="grow"><b>Inscrições abertas</b><span>{open} vaga{open > 1 ? 's' : ''} · {priceText(champ.feeCents, champ.priceTiers, brl).long} por time</span></div>
               <Link href={`/c/${champ.slug}/inscricao`} className="btn sm">Inscrever</Link>
             </div>
           )}
@@ -90,13 +117,23 @@ export default async function Publico({ params, searchParams }: {
         </aside>
         <div className="main-col">
           <Tabs items={tabs} current={tab} base={`/c/${champ.slug}`} />
+          {liveNow.length > 0 && (
+            <section className="live-now">
+              <AutoRefresh seconds={15} />
+              <h2 style={{ marginTop: 0 }}><span className="live-dot" /> Ao vivo agora</h2>
+              <div className="games">{liveNow.map(g => <GameRow key={g.id} g={g} teams={teams} games={games} />)}</div>
+            </section>
+          )}
           {tab === 'jogos' && <GamesList games={games} teams={teams} />}
           {tab === 'tabela' && <TableTab champ={champ} games={games} teams={teams} />}
           {tab === 'artilharia' && <Scorers champ={champ} games={games} goals={goals} players={players} teams={teams} />}
+          {tab === 'times' && <><TeamsTab champ={champ} teams={teams} players={players} /><FreeAgents champ={champ} finished={!!champion} isOwner={isOwner} /></>}
+          {tab === 'votacao' && <VotingTab champ={champ} players={players} teams={teams} />}
           {tab === 'cartoes' && <Discipline champ={champ} games={games} cards={cards} players={players} teams={teams} />}
         </div>
       </div>
-      <p className="sub small" style={{ textAlign: 'center', marginTop: 32 }}>Organiza campeonatos? <Link href="/">Crie o seu na Campia</Link>.</p>
+      <Sponsors list={sponsors ?? []} />
+      {!pro && <p className="sub small" style={{ textAlign: 'center', marginTop: 32 }}>Organiza campeonatos? <Link href="/">Crie o seu na Campia</Link>.</p>}
     </>
   );
 }

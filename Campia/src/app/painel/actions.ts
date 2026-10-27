@@ -7,6 +7,9 @@ import { gameRow, loadChampionship, persistKnockout, teamRow } from '@/lib/data'
 import { buildPlan, teamCountError } from '@/lib/domain/build';
 import { SPORTS, allowsOnline, sportRules } from '@/lib/domain/sports';
 import { scoreError } from '@/lib/domain/standings';
+import { editionInviteEmail } from '@/lib/edition';
+import { sendEmail } from '@/lib/email';
+import { siteUrl } from '@/lib/env';
 import { UFS, slugify } from '@/lib/format';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
@@ -46,6 +49,8 @@ const NewChampionship = z.object({
   times: z.string().transform(list).refine(a => a.length && a.every(t => /^\d{2}:\d{2}$/.test(t)), 'Horários no formato 09:00, 10:00'),
   fields: z.string().transform(list).refine(a => a.length > 0, 'Informe pelo menos um campo ou quadra'),
   visibility: z.enum(['publico', 'link']).default('link'),
+  from: z.string().uuid().optional(),
+  invite: z.literal('1').optional(),
 });
 
 export async function createChampionship(formData: FormData) {
@@ -56,6 +61,12 @@ export async function createChampionship(formData: FormData) {
   const countErr = teamCountError(f.format, f.teams);
   if (countErr) fail('/painel/novo', countErr);
 
+  const back = f.from ? `/painel/novo?de=${f.from}` : '/painel/novo';
+  // Nova edição: herda as regras (limite de amarelos, desempate) do campeonato de origem, se for do mesmo dono.
+  const { data: source } = f.from
+    ? await supabase.from('championships').select('id, name, rules').eq('id', f.from).eq('owner_id', user.id).maybeSingle<{ id: string; name: string; rules: Record<string, unknown> }>()
+    : { data: null };
+
   const schedule = { start: f.start, times: f.times, fields: f.fields };
   const plan = buildPlan({ format: f.format, teamCount: f.teams, schedule });
   const slug = `${slugify(f.name)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -63,17 +74,50 @@ export async function createChampionship(formData: FormData) {
   const { data: champ, error } = await supabase.from('championships').insert({
     owner_id: user.id, slug, name: f.name, sport: f.sport, format: f.format, fee_cents: Math.round(f.fee * 100),
     ...place(f.sport, f), visibility: f.visibility,
-    rules: { qualify: plan.qualify, tiebreak: ['v', 'sg', 'gp', 'cd'] }, schedule,
+    rules: {
+      qualify: plan.qualify, tiebreak: (source?.rules?.tiebreak as string[] | undefined) ?? ['v', 'sg', 'gp', 'cd'],
+      ...(source?.rules?.yellowLimit ? { yellowLimit: source.rules.yellowLimit } : {}),
+    }, schedule,
   }).select('id').single();
-  if (error || !champ) fail('/painel/novo', 'Não foi possível criar o campeonato');
+  if (error || !champ) fail(back, 'Não foi possível criar o campeonato');
 
   const teamsRes = await supabase.from('teams').insert(plan.teams.map(t => teamRow(champ!.id, t)));
   const gamesRes = teamsRes.error ? teamsRes : await supabase.from('games').insert(plan.games.map(g => gameRow(champ!.id, g)));
   if (teamsRes.error || gamesRes.error) {
     await supabase.from('championships').delete().eq('id', champ!.id);
-    fail('/painel/novo', 'Não foi possível gerar a tabela. Tente de novo.');
+    fail(back, 'Não foi possível gerar a tabela. Tente de novo.');
   }
-  redirect(`/painel/${champ!.id}?aba=times&ok=${encodeURIComponent('Campeonato criado! Agora mande o link de inscrição no grupo.')}`);
+
+  let invited = 0;
+  if (source && f.invite) invited = await inviteCaptains(supabase, user.id, source, { name: f.name, slug, feeCents: Math.round(f.fee * 100), start: f.start });
+  const ok = source
+    ? `Nova edição criada!${invited ? ` Convite enviado para ${invited} capitão${invited > 1 ? 'es' : ''}.` : ''} Agora mande o link de inscrição no grupo.`
+    : 'Campeonato criado! Agora mande o link de inscrição no grupo.';
+  redirect(`/painel/${champ!.id}?aba=times&ok=${encodeURIComponent(ok)}`);
+}
+
+/** Avisa por e-mail os capitães da edição anterior (um e-mail por endereço). Devolve quantos saíram. */
+async function inviteCaptains(
+  supabase: Awaited<ReturnType<typeof createClient>>, ownerId: string,
+  source: { id: string; name: string }, next: { name: string; slug: string; feeCents: number; start: string },
+) {
+  const [{ data: contacts }, { data: arena }] = await Promise.all([
+    supabase.from('team_contacts').select('captain_email, teams(name)').eq('championship_id', source.id).neq('captain_email', '')
+      .returns<Array<{ captain_email: string; teams: { name: string } | null }>>(),
+    supabase.from('arenas').select('name').eq('owner_id', ownerId).maybeSingle<{ name: string }>(),
+  ]);
+  const seen = new Set<string>();
+  let sent = 0;
+  for (const c of contacts ?? []) {
+    if (seen.has(c.captain_email)) continue;
+    seen.add(c.captain_email);
+    const mail = editionInviteEmail({
+      team: c.teams?.name ?? 'seu time', previous: source.name, championship: next.name, feeCents: next.feeCents,
+      start: next.start, url: `${siteUrl()}/c/${next.slug}/inscricao?origem=email`, organizer: arena?.name ?? 'o organizador',
+    });
+    if ((await sendEmail({ to: c.captain_email, subject: mail.subject, html: mail.html })) === 'ok') sent++;
+  }
+  return sent;
 }
 
 const int = (v: FormDataEntryValue | null) => (v === null || v === '' ? null : Number(v));
@@ -142,7 +186,7 @@ export async function saveResult(formData: FormData) {
 
   const tie = !wo && home === away && g!.stage === 'ko';
   const { error } = await supabase.from('games').update({
-    home_score: home, away_score: away, pen_home: tie ? penHome : null, pen_away: tie ? penAway : null, wo,
+    home_score: home, away_score: away, pen_home: tie ? penHome : null, pen_away: tie ? penAway : null, wo, live: false,
     date: date || null, time, field,
   }).eq('id', gameId);
   if (error) fail(back, 'Não foi possível salvar o resultado');

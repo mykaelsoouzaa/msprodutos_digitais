@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { loadChampionship, type PaymentRow } from '@/lib/data';
 import { isDecided } from '@/lib/domain/standings';
 import { refundPix } from '@/lib/payments';
+import { logEvent } from '@/lib/monitor';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
@@ -25,7 +26,9 @@ async function refund(p: PaymentRow): Promise<string | null> {
   try {
     await refundPix(p.provider, p.provider_id);
   } catch (e) {
-    return e instanceof Error ? e.message : 'O Asaas não aceitou a devolução';
+    const msg = e instanceof Error ? e.message : 'O Asaas não aceitou a devolução';
+    await logEvent('estorno', `Pagamento ${p.id}: ${msg}`);
+    return msg;
   }
   // O organizador não altera pagamentos pelo RLS: o servidor grava com a service role.
   await createAdminClient().from('payments').update({ status: 'estornado', refunded_at: new Date().toISOString() }).eq('id', p.id);

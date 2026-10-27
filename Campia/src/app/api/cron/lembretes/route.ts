@@ -10,6 +10,7 @@ import { freeSlots, waitlistEmail, waitlistToNotify } from '@/lib/waitlist';
 import { sendPush } from '@/lib/push';
 import { siteUrl } from '@/lib/env';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { beat, logEvent } from '@/lib/monitor';
 
 // Envia os lembretes de jogo. Chamar a cada 10 minutos (ver README: Supabase Cron).
 // Protegido por CRON_SECRET no cabeçalho Authorization: Bearer <segredo>.
@@ -82,8 +83,11 @@ async function run(request: NextRequest) {
 
   const db = createAdminClient();
   const now = Date.now();
-  const pix = await remindPendingPix(db, now).catch(e => { console.error('Lembrete de PIX falhou', e); return { error: true }; });
-  const espera = await notifyWaitlist(db, now).catch(e => { console.error('Lista de espera falhou', e); return { error: true }; });
+  await beat('agendador');
+  // Limpeza: falhas registradas há mais de 30 dias.
+  await db.from('system_events').delete().lt('created_at', new Date(now - 30 * 86400_000).toISOString()).then(() => {}, () => {});
+  const pix = await remindPendingPix(db, now).catch(async e => { await logEvent('agendador-erro', `Lembrete de PIX: ${e instanceof Error ? e.message : e}`); return { error: true }; });
+  const espera = await notifyWaitlist(db, now).catch(async e => { await logEvent('agendador-erro', `Lista de espera: ${e instanceof Error ? e.message : e}`); return { error: true }; });
   const todayBr = new Date(now - 3 * 3600_000).toISOString().slice(0, 10);
   const leads = [...new Set([...DEFAULT_LEADS, 180, 30])];
 
@@ -91,7 +95,7 @@ async function run(request: NextRequest) {
     .gte('date', todayBr).lte('date', addDays(todayBr, 2))
     .is('home_score', null).not('home_team_id', 'is', null).not('away_team_id', 'is', null)
     .returns<GameRow[]>();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { await logEvent('agendador-erro', `Busca de jogos: ${error.message}`); return NextResponse.json({ error: error.message }, { status: 500 }); }
 
   const due = dueReminders((rows ?? []).map(toGame), now, leads);
   if (!due.length) return NextResponse.json({ ok: true, sent: 0, pix, espera });

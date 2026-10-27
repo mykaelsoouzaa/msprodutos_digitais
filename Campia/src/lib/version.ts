@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.18.0';
+export const APP_VERSION = '2.3.1';
 
 export interface Release {
   version: string;
@@ -11,6 +11,175 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.3.1',
+    date: '2026-10-27',
+    title: 'Ajustes',
+    items: [
+      "A Campia agora aparece como um produto da MS Soluções Tecnológicas",
+      "Perfil do atleta e ranking da arena abrem mais rápido",
+    ],
+  },
+  {
+    version: '2.3.0',
+    date: '2026-10-27',
+    title: 'Alertas e saúde do sistema',
+    items: [
+      "O dono da Campia recebe um e-mail na hora se o PIX, o webhook do Asaas, o agendador, uma devolução ou o envio de e-mails falhar",
+      "Novo quadro de saúde no /admin mostra o que está funcionando, o que precisa de atenção e se falta alguma configuração",
+    ],
+  },
+  {
+    version: '2.2.0',
+    date: '2026-10-27',
+    title: 'Primeiros passos',
+    items: [
+      "Quem começa na Campia vê no painel um passo a passo: campeonato, página da arena, conta para receber, divulgar e lançar o primeiro resultado",
+      "Cada passo se marca sozinho quando é feito, e dá para esconder a lista",
+    ],
+  },
+  {
+    version: '2.1.0',
+    date: '2026-10-27',
+    title: 'Campeonato de exemplo',
+    items: [
+      "Nova página de exemplo com um campeonato completo: jogos, tabela, placar ao vivo, artilharia, votação e patrocinadores",
+      "Link Ver um exemplo na página inicial e em Para arenas, para mostrar a Campia sem precisar criar conta",
+    ],
+  },
+  {
+    version: '2.0.0',
+    date: '2026-10-27',
+    title: 'Plano Pro',
+    items: [
+      "Novo Plano Pro para arenas e organizadores, com mensalidade e taxa menor por inscrição",
+      "No Pro: sem a marca Campia, patrocinadores, estatísticas de visitas e planilhas",
+      "Assine e cancele pelo painel; a cobrança mensal vem pelo Asaas, por PIX, boleto ou cartão",
+      "Página Para arenas mostra os planos Grátis e Pro lado a lado",
+    ],
+  },
+  {
+    version: '1.30.0',
+    date: '2026-10-27',
+    title: 'Procuro time',
+    items: [
+      "Atleta sem time coloca o nome na lista Procuram time, na aba Times do campeonato",
+      "Os capitães do campeonato e o organizador veem o WhatsApp e chamam com um toque",
+      "Para o resto do público aparecem só nome, posição e recado",
+    ],
+  },
+  {
+    version: '1.29.0',
+    date: '2026-10-27',
+    title: 'Ranking da arena',
+    items: [
+      "Nova aba Ranking na página da arena: times mais vencedores, campeões de cada campeonato e craques eleitos",
+      "Artilheiros de todos os campeonatos da arena somados, por esporte",
+      "Atleta com perfil aparece com link para a página dele",
+    ],
+  },
+  {
+    version: '1.28.0',
+    date: '2026-10-27',
+    title: 'Perfil do atleta',
+    items: [
+      "Cada atleta pode ter sua página com gols, jogos, títulos e prêmios de todos os campeonatos na Campia",
+      "Nova aba Times na página do campeonato, com o elenco de cada time",
+      "O atleta toca em Sou eu no próprio nome e o capitão confirma em Meus times (capitão que se marca entra direto)",
+      "Perfil pronto para compartilhar no WhatsApp",
+    ],
+  },
+  {
+    version: '1.27.0',
+    date: '2026-10-27',
+    title: 'Presença no dia do jogo',
+    items: [
+      "Na tela do jogo, o mesário marca quem chegou de cada time, direto pelo celular",
+      "Atleta suspenso aparece em destaque e o sistema avisa se ele for marcado como presente",
+      "Ajuda a decidir W.O. e a conferir que só joga quem está inscrito",
+    ],
+  },
+  {
+    version: '1.26.0',
+    date: '2026-10-27',
+    title: 'Patrocinadores',
+    items: [
+      "Cadastre patrocinadores do campeonato em Ajustes, com logo e link para o site ou Instagram",
+      "Cota master aparece em destaque e cota de apoio menor, na página do campeonato, na versão para imprimir e nas artes dos stories",
+      "Ajuda a vender patrocínio para bancar a premiação",
+    ],
+  },
+  {
+    version: '1.25.0',
+    date: '2026-10-27',
+    title: 'Baixar planilhas',
+    items: [
+      "Na aba Times e inscrições: baixe planilhas de times e contatos, atletas, pagamentos e jogos",
+      "Abrem direto no Excel e no Google Planilhas, com acentos e valores em reais",
+    ],
+  },
+  {
+    version: '1.24.0',
+    date: '2026-10-27',
+    title: 'Nova edição em um clique',
+    items: [
+      "Botão Nova edição no painel: cria o próximo campeonato com o mesmo formato, valor, local, horários e regras",
+      "O nome já vem sugerido (Copa 2026 vira Copa 2027)",
+      "Opção de avisar por e-mail os capitães da edição anterior que as inscrições abriram",
+    ],
+  },
+  {
+    version: '1.23.0',
+    date: '2026-10-27',
+    title: 'Estatísticas de visitas',
+    items: [
+      "Nova aba Visitas no painel: quantas pessoas abriram a página do campeonato por dia",
+      "Mostra de onde vieram (WhatsApp, Instagram, Google...) e quantas foram para a inscrição",
+      "Os links de Divulgar já saem marcados, para você saber quanto o WhatsApp trouxe",
+      "Sem dado pessoal: só a contagem e a origem geral; suas próprias visitas não contam",
+    ],
+  },
+  {
+    version: '1.22.0',
+    date: '2026-10-27',
+    title: 'Mais fácil de achar no Google',
+    items: [
+      "Os campeonatos públicos e as páginas das arenas aparecem melhor no Google, com datas, local e preço da inscrição",
+      "O Google recebe a lista de páginas do site e deixa de lado as áreas privadas (painel e pagamento)",
+      "Descrição do campeonato nas buscas agora mostra o esporte e a cidade",
+    ],
+  },
+  {
+    version: '1.21.0',
+    date: '2026-10-27',
+    title: 'Craque do campeonato',
+    items: [
+      "Atletas e torcedores votam no craque, no melhor goleiro e na revelação, direto na página do campeonato",
+      "Um voto por pessoa em cada categoria (precisa entrar com o e-mail); dá para mudar o voto enquanto estiver aberta",
+      "O organizador abre e encerra a votação em Ajustes e acompanha o resultado parcial",
+      "Quando encerra, o resultado aparece com medalhas e sai uma arte pronta para os stories",
+    ],
+  },
+  {
+    version: '1.20.0',
+    date: '2026-10-26',
+    title: 'Placar ao vivo',
+    items: [
+      "Na tela do jogo, toque em Começar ao vivo e vá somando os pontos com +1 e −1 pelo celular (o ajudante também pode).",
+      "A página do campeonato mostra Ao vivo agora com o placar, que se atualiza sozinho a cada 15 segundos.",
+      "No fim, o placar ao vivo já vem preenchido para salvar o resultado.",
+    ],
+  },
+  {
+    version: '1.19.0',
+    date: '2026-10-26',
+    title: 'Lotes de preço e cupom de desconto',
+    items: [
+      "Defina até 3 lotes com valores mais baratos para quem se inscreve antes; a página mostra o lote atual e o próximo preço.",
+      "Crie cupons de desconto (em % ou em R$) com limite de usos; o capitão digita o código na inscrição.",
+      "O valor recebido no painel passa a somar exatamente o que foi pago pelo PIX.",
+    ],
+  },
   {
     version: '1.18.0',
     date: '2026-10-26',

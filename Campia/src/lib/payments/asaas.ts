@@ -82,3 +82,28 @@ export async function refundAsaasPayment(providerId: string): Promise<void> {
 
 /** Eventos que significam dinheiro recebido. */
 export const PAID_EVENTS = new Set(['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED']);
+
+/**
+ * Assinatura mensal do Plano Pro (POST /subscriptions). billingType UNDEFINED: o organizador escolhe
+ * PIX, boleto ou cartão na página de pagamento da Asaas. Devolve o link da primeira mensalidade.
+ */
+export async function createAsaasSubscription(input: { ownerId: string; name: string; email: string; cpfCnpj: string; valueCents: number }) {
+  const customer = await asaas<{ id: string }>('/customers', {
+    method: 'POST',
+    body: JSON.stringify({ name: input.name, cpfCnpj: input.cpfCnpj, email: input.email, externalReference: input.ownerId, notificationDisabled: false }),
+  });
+  const sub = await asaas<{ id: string }>('/subscriptions', {
+    method: 'POST',
+    body: JSON.stringify({
+      customer: customer.id, billingType: 'UNDEFINED', value: input.valueCents / 100, nextDueDate: today(), cycle: 'MONTHLY',
+      description: 'Campia Pro: plano mensal para organizadores', externalReference: `plano:${input.ownerId}`,
+    }),
+  });
+  const list = await asaas<{ data?: Array<{ invoiceUrl?: string }> }>(`/subscriptions/${sub.id}/payments`).catch(() => ({ data: [] }));
+  return { customerId: customer.id, subscriptionId: sub.id, invoiceUrl: list.data?.[0]?.invoiceUrl ?? null };
+}
+
+/** Cancela a assinatura (não gera novas mensalidades). */
+export async function cancelAsaasSubscription(subscriptionId: string): Promise<void> {
+  await asaas(`/subscriptions/${subscriptionId}`, { method: 'DELETE' });
+}

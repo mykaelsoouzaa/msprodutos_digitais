@@ -7,14 +7,17 @@ import { brl } from '@/lib/format';
 import { campiaFeePercent } from '@/lib/payout';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
-import { togglePayoutDone } from './actions';
+import { grantCourtesy, togglePayoutDone } from './actions';
+import { type PlanRow, isProActive, proPriceCents } from '@/lib/plan';
+import { healthChecks } from '@/lib/health';
+import { paymentProvider } from '@/lib/env';
 
 export const metadata: Metadata = { title: 'Admin', robots: { index: false, follow: false } };
 export const dynamic = 'force-dynamic';
 
 interface Pay {
   id: string; amount_cents: number; status: string; payout: 'automatico' | 'manual'; paid_at: string | null; created_at: string;
-  manual_payout_done_at: string | null; teams: { name: string } | null; championships: { id: string; name: string; owner_id: string } | null;
+  manual_payout_done_at: string | null; fee_percent: number | null; teams: { name: string } | null; championships: { id: string; name: string; owner_id: string } | null;
 }
 interface Champ { id: string; name: string; slug: string; owner_id: string; visibility: string; created_at: string; fee_cents: number }
 
@@ -28,22 +31,33 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
 
   // Visão de toda a plataforma: só pelo servidor, com a service role.
   const db = createAdminClient();
-  const [{ data: pays }, { data: champs }, { count: arenas }, { data: payouts }, users] = await Promise.all([
-    db.from('payments').select('id, amount_cents, status, payout, paid_at, created_at, manual_payout_done_at, teams(name), championships(id, name, owner_id)')
+  const [{ data: pays }, { data: champs }, { count: arenas }, { data: payouts }, users, { data: plans }, { data: status }, { data: events }] = await Promise.all([
+    db.from('payments').select('id, amount_cents, status, payout, paid_at, created_at, manual_payout_done_at, fee_percent, teams(name), championships(id, name, owner_id)')
       .in('status', ['pago', 'pago_tarde']).order('paid_at', { ascending: false }).limit(500).returns<Pay[]>(),
     db.from('championships').select('id, name, slug, owner_id, visibility, created_at, fee_cents').order('created_at', { ascending: false }).limit(200).returns<Champ[]>(),
     db.from('arenas').select('id', { count: 'exact', head: true }),
     db.from('payout_accounts').select('owner_id').returns<Array<{ owner_id: string }>>(),
     db.auth.admin.listUsers({ perPage: 1000 }),
+    db.from('plans').select('owner_id, status, source, paid_until, asaas_subscription_id, invoice_url').order('updated_at', { ascending: false }).returns<PlanRow[]>(),
+    db.from('system_status').select('key, at, info').returns<Array<{ key: string; at: string; info: string }>>(),
+    db.from('system_events').select('kind, message, created_at').order('created_at', { ascending: false }).limit(50)
+      .returns<Array<{ kind: string; message: string; created_at: string }>>(),
   ]);
+  const statusAt = (key: string) => status?.find(x => x.key === key)?.at ?? null;
+  const checks = healthChecks({ now: Date.now(), cronAt: statusAt('agendador'), webhookAt: statusAt('webhook'), events: events ?? [], env: process.env, provider: paymentProvider() });
+  const problems = checks.filter(c => c.state !== 'ok').length;
   const emailOf = new Map((users.data?.users ?? []).map((u: { id: string; email?: string }) => [u.id, u.email ?? ''] as [string, string]));
   const connected = new Set((payouts ?? []).map(p => p.owner_id));
   const fee = campiaFeePercent();
+  // Taxa gravada na inscrição (Pro paga menos); inscrições antigas usam a taxa padrão.
+  const feeOf = (p: Pay) => (p.fee_percent ?? fee);
+  const activePro = (plans ?? []).filter(p => isProActive(p));
+  const mrr = activePro.filter(p => p.source === 'asaas' && p.status === 'ativo').length * proPriceCents();
 
   const paid = (pays ?? []).filter(p => p.status === 'pago');
   const late = (pays ?? []).filter(p => p.status === 'pago_tarde');
   const gross = paid.reduce((s, p) => s + p.amount_cents, 0);
-  const campiaCut = paid.reduce((s, p) => s + splitGross(p.amount_cents, fee).campia, 0);
+  const campiaCut = paid.reduce((s, p) => s + splitGross(p.amount_cents, feeOf(p)).campia, 0);
   const pending = paid.filter(p => p.payout === 'manual' && !p.manual_payout_done_at);
   const doneManual = paid.filter(p => p.payout === 'manual' && p.manual_payout_done_at).slice(0, 20);
   const organizers = new Set((champs ?? []).map(c => c.owner_id));
@@ -59,13 +73,51 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
       </div>
       <Flash ok={sp.ok} />
 
+      <h2 style={{ marginTop: 8 }}>Saúde {problems ? <span className="badge wait">{problems} ponto{problems > 1 ? 's' : ''} de atenção</span> : <span className="badge ok">tudo certo</span>}</h2>
+      <div className="health-grid">
+        {checks.map(c => (
+          <div key={c.key} className={`card health ${c.state}`}>
+            <b><span className="health-dot" />{c.label}</b>
+            <span className="sub small">{c.detail}</span>
+          </div>
+        ))}
+      </div>
+      {(events ?? []).length > 0 && (
+        <details className="card" style={{ marginTop: 10 }}>
+          <summary><b>Últimas falhas registradas ({events!.length})</b></summary>
+          {events!.map((e, i) => (
+            <div className="row" key={i}>
+              <div className="grow"><b style={{ fontWeight: 600 }}>{e.kind}</b><span>{e.message}</span></div>
+              <span className="sub small">{new Date(e.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+          ))}
+        </details>
+      )}
+      <p className="sub small" style={{ marginTop: 8 }}>Quando algo falha, os e-mails de ADMIN_EMAILS recebem um alerta (no máximo um a cada 30 min por tipo).</p>
+
       <div className="stats admin-stats">
         <div className="stat"><b className="money">{brl(gross)}</b><span>inscrições pagas ({paid.length})</span></div>
-        <div className="stat"><b className="money">{brl(campiaCut)}</b><span>taxa da Campia ({fee}%, estimada)</span></div>
-        <div className="stat"><b className="money" style={{ color: pending.length ? 'var(--warn)' : undefined }}>{brl(pending.reduce((s, p) => s + splitGross(p.amount_cents, fee).organizer, 0))}</b><span>a repassar ({pending.length})</span></div>
+        <div className="stat"><b className="money">{brl(campiaCut)}</b><span>taxa da Campia (estimada)</span></div>
+        <div className="stat"><b className="money" style={{ color: pending.length ? 'var(--warn)' : undefined }}>{brl(pending.reduce((s, p) => s + splitGross(p.amount_cents, feeOf(p)).organizer, 0))}</b><span>a repassar ({pending.length})</span></div>
         <div className="stat"><b>{organizers.size}</b><span>organizadores · {arenas ?? 0} arenas</span></div>
         <div className="stat"><b>{champs?.length ?? 0}</b><span>campeonatos</span></div>
         <div className="stat"><b>{connected.size}</b><span>com repasse automático</span></div>
+        <div className="stat"><b className="money">{brl(mrr)}</b><span>Pro por mês ({activePro.length} ativos)</span></div>
+      </div>
+
+      <h2>Plano Pro</h2>
+      <div className="card" style={{ marginBottom: 12 }}>
+        {(plans ?? []).length ? (plans ?? []).map(p => (
+          <div className="row" key={p.owner_id}>
+            <div className="grow"><b style={{ fontWeight: 600 }}>{emailOf.get(p.owner_id) || p.owner_id}</b><span>{p.source === 'cortesia' ? 'Cortesia' : 'Asaas'} · {p.paid_until ? `até ${day(p.paid_until)}` : 'sem pagamento'}</span></div>
+            <span className={`badge ${isProActive(p) ? 'ok' : p.status === 'pendente' ? 'wait' : 'open'}`}>{isProActive(p) ? (p.status === 'cancelado' ? 'Ativo até vencer' : 'Ativo') : p.status === 'pendente' ? 'Aguardando 1º pagamento' : 'Inativo'}</span>
+          </div>
+        )) : <p className="sub" style={{ margin: 0 }}>Nenhum organizador no Pro ainda.</p>}
+        <form action={grantCourtesy} className="grid3" style={{ marginTop: 12, alignItems: 'end' }}>
+          <div><label htmlFor="gc-email">Dar Pro de cortesia (e-mail)</label><input id="gc-email" name="email" type="email" className="inp" required /></div>
+          <div><label htmlFor="gc-months">Meses (0 tira)</label><input id="gc-months" name="months" type="number" min={0} max={24} defaultValue={3} className="inp" /></div>
+          <div><button className="btn ghost">Salvar cortesia</button></div>
+        </form>
       </div>
 
       <h2>Repasses manuais pendentes</h2>
@@ -74,7 +126,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
           <div className="row" style={{ paddingTop: 0 }}>
             <div className="grow">
               <b>{emailOf.get(owner) || 'Organizador'}</b>
-              <span>{list.length} inscriç{list.length > 1 ? 'ões' : 'ão'} · repassar {brl(list.reduce((s, p) => s + splitGross(p.amount_cents, fee).organizer, 0))} (desconte a tarifa do Asaas)</span>
+              <span>{list.length} inscriç{list.length > 1 ? 'ões' : 'ão'} · repassar {brl(list.reduce((s, p) => s + splitGross(p.amount_cents, feeOf(p)).organizer, 0))} (desconte a tarifa do Asaas)</span>
             </div>
             <span className={`badge ${connected.has(owner) ? 'ok' : 'open'}`}>{connected.has(owner) ? 'Repasse automático ligado' : 'Sem conta Asaas'}</span>
           </div>

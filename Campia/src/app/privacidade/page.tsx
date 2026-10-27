@@ -18,11 +18,14 @@ export default function Privacidade() {
       <ul>
         <li><b>Organizadores e ajudantes:</b> e-mail de acesso; dados da página da arena (nome, logo, endereço, WhatsApp e Instagram, se informados); Wallet ID do Asaas, se o repasse automático for ligado.</li>
         <li><b>Capitães:</b> nome, WhatsApp e e-mail. O CPF ou CNPJ é enviado direto ao Asaas para gerar o PIX e <b>não é guardado pela Campia</b>.</li>
+        <li><b>Perfil de atleta (opcional):</b> nome, cidade e texto que você mesmo preencher, e os campeonatos que você ligar ao perfil. Essa página é pública; você pode tirar campeonatos ou apagar o perfil quando quiser.</li>
+        <li><b>Procuro time (opcional):</b> nome, posição, recado e WhatsApp. O nome, a posição e o recado aparecem na página do campeonato; o WhatsApp só para os capitães daquele campeonato e para o organizador.</li>
         <li><b>Lista de espera:</b> nome do time, do capitão, e-mail e WhatsApp, para avisar quando abrir vaga.</li>
         <li><b>Atletas:</b> nome, número da camisa, gols, cartões e outras estatísticas do campeonato.</li>
         <li><b>Pagamentos:</b> valor, situação e identificadores da cobrança no Asaas. A Campia não recebe dados bancários de quem paga.</li>
         <li><b>Lembretes no celular:</b> se você ativar, guardamos o endereço técnico de notificação do seu aparelho e o time que você segue.</li>
         <li><b>Dados técnicos:</b> cookies de sessão para manter você logado e preferências salvas no navegador (por exemplo, se você fechou o aviso de instalar o app). Não usamos cookies de publicidade.</li>
+        <li><b>Contagem de visitas:</b> quando alguém abre a página de um campeonato, somamos 1 visita no dia e anotamos só a origem geral (por exemplo, WhatsApp ou Google), para o organizador saber onde a divulgação funciona. Não guardamos IP, nome nem nada que identifique quem visitou.</li>
       </ul>
 
       <h2>3. Para que usamos</h2>

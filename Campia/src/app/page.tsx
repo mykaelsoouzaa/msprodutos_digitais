@@ -26,6 +26,7 @@ export default function Home() {
             <Link href="/painel/novo" className="btn lg">Criar meu campeonato</Link>
             <Link href="/para-arenas" className="btn ghost lg">Sou arena ou organizador</Link>
           </div>
+          <p className="fine" style={{ marginTop: 10 }}><Link href="/exemplo">Ver um campeonato de exemplo ›</Link></p>
           <p className="fine">Sem mensalidade para começar. Você só precisa de um e-mail.</p>
         </div>
         <div className="mock" aria-hidden="true">

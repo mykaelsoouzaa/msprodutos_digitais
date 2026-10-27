@@ -52,7 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/#como-funciona">Como funciona</Link>
               <Link href="/termos">Termos</Link>
               <Link href="/privacidade">Privacidade</Link>
-              <span>um produto MS Suporte TI</span>
+              <span>um produto MS Soluções Tecnológicas</span>
             </div>
           </div>
         </footer>

@@ -51,6 +51,8 @@ export interface Game {
   penAway: number | null;
   /** W.O.: qual time faltou ('home', 'away') ou os dois ('both'). */
   wo: WO;
+  /** Placar ao vivo enquanto o jogo acontece (não conta na tabela). */
+  live?: { home: number; away: number; since: string | null } | null;
   date: string;   // AAAA-MM-DD ou ''
   time: string;   // HH:MM ou ''
   field: string;
@@ -106,6 +108,10 @@ export interface Championship {
   visibility: Visibility;
   rules: Rules;
   schedule: Schedule;
+  /** Lotes de preço por data (o feeCents vale depois do último lote). */
+  priceTiers?: Array<{ until: string; cents: number }>;
+  /** Votação do craque: fechada, aberta ou encerrada. */
+  voting?: 'fechada' | 'aberta' | 'encerrada';
 }
 
 export interface StandingRow {

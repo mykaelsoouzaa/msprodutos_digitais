@@ -5,7 +5,7 @@ Passo a passo para colocar a Campia no ar, na ordem. Cada etapa diz onde clicar 
 ## 0. Antes de começar
 
 - [ ] **Pagar o domínio** campia.app.br no Registro.br. O status "Registro pendente" significa que o pagamento ainda não foi compensado.
-- [ ] Ter acesso a: GitHub (o código já está em `msprodutos_digitais/Campia`), um e-mail para as contas e, de preferência, o **CNPJ da MS Suporte TI** para a Asaas.
+- [ ] Ter acesso a: GitHub (o código já está em `msprodutos_digitais/Campia`), um e-mail para as contas e, de preferência, o **CNPJ da MS Soluções Tecnológicas** para a Asaas.
 
 ## 1. Banco de dados e login (Supabase)
 
@@ -20,6 +20,18 @@ Passo a passo para colocar a Campia no ar, na ordem. Cada etapa diz onde clicar 
    7. `supabase/migrations/20261027120000_ajudantes.sql`
    8. `supabase/migrations/20261027130000_wo_cartoes.sql`
    9. `supabase/migrations/20261027140000_repasse.sql`
+   10. `supabase/migrations/20261027150000_gestao.sql`
+   11. `supabase/migrations/20261027160000_lista_espera.sql`
+   12. `supabase/migrations/20261027170000_lotes_cupons.sql`
+   13. `supabase/migrations/20261027180000_ao_vivo.sql`
+   14. `supabase/migrations/20261027190000_votacao.sql`
+   15. `supabase/migrations/20261027200000_visitas.sql`
+   16. `supabase/migrations/20261027210000_patrocinadores.sql`
+   17. `supabase/migrations/20261027220000_checkin.sql`
+   18. `supabase/migrations/20261027230000_atletas.sql`
+   19. `supabase/migrations/20261027240000_avulsos.sql`
+   20. `supabase/migrations/20261027250000_plano_pro.sql`
+   21. `supabase/migrations/20261027260000_saude.sql`
 
    **Banco já criado e precisa atualizar?** Rode só `supabase/atualizar-banco.sql`. Ele confere o que já existe e cria só o que falta; pode rodar de novo sem problema.
 3. Em *Authentication › URL Configuration*:
@@ -63,6 +75,8 @@ openssl rand -hex 32       # use como ASAAS_WEBHOOK_TOKEN
 | `VAPID_SUBJECT` | `mailto:contato@campia.app.br` |
 | `CRON_SECRET` | do passo 2 |
 | `CAMPIA_TAXA_PERCENT` | % de cada inscrição que fica com a Campia no repasse automático (ex.: `10`) |
+| `CAMPIA_PRO_PRECO` | Mensalidade do Plano Pro em reais (padrão `49.90`) |
+| `CAMPIA_TAXA_PERCENT_PRO` | Taxa por inscrição para quem é Pro (padrão `5`) |
 | `ADMIN_EMAILS` | seu e-mail (separe vários por vírgula): libera o painel /admin |
 | `BREVO_API_KEY` | chave de API do Brevo (SMTP & API › API Keys): lembrete por e-mail do PIX pendente |
 | `NEXT_PUBLIC_EMPRESA_CNPJ` | CNPJ que aparece nos Termos e na Privacidade |
@@ -103,7 +117,7 @@ openssl rand -hex 32       # use como ASAAS_WEBHOOK_TOKEN
 
 **Depois em produção:**
 
-1. Abra a conta Asaas de produção, de preferência com o **CNPJ da MS Suporte TI**, envie os documentos e cadastre uma **chave PIX** na conta.
+1. Abra a conta Asaas de produção, de preferência com o **CNPJ da MS Soluções Tecnológicas**, envie os documentos e cadastre uma **chave PIX** na conta.
 2. Gere a chave de API de produção e troque na Vercel:
    - `ASAAS_API_KEY` = a chave de produção
    - `ASAAS_BASE_URL` = `https://api.asaas.com/v3`

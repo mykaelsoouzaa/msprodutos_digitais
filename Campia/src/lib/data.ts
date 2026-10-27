@@ -7,7 +7,7 @@ import type { Card, Championship, Game, Goal, Player, Rules, Schedule, Source, T
 export interface ChampionshipRow {
   id: string; owner_id: string; slug: string; name: string; sport: string; format: Championship['format'];
   fee_cents: number; location: string; city: string; state: string; online: boolean; visibility: Championship['visibility'];
-  rules: Rules; schedule: Schedule; created_at: string;
+  rules: Rules; schedule: Schedule; created_at: string; price_tiers?: Array<{ until: string; cents: number }>; voting?: 'fechada' | 'aberta' | 'encerrada';
 }
 export interface TeamRow {
   id: string; championship_id: string; slot: number; name: string; short: string; color: string; grp: string | null;
@@ -18,7 +18,7 @@ export interface GameRow {
   id: string; championship_id: string; stage: Game['stage']; grp: string | null; seq: number; label: string; name: string;
   home_team_id: string | null; away_team_id: string | null; src_home: Source | null; src_away: Source | null;
   home_score: number | null; away_score: number | null; pen_home: number | null; pen_away: number | null;
-  wo: Game['wo']; date: string | null; time: string; field: string; sort: number;
+  wo: Game['wo']; date: string | null; live?: boolean; live_home?: number; live_away?: number; live_started_at?: string | null; time: string; field: string; sort: number;
 }
 export interface CardRow { game_id: string; player_id: string; team_id: string; championship_id: string; yellow: number; red: boolean }
 export interface GoalRow { game_id: string; player_id: string; team_id: string; championship_id: string; count: number }
@@ -32,7 +32,7 @@ export interface PaymentRow {
 /* ---------- conversões ---------- */
 export const toChampionship = (r: ChampionshipRow): Championship => ({
   id: r.id, slug: r.slug, name: r.name, sport: r.sport, format: r.format, feeCents: r.fee_cents,
-  location: r.location, city: r.city, state: r.state ?? '', online: !!r.online, visibility: r.visibility, rules: r.rules, schedule: r.schedule,
+  location: r.location, city: r.city, state: r.state ?? '', online: !!r.online, priceTiers: r.price_tiers ?? [], voting: r.voting ?? 'fechada', visibility: r.visibility, rules: r.rules, schedule: r.schedule,
 });
 export const toTeam = (r: TeamRow, phone = '', email = ''): Team => ({
   id: r.id, slot: r.slot, name: r.name, short: r.short, color: r.color, group: r.grp, status: r.status,
@@ -43,6 +43,7 @@ export const toGame = (r: GameRow): Game => ({
   id: r.id, stage: r.stage, group: r.grp, seq: r.seq, label: r.label, name: r.name,
   homeId: r.home_team_id, awayId: r.away_team_id, srcHome: r.src_home, srcAway: r.src_away,
   homeScore: r.home_score, awayScore: r.away_score, penHome: r.pen_home, penAway: r.pen_away, wo: r.wo ?? null,
+  live: r.live ? { home: r.live_home ?? 0, away: r.live_away ?? 0, since: r.live_started_at ?? null } : null,
   date: r.date ?? '', time: r.time, field: r.field, sort: r.sort,
 });
 export const toCard = (r: CardRow): Card => ({ gameId: r.game_id, playerId: r.player_id, teamId: r.team_id, yellow: r.yellow, red: r.red });

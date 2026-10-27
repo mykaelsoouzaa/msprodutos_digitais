@@ -24,3 +24,26 @@ end $$;
 reset role;
 select set_config('request.jwt.claim.sub', '', false);
 select 'TESTES DE LISTA DE ESPERA PASSARAM';
+
+-- Cupons: só o dono vê; código e desconto validados pelo banco.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000f7', false);
+insert into public.coupons (championship_id, code, percent) values ('00000000-0000-0000-0000-0000000000a7', 'PARCEIRO10', 10);
+do $$
+begin
+  begin
+    insert into public.coupons (championship_id, code, percent, amount_cents) values ('00000000-0000-0000-0000-0000000000a7', 'DOIS', 10, 500);
+    raise exception 'cupom com dois descontos aceito';
+  exception when check_violation then null; end;
+  begin
+    insert into public.coupons (championship_id, code, percent) values ('00000000-0000-0000-0000-0000000000a7', 'minusculo', 10);
+    raise exception 'código em minúsculas aceito';
+  exception when check_violation then null; end;
+end $$;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000f8', false);
+do $$ begin
+  if exists (select 1 from public.coupons) then raise exception 'estranho vê cupons'; end if;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+select 'TESTES DE CUPOM PASSARAM';

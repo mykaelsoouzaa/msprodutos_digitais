@@ -3,6 +3,7 @@ import SportIcon from '@/components/SportIcon';
 import { STATUS_BADGE, STATUS_LABEL, type ListingItem } from '@/lib/explore';
 import { FORMATS, sportLabel } from '@/lib/domain/sports';
 import { brl, fmtDate, placeLabel } from '@/lib/format';
+import { priceText } from '@/lib/pricing';
 
 /** Cartão de campeonato nas listagens. `organizer` mostra "por Arena X". */
 export default function ChampCard({ c, organizer }: { c: ListingItem; organizer?: { name: string; slug: string } }) {
@@ -23,7 +24,7 @@ export default function ChampCard({ c, organizer }: { c: ListingItem; organizer?
       </div>
       <div className="champ-card-foot">
         <span className={`badge ${STATUS_BADGE[c.status]}`}>{STATUS_LABEL[c.status]}</span>
-        {c.status === 'abertas' && <span className="small">{c.open} vaga{c.open > 1 ? 's' : ''} · {c.fee_cents ? brl(c.fee_cents) : 'grátis'}</span>}
+        {c.status === 'abertas' && <span className="small">{c.open} vaga{c.open > 1 ? 's' : ''} · {priceText(c.fee_cents, c.price_tiers, brl).short}</span>}
       </div>
     </Link>
   );
