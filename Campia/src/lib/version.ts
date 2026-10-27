@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.19.0';
+export const APP_VERSION = '1.20.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.20.0',
+    date: '2026-10-26',
+    title: 'Placar ao vivo',
+    items: [
+      "Na tela do jogo, toque em Começar ao vivo e vá somando os pontos com +1 e −1 pelo celular (o ajudante também pode).",
+      "A página do campeonato mostra Ao vivo agora com o placar, que se atualiza sozinho a cada 15 segundos.",
+      "No fim, o placar ao vivo já vem preenchido para salvar o resultado.",
+    ],
+  },
   {
     version: '1.19.0',
     date: '2026-10-26',

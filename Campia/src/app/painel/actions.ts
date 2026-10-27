@@ -142,7 +142,7 @@ export async function saveResult(formData: FormData) {
 
   const tie = !wo && home === away && g!.stage === 'ko';
   const { error } = await supabase.from('games').update({
-    home_score: home, away_score: away, pen_home: tie ? penHome : null, pen_away: tie ? penAway : null, wo,
+    home_score: home, away_score: away, pen_home: tie ? penHome : null, pen_away: tie ? penAway : null, wo, live: false,
     date: date || null, time, field,
   }).eq('id', gameId);
   if (error) fail(back, 'Não foi possível salvar o resultado');

@@ -1,5 +1,5 @@
 -- =============================================================================
--- Campia · atualizar o banco até a versão 1.19.0
+-- Campia · atualizar o banco até a versão 1.20.0
 --
 -- Pode rodar quantas vezes quiser: cada parte só cria o que ainda não existe.
 -- Use no Supabase › SQL Editor quando o banco já tem a primeira migração (init).
@@ -214,4 +214,12 @@ create policy "cupons: dono gerencia" on public.coupons
 alter table public.payments add column if not exists coupon_code text;
 alter table public.payments add column if not exists discount_cents integer not null default 0 check (discount_cents >= 0);
 
-select 'Banco da Campia atualizado até a versão 1.19.0' as resultado;
+-- 1.20 · Placar ao vivo -------------------------------------------------
+-- Placar ao vivo: o organizador ou ajudante vai atualizando durante o jogo; o resultado final continua em home_score/away_score.
+alter table public.games add column if not exists live boolean not null default false;
+alter table public.games add column if not exists live_home integer not null default 0 check (live_home >= 0);
+alter table public.games add column if not exists live_away integer not null default 0 check (live_away >= 0);
+alter table public.games add column if not exists live_started_at timestamptz;
+create index if not exists games_live_idx on public.games (championship_id) where live;
+
+select 'Banco da Campia atualizado até a versão 1.20.0' as resultado;

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Discipline, Flash, GameRow, GamesList, Scorers, TableTab, Tabs } from '@/components/champ';
+import AutoRefresh from '@/components/AutoRefresh';
 import ReminderButton from '@/components/ReminderButton';
 import { type ArenaRow, initials } from '@/lib/arena';
 import { loadChampionship } from '@/lib/data';
@@ -48,7 +49,8 @@ export default async function Publico({ params, searchParams }: {
   const url = `${siteUrl()}/c/${champ.slug}`;
   const today = new Date().toISOString().slice(0, 10);
   const champion = getChampion(champ, games, teams);
-  const upcoming = ordered(games).filter(g => !isDecided(g) && g.homeId && g.awayId && g.date >= today).slice(0, 4);
+  const liveNow = ordered(games).filter(g => g.live && !isDecided(g));
+  const upcoming = ordered(games).filter(g => !isDecided(g) && !g.live && g.homeId && g.awayId && g.date >= today).slice(0, 4);
 
   const signupOpen = open > 0 && !started;
   return (
@@ -91,6 +93,13 @@ export default async function Publico({ params, searchParams }: {
         </aside>
         <div className="main-col">
           <Tabs items={tabs} current={tab} base={`/c/${champ.slug}`} />
+          {liveNow.length > 0 && (
+            <section className="live-now">
+              <AutoRefresh seconds={15} />
+              <h2 style={{ marginTop: 0 }}><span className="live-dot" /> Ao vivo agora</h2>
+              <div className="games">{liveNow.map(g => <GameRow key={g.id} g={g} teams={teams} games={games} />)}</div>
+            </section>
+          )}
           {tab === 'jogos' && <GamesList games={games} teams={teams} />}
           {tab === 'tabela' && <TableTab champ={champ} games={games} teams={teams} />}
           {tab === 'artilharia' && <Scorers champ={champ} games={games} goals={goals} players={players} teams={teams} />}

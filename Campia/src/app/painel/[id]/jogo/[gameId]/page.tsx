@@ -8,6 +8,7 @@ import { discipline } from '@/lib/domain/discipline';
 import { sportLabel, sportRules } from '@/lib/domain/sports';
 import { createClient } from '@/lib/supabase/server';
 import { clearResult, saveResult } from '../../../actions';
+import { scoreLive, startLive, stopLive } from '../../../live-actions';
 
 export const metadata: Metadata = { title: 'Resultado' };
 export const dynamic = 'force-dynamic';
@@ -43,6 +44,35 @@ export default async function Jogo({ params, searchParams }: {
       {suspendedHere.length > 0 && (
         <div className="alert err">🟥 Suspensos neste jogo: {suspendedHere.map(p => `${p.name} (${data.teams.find(t => t.id === p.teamId)?.short})`).join(', ')}</div>
       )}
+      <section id="ao-vivo" className="card live-card">
+        <div className="live-head">
+          <b>{g.live ? <><span className="live-dot" /> Ao vivo</> : 'Placar ao vivo'}</b>
+          {g.live?.since && <span className="sub small">começou às {new Date(g.live.since).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}</span>}
+        </div>
+        {g.live ? (
+          <>
+            <div className="live-board">
+              {(['home', 'away'] as const).map(side => (
+                <div className="live-side" key={side}>
+                  <span className="live-name">{side === 'home' ? home.name : away.name}</span>
+                  <span className="live-score">{g.live![side]}</span>
+                  <div className="live-btns">
+                    <form action={scoreLive}><input type="hidden" name="championship" value={id} /><input type="hidden" name="game" value={g.id} /><input type="hidden" name="side" value={side} /><input type="hidden" name="delta" value="-1" /><button className="btn ghost" aria-label={`Tirar 1 de ${side === 'home' ? home.name : away.name}`}>−1</button></form>
+                    <form action={scoreLive}><input type="hidden" name="championship" value={id} /><input type="hidden" name="game" value={g.id} /><input type="hidden" name="side" value={side} /><input type="hidden" name="delta" value="1" /><button className="btn" aria-label={`Somar 1 para ${side === 'home' ? home.name : away.name}`}>+1</button></form>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="sub small" style={{ margin: '10px 0 0' }}>A página do campeonato mostra esse placar em tempo real. Ao final, confira o placar abaixo e clique em <b>Salvar resultado</b>.</p>
+            <form action={stopLive} className="actions"><input type="hidden" name="championship" value={id} /><input type="hidden" name="game" value={g.id} /><button className="btn ghost sm">Parar o ao vivo sem salvar</button></form>
+          </>
+        ) : g.homeScore === null && !g.wo ? (
+          <>
+            <p className="sub" style={{ margin: '4px 0 10px' }}>Vá atualizando o placar durante o jogo pelo celular: quem estiver na página do campeonato acompanha em tempo real.</p>
+            <form action={startLive}><input type="hidden" name="championship" value={id} /><input type="hidden" name="game" value={g.id} /><button className="btn">▶ Começar ao vivo</button></form>
+          </>
+        ) : <p className="sub" style={{ margin: '4px 0 0' }}>Jogo com resultado lançado.</p>}
+      </section>
       <form action={saveResult} className="card result-form">
         <input type="hidden" name="championship" value={id} />
         <input type="hidden" name="game" value={g.id} />
@@ -58,9 +88,9 @@ export default async function Jogo({ params, searchParams }: {
         </fieldset>
         <div className="if-played">
         <div className="scorebox" style={{ marginTop: 16 }}>
-          <div><input name="home" type="number" min={0} className="inp" defaultValue={g.homeScore ?? ''} aria-label={`Placar ${home.name}`} /><div className="nm">{home.name}</div></div>
+          <div><input name="home" type="number" min={0} className="inp" defaultValue={g.homeScore ?? g.live?.home ?? ''} aria-label={`Placar ${home.name}`} /><div className="nm">{home.name}</div></div>
           <b style={{ color: 'var(--muted)' }}>×</b>
-          <div><input name="away" type="number" min={0} className="inp" defaultValue={g.awayScore ?? ''} aria-label={`Placar ${away.name}`} /><div className="nm">{away.name}</div></div>
+          <div><input name="away" type="number" min={0} className="inp" defaultValue={g.awayScore ?? g.live?.away ?? ''} aria-label={`Placar ${away.name}`} /><div className="nm">{away.name}</div></div>
         </div>
         <p className="sub small" style={{ margin: '8px 0 0' }}>Placar em {rules.unit}.{rules.draws ? '' : ` ${sportLabel(data.champ.sport)} não tem empate.`}</p>
 

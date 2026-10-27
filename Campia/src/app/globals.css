@@ -467,3 +467,18 @@ form.esports:has(input[name="online"][value="1"]:checked) .presencial { display:
 .draw-card .grow { flex: 1 1 240px; }
 .draw-card .grow b { display: block; margin-bottom: 2px; }
 .draw-card .grow span { font-size: 13px; color: var(--muted); }
+
+/* ---------- ao vivo ---------- */
+.live-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--danger); margin-right: 6px; vertical-align: 1px; animation: live-pulse 1.4s ease-in-out infinite; }
+@keyframes live-pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239, 68, 68, .6); } 50% { opacity: .6; box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } }
+.live-tag { display: block; font-size: 10px; font-weight: 800; color: #fca5a5; text-transform: uppercase; letter-spacing: .06em; }
+.score.live { color: #fecaca; }
+.live-card { margin-bottom: 12px; border-color: rgba(239, 68, 68, .35); }
+.live-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.live-board { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.live-side { display: flex; flex-direction: column; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 12px 8px; min-width: 0; }
+.live-name { font-weight: 700; font-size: 14px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.live-score { font-size: 44px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+.live-btns { display: flex; gap: 6px; }
+.live-btns .btn { padding: 10px 16px; font-size: 18px; }
+.live-now { background: rgba(239, 68, 68, .06); border: 1px solid rgba(239, 68, 68, .3); border-radius: 16px; padding: 14px; margin-bottom: 16px; }

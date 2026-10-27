@@ -18,7 +18,7 @@ export interface GameRow {
   id: string; championship_id: string; stage: Game['stage']; grp: string | null; seq: number; label: string; name: string;
   home_team_id: string | null; away_team_id: string | null; src_home: Source | null; src_away: Source | null;
   home_score: number | null; away_score: number | null; pen_home: number | null; pen_away: number | null;
-  wo: Game['wo']; date: string | null; time: string; field: string; sort: number;
+  wo: Game['wo']; date: string | null; live?: boolean; live_home?: number; live_away?: number; live_started_at?: string | null; time: string; field: string; sort: number;
 }
 export interface CardRow { game_id: string; player_id: string; team_id: string; championship_id: string; yellow: number; red: boolean }
 export interface GoalRow { game_id: string; player_id: string; team_id: string; championship_id: string; count: number }
@@ -43,6 +43,7 @@ export const toGame = (r: GameRow): Game => ({
   id: r.id, stage: r.stage, group: r.grp, seq: r.seq, label: r.label, name: r.name,
   homeId: r.home_team_id, awayId: r.away_team_id, srcHome: r.src_home, srcAway: r.src_away,
   homeScore: r.home_score, awayScore: r.away_score, penHome: r.pen_home, penAway: r.pen_away, wo: r.wo ?? null,
+  live: r.live ? { home: r.live_home ?? 0, away: r.live_away ?? 0, since: r.live_started_at ?? null } : null,
   date: r.date ?? '', time: r.time, field: r.field, sort: r.sort,
 });
 export const toCard = (r: CardRow): Card => ({ gameId: r.game_id, playerId: r.player_id, teamId: r.team_id, yellow: r.yellow, red: r.red });
