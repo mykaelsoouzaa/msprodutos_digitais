@@ -6,6 +6,7 @@ import { ownerIsPro } from '@/lib/plan-server';
 import { SPONSOR_LIMIT, normalizeUrl } from '@/lib/sponsors';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
+import { canManage } from '@/lib/access';
 
 const LOGO_TYPES: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
 const go = (path: string, k: 'ok' | 'erro', msg: string): never =>
@@ -15,8 +16,8 @@ async function owner(champId: string, back: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/entrar');
-  const { data: champ } = await supabase.from('championships').select('id, slug').eq('id', champId).eq('owner_id', user!.id).maybeSingle();
-  if (!champ) go(back, 'erro', 'Campeonato não encontrado');
+  const { data: champ } = await supabase.from('championships').select('id, slug, owner_id').eq('id', champId).maybeSingle<{ id: string; slug: string; owner_id: string }>();
+  if (!champ || !(await canManage(supabase, champ, user))) go(back, 'erro', 'Campeonato não encontrado');
   return { supabase, user: user!, champ: champ! };
 }
 
@@ -24,7 +25,7 @@ export async function addSponsor(formData: FormData) {
   const champId = String(formData.get('championship'));
   const back = `/painel/${champId}?aba=ajustes#patrocinio`;
   const { supabase, user, champ } = await owner(champId, back);
-  if (!(await ownerIsPro(supabase, user.id))) go(back, 'erro', 'Patrocinadores fazem parte do Plano Pro');
+  if (!(await ownerIsPro(supabase, champ.owner_id))) go(back, 'erro', 'Patrocinadores fazem parte do Plano Pro');
 
   const name = String(formData.get('name') ?? '').trim();
   if (name.length < 2 || name.length > 60) go(back, 'erro', 'Nome do patrocinador: de 2 a 60 letras');

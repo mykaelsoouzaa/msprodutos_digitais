@@ -637,3 +637,12 @@ form:has(input[name="method"][value="cartao"]:checked) .if-card { display: block
 .secret { word-break: break-all; background: var(--panel2); padding: 2px 6px; border-radius: 6px; font-size: 12px; }
 .twofa-step label { display: block; }
 .acct-panel a.acct-admin { color: var(--accent2); font-weight: 700; }
+.admin-note { border-color: rgba(163, 230, 53, .45); background: rgba(163, 230, 53, .08); }
+.admin-search { display: flex; gap: 8px; margin: 0 0 8px; }
+.admin-search .inp { flex: 1; }
+.admin-champ { flex-wrap: wrap; }
+.admin-actions { display: flex; gap: 6px; align-items: flex-start; flex-wrap: wrap; }
+.admin-del summary { list-style: none; }
+.admin-del summary::-webkit-details-marker { display: none; }
+.admin-del[open] summary { opacity: .6; }
+.admin-del-form { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; max-width: 280px; }

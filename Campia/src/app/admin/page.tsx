@@ -7,7 +7,7 @@ import { brl } from '@/lib/format';
 import { campiaFeePercent } from '@/lib/payout';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
-import { grantCourtesy, togglePayoutDone } from './actions';
+import { adminDeleteChampionship, grantCourtesy, togglePayoutDone } from './actions';
 import { type PlanRow, isProActive, proPriceCents } from '@/lib/plan';
 import { healthChecks } from '@/lib/health';
 import { paymentProvider } from '@/lib/env';
@@ -23,7 +23,7 @@ interface Champ { id: string; name: string; slug: string; owner_id: string; visi
 
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '');
 
-export default async function Admin({ searchParams }: { searchParams: Promise<{ ok?: string }> }) {
+export default async function Admin({ searchParams }: { searchParams: Promise<{ ok?: string; q?: string }> }) {
   const sp = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -43,6 +43,12 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
 
   // Visão de toda a plataforma: só pelo servidor, com a service role.
   const db = createAdminClient();
+  // A lista de admins do banco segue o ADMIN_EMAILS da Vercel (é o que libera o "modo admin" nos campeonatos).
+  const adminEmails = (process.env.ADMIN_EMAILS ?? '').split(',').map(e => e.trim().toLowerCase()).filter(e => /^[^@\s]+@[^@\s]+$/.test(e));
+  if (adminEmails.length) {
+    await db.from('platform_admins').upsert(adminEmails.map(email => ({ email })), { onConflict: 'email' }).then(() => {}, () => {});
+    await db.from('platform_admins').delete().not('email', 'in', `(${adminEmails.map(e => `"${e}"`).join(',')})`).then(() => {}, () => {});
+  }
   const [{ data: pays }, { data: champs }, { count: arenas }, { data: payouts }, users, { data: plans }, { data: status }, { data: events }] = await Promise.all([
     db.from('payments').select('id, amount_cents, status, payout, paid_at, created_at, manual_payout_done_at, fee_percent, teams(name), championships(id, name, owner_id)')
       .in('status', ['pago', 'pago_tarde']).order('paid_at', { ascending: false }).limit(500).returns<Pay[]>(),
@@ -58,6 +64,8 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
   const statusAt = (key: string) => status?.find(x => x.key === key)?.at ?? null;
   const checks = healthChecks({ now: Date.now(), cronAt: statusAt('agendador'), webhookAt: statusAt('webhook'), events: events ?? [], env: process.env, provider: paymentProvider() });
   const problems = checks.filter(c => c.state !== 'ok').length;
+  const q = (sp.q ?? '').trim().toLowerCase();
+  const shown = (champs ?? []).filter(c => !q || c.name.toLowerCase().includes(q) || String(emailOf.get(c.owner_id) ?? '').toLowerCase().includes(q)).slice(0, 100);
   const emailOf = new Map((users.data?.users ?? []).map((u: { id: string; email?: string }) => [u.id, u.email ?? ''] as [string, string]));
   const connected = new Set((payouts ?? []).map(p => p.owner_id));
   const fee = campiaFeePercent();
@@ -182,15 +190,32 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
         </>
       )}
 
-      <h2>Campeonatos recentes</h2>
+      <h2 id="campeonatos">Todos os campeonatos</h2>
+      <form className="admin-search" action="/admin#campeonatos">
+        <input name="q" className="inp" defaultValue={sp.q ?? ''} placeholder="Buscar por nome do campeonato ou e-mail do organizador" />
+        <button className="btn ghost">Buscar</button>
+      </form>
+      <p className="sub small">Em <b>Painel</b> você mexe no campeonato como se fosse o dono (editar, times, resultados, cancelar inscrição). Para isso, entre no /admin com a verificação em duas etapas.</p>
       <div className="card">
-        {(champs ?? []).slice(0, 40).map(c => (
-          <div className="row" key={c.id}>
+        {shown.length ? shown.map(c => (
+          <div className="row admin-champ" key={c.id}>
             <div className="grow"><b style={{ fontWeight: 600 }}>{c.name}</b><span>{emailOf.get(c.owner_id) || '?'} · {brl(c.fee_cents)} · criado em {day(c.created_at)}</span></div>
             <span className={`badge ${c.visibility === 'publico' ? 'ok' : 'open'}`}>{c.visibility === 'publico' ? 'Público' : 'Só link'}</span>
-            <Link href={`/c/${c.slug}`} className="btn ghost sm" target="_blank">Ver</Link>
+            <div className="admin-actions">
+              <Link href={`/painel/${c.id}`} className="btn sm">Painel</Link>
+              <Link href={`/c/${c.slug}`} className="btn ghost sm" target="_blank">Página</Link>
+              <details className="admin-del">
+                <summary className="btn danger sm">Excluir</summary>
+                <form action={adminDeleteChampionship} className="admin-del-form">
+                  <input type="hidden" name="championship" value={c.id} />
+                  <span className="sub small">Apaga o campeonato, times, jogos e inscrições. Não dá para desfazer. Digite <b>EXCLUIR</b>:</span>
+                  <input name="confirm" className="inp" required pattern="EXCLUIR" placeholder="EXCLUIR" autoComplete="off" />
+                  <button className="btn danger sm">Excluir de vez</button>
+                </form>
+              </details>
+            </div>
           </div>
-        ))}
+        )) : <p className="sub" style={{ margin: 0 }}>Nenhum campeonato encontrado.</p>}
       </div>
     </>
   );

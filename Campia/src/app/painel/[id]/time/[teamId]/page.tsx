@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/server';
 import { cancelRegistration } from '../../../cancel-actions';
 import { saveTeam } from '../../../edit-actions';
 import { decideClaim } from '@/app/atleta/actions';
+import { canManage } from '@/lib/access';
 
 export const metadata: Metadata = { title: 'Editar time' };
 export const dynamic = 'force-dynamic';
@@ -24,7 +25,7 @@ export default async function EditTeam({ params, searchParams }: {
   const { data: { user } } = await supabase.auth.getUser();
   const data = await loadChampionship(supabase, { id }, { withContacts: true });
   const team = data?.teams.find(t => t.id === teamId);
-  if (!data || data.row.owner_id !== user?.id || !team) notFound();
+  if (!data || !team || !(await canManage(supabase, data.row, user))) notFound();
 
   const rules = sportRules(data.champ.sport);
   const roster = data.players.filter(p => p.teamId === team.id);
