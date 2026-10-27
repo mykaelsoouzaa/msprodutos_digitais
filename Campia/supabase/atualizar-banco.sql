@@ -276,7 +276,7 @@ create table if not exists public.page_views (
   championship_id  uuid not null references public.championships (id) on delete cascade,
   day              date not null,
   page             text not null check (page in ('pagina', 'inscricao')),
-  source           text not null check (source in ('whatsapp', 'instagram', 'facebook', 'google', 'busca', 'campia', 'direto', 'outros')),
+  source           text not null check (source in ('whatsapp', 'instagram', 'facebook', 'google', 'busca', 'email', 'campia', 'direto', 'outros')),
   views            integer not null default 0 check (views >= 0),
   primary key (championship_id, day, page, source)
 );
@@ -291,7 +291,7 @@ create or replace function public.track_view(p_slug text, p_page text, p_source 
 returns void language plpgsql security definer set search_path = public as $$
 declare
   champ uuid;
-  src text := case when p_source in ('whatsapp', 'instagram', 'facebook', 'google', 'busca', 'campia', 'direto') then p_source else 'outros' end;
+  src text := case when p_source in ('whatsapp', 'instagram', 'facebook', 'google', 'busca', 'email', 'campia', 'direto') then p_source else 'outros' end;
 begin
   if p_page not in ('pagina', 'inscricao') then return; end if;
   select id into champ from public.championships where slug = p_slug;

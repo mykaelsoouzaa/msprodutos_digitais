@@ -1,9 +1,9 @@
-export type Source = 'whatsapp' | 'instagram' | 'facebook' | 'google' | 'busca' | 'campia' | 'direto' | 'outros';
+export type Source = 'whatsapp' | 'instagram' | 'facebook' | 'google' | 'busca' | 'email' | 'campia' | 'direto' | 'outros';
 export type ViewPage = 'pagina' | 'inscricao';
 
 export const SOURCE_LABEL: Record<Source, string> = {
   whatsapp: 'WhatsApp', instagram: 'Instagram', facebook: 'Facebook', google: 'Google',
-  busca: 'Outros buscadores', campia: 'Dentro da Campia', direto: 'Link direto', outros: 'Outros sites',
+  busca: 'Outros buscadores', email: 'E-mail', campia: 'Dentro da Campia', direto: 'Link direto', outros: 'Outros sites',
 };
 
 /** Marca que vai nos links compartilhados pela Campia: ?origem=whatsapp. */
@@ -23,6 +23,7 @@ export function classifySource(referrer: string, params: URLSearchParams, ownHos
     if (/^(ig|insta)/.test(tag)) return 'instagram';
     if (/^(fb|face)/.test(tag)) return 'facebook';
     if (tag.startsWith('google')) return 'google';
+    if (/^(email|e-mail|mail)/.test(tag)) return 'email';
     return 'outros';
   }
   let host = '';

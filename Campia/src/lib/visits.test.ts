@@ -8,6 +8,7 @@ test('origem pela marca do link', () => {
   assert.equal(classifySource('', p('origem=whatsapp'), 'campia.app.br'), 'whatsapp');
   assert.equal(classifySource('https://google.com/', p('utm_source=ig'), 'campia.app.br'), 'instagram');
   assert.equal(classifySource('', p('utm_source=newsletter'), 'campia.app.br'), 'outros');
+  assert.equal(classifySource('', p('origem=email'), 'campia.app.br'), 'email');
 });
 
 test('origem pelo site anterior', () => {

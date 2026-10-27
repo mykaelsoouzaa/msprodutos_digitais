@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.23.0';
+export const APP_VERSION = '1.24.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.24.0',
+    date: '2026-10-27',
+    title: 'Nova edição em um clique',
+    items: [
+      "Botão Nova edição no painel: cria o próximo campeonato com o mesmo formato, valor, local, horários e regras",
+      "O nome já vem sugerido (Copa 2026 vira Copa 2027)",
+      "Opção de avisar por e-mail os capitães da edição anterior que as inscrições abriram",
+    ],
+  },
   {
     version: '1.23.0',
     date: '2026-10-27',

@@ -88,7 +88,7 @@ export default async function Campeonato({ params, searchParams }: {
     <>
       <h1>{champ.name}</h1>
       <p className="sub" style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}><SportIcon sport={champ.sport} size={16} plain />{sportLabel(champ.sport)} · {FORMATS[champ.format]}{placeLabel(champ) ? ` · ${placeLabel(champ)}` : ''}</p>
-      <div className="actions" style={{ marginTop: 0 }}><Link href={`/c/${champ.slug}`} className="btn ghost sm" target="_blank">👁 Página pública</Link></div>
+      <div className="actions" style={{ marginTop: 0 }}><Link href={`/c/${champ.slug}`} className="btn ghost sm" target="_blank">👁 Página pública</Link>{owner && <Link href={`/painel/novo?de=${champ.id}`} className="btn ghost sm">⧉ Nova edição</Link>}</div>
       <div className="stats">
         <div className="stat"><b>{signed.length}/{teams.length}</b><span>times inscritos</span></div>
         <div className="stat"><b>{done}/{games.length}</b><span>jogos</span></div>
