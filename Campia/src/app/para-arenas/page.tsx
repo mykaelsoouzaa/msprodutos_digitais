@@ -7,6 +7,7 @@ import { brl } from '@/lib/format';
 import { campiaFeePercent, organizerPercent } from '@/lib/payout';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/para-arenas' },
   title: 'Para arenas e organizadores',
   description: 'Campeonato lotado e pago antes do primeiro jogo: inscrição com PIX, tabela automática, página da arena e repasse direto na sua conta.',
 };

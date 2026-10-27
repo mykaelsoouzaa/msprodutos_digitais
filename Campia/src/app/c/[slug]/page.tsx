@@ -12,7 +12,8 @@ import { FORMATS, sportLabel, sportRules } from '@/lib/domain/sports';
 import { champion as getChampion, isDecided, ordered } from '@/lib/domain/standings';
 import { siteUrl } from '@/lib/env';
 import { brl, placeLabel, waLink } from '@/lib/format';
-import { priceText } from '@/lib/pricing';
+import { currentPrice, priceText, todayBr } from '@/lib/pricing';
+import { eventJsonLd, safeJson } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -20,12 +21,15 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data } = await supabase.from('championships').select('name, sport, visibility').eq('slug', slug).maybeSingle();
+  const { data } = await supabase.from('championships').select('name, sport, visibility, city, state').eq('slug', slug).maybeSingle();
   if (!data) return { title: 'Campeonato' };
+  const where = [data.city, data.state].filter(Boolean).join(' - ');
+  const description = `${data.name}: campeonato de ${sportLabel(data.sport).toLowerCase()}${where ? ` em ${where}` : ''}. Jogos, tabela, artilharia e inscrição na Campia.`;
   return {
     title: data.name,
-    openGraph: { title: data.name, description: `${sportLabel(data.sport)}: jogos, tabela, inscrição e resultados na Campia.`, type: 'website' },
-    description: `${sportLabel(data.sport)}: jogos, tabela e artilharia ao vivo.`,
+    description,
+    alternates: { canonical: `/c/${slug}` },
+    openGraph: { title: data.name, description, type: 'website' },
     robots: data.visibility === 'publico' ? undefined : { index: false, follow: false },
   };
 }
@@ -54,8 +58,15 @@ export default async function Publico({ params, searchParams }: {
   const upcoming = ordered(games).filter(g => !isDecided(g) && !g.live && g.homeId && g.awayId && g.date >= today).slice(0, 4);
 
   const signupOpen = open > 0 && !started;
+  const jsonLd = data.row.visibility === 'publico' ? eventJsonLd({
+    champ, games, url, imageUrl: `${url}/opengraph-image`, finished: !!champion,
+    organizer: arena ? { name: arena.name, url: `${siteUrl()}/arena/${arena.slug}` } : null,
+    offerCents: signupOpen ? currentPrice(champ.feeCents, champ.priceTiers ?? [], todayBr()).cents : null,
+    signupUrl: `${url}/inscricao`,
+  }) : null;
   return (
     <>
+      {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJson(jsonLd) }} />}
       <div className="hero">
         <div className="tag"><SportIcon sport={champ.sport} size={18} />{sportLabel(champ.sport)} · {FORMATS[champ.format]}</div>
         <h1>{champ.name}</h1>

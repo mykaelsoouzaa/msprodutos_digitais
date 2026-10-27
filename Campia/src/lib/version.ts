@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.21.0';
+export const APP_VERSION = '1.22.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.22.0',
+    date: '2026-10-27',
+    title: 'Mais fácil de achar no Google',
+    items: [
+      "Os campeonatos públicos e as páginas das arenas aparecem melhor no Google, com datas, local e preço da inscrição",
+      "O Google recebe a lista de páginas do site e deixa de lado as áreas privadas (painel e pagamento)",
+      "Descrição do campeonato nas buscas agora mostra o esporte e a cidade",
+    ],
+  },
   {
     version: '1.21.0',
     date: '2026-10-27',

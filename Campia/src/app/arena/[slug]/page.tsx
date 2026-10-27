@@ -4,7 +4,9 @@ import { notFound } from 'next/navigation';
 import ChampCard from '@/components/ChampCard';
 import { type ArenaRow, initials } from '@/lib/arena';
 import { LISTING_SELECT, type ListingRow, toListing } from '@/lib/explore';
+import { siteUrl } from '@/lib/env';
 import { cityState, waLink } from '@/lib/format';
+import { arenaJsonLd, safeJson } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +20,7 @@ async function getArena(slug: string) {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { arena } = await getArena((await params).slug);
   if (!arena) return { title: 'Arena' };
-  return { title: arena.name, description: arena.bio || `Campeonatos organizados por ${arena.name} na Campia.` };
+  return { title: arena.name, description: arena.bio || `Campeonatos organizados por ${arena.name} na Campia.`, alternates: { canonical: `/arena/${arena.slug}` } };
 }
 
 export default async function ArenaPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -35,6 +37,7 @@ export default async function ArenaPage({ params }: { params: Promise<{ slug: st
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJson(arenaJsonLd(arena, `${siteUrl()}/arena/${arena.slug}`)) }} />
       <section className="arena-hero">
         {arena.logo_url ? <img src={arena.logo_url} alt={`Logo ${arena.name}`} className="arena-logo" /> : <span className="arena-logo empty">{initials(arena.name)}</span>}
         <div className="grow">
