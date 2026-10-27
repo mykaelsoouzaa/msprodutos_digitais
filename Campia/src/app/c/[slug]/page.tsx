@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { Discipline, Flash, GameRow, GamesList, Scorers, TableTab, Tabs } from '@/components/champ';
 import AutoRefresh from '@/components/AutoRefresh';
 import VotingTab from '@/components/VotingTab';
+import ViewBeacon from '@/components/ViewBeacon';
 import ReminderButton from '@/components/ReminderButton';
 import { type ArenaRow, initials } from '@/lib/arena';
 import { loadChampionship } from '@/lib/data';
@@ -14,6 +15,7 @@ import { siteUrl } from '@/lib/env';
 import { brl, placeLabel, waLink } from '@/lib/format';
 import { currentPrice, priceText, todayBr } from '@/lib/pricing';
 import { eventJsonLd, safeJson } from '@/lib/seo';
+import { withOrigin } from '@/lib/visits';
 import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -58,6 +60,8 @@ export default async function Publico({ params, searchParams }: {
   const upcoming = ordered(games).filter(g => !isDecided(g) && !g.live && g.homeId && g.awayId && g.date >= today).slice(0, 4);
 
   const signupOpen = open > 0 && !started;
+  const { data: { user } } = await supabase.auth.getUser();
+  const isOwner = !!user && user.id === data.row.owner_id;
   const jsonLd = data.row.visibility === 'publico' ? eventJsonLd({
     champ, games, url, imageUrl: `${url}/opengraph-image`, finished: !!champion,
     organizer: arena ? { name: arena.name, url: `${siteUrl()}/arena/${arena.slug}` } : null,
@@ -66,6 +70,7 @@ export default async function Publico({ params, searchParams }: {
   }) : null;
   return (
     <>
+      {!isOwner && <ViewBeacon slug={champ.slug} page="pagina" />}
       {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJson(jsonLd) }} />}
       <div className="hero">
         <div className="tag"><SportIcon sport={champ.sport} size={18} />{sportLabel(champ.sport)} · {FORMATS[champ.format]}</div>
@@ -83,7 +88,7 @@ export default async function Publico({ params, searchParams }: {
         )}
         <div className="actions">
           <Link href={`/c/${champ.slug}/imprimir`} className="btn ghost sm">🖨 Imprimir / PDF</Link>
-          <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 ${champ.name}: jogos, tabela e artilharia\n${url}`)}>Compartilhar</a>
+          <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 ${champ.name}: jogos, tabela e artilharia\n${withOrigin(url, 'whatsapp')}`)}>Compartilhar</a>
         </div>
       </div>
       <Flash ok={sp.ok} erro={sp.erro} />

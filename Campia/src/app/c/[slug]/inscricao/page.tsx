@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Flash } from '@/components/champ';
+import ViewBeacon from '@/components/ViewBeacon';
 import SportIcon from '@/components/SportIcon';
 import { sportLabel, sportRules } from '@/lib/domain/sports';
 import { paymentProvider } from '@/lib/env';
@@ -21,16 +22,18 @@ export default async function Inscricao({ params, searchParams }: {
   const { slug } = await params;
   const sp = await searchParams;
   const supabase = await createClient();
-  const { data: champ } = await supabase.from('championships').select('id, name, sport, fee_cents, price_tiers, location, city, state, online').eq('slug', slug).maybeSingle();
+  const { data: champ } = await supabase.from('championships').select('id, owner_id, name, sport, fee_cents, price_tiers, location, city, state, online').eq('slug', slug).maybeSingle();
   if (!champ) notFound();
   const { count } = await supabase.from('teams').select('id', { count: 'exact', head: true }).eq('championship_id', champ.id).neq('status', 'inscrita');
   const { data: started } = await supabase.from('games').select('id').eq('championship_id', champ.id).not('home_score', 'is', null).limit(1);
   const rules = sportRules(champ.sport);
   const place = placeLabel({ online: champ.online, location: champ.location, city: champ.city, state: champ.state ?? '' });
   const needsCpf = paymentProvider() === 'asaas';
+  const { data: { user } } = await supabase.auth.getUser();
 
   return (
     <div className="narrow">
+      {user?.id !== champ.owner_id && <ViewBeacon slug={slug} page="inscricao" />}
       <Link href={`/c/${slug}`} className="back-link">‹ {champ.name}</Link>
       <h1>Inscrição de {rules.who === 'Dupla' ? 'dupla' : 'time'}</h1>
       <p className="sub" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><SportIcon sport={champ.sport} size={16} plain />{sportLabel(champ.sport)} · {priceText(champ.fee_cents, champ.price_tiers, brl).long} · {count ?? 0} vaga{count === 1 ? '' : 's'} em aberto{place ? ` · ${place}` : ''}</p>

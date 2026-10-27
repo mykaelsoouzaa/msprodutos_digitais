@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.22.0';
+export const APP_VERSION = '1.23.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,17 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.23.0',
+    date: '2026-10-27',
+    title: 'Estatísticas de visitas',
+    items: [
+      "Nova aba Visitas no painel: quantas pessoas abriram a página do campeonato por dia",
+      "Mostra de onde vieram (WhatsApp, Instagram, Google...) e quantas foram para a inscrição",
+      "Os links de Divulgar já saem marcados, para você saber quanto o WhatsApp trouxe",
+      "Sem dado pessoal: só a contagem e a origem geral; suas próprias visitas não contam",
+    ],
+  },
   {
     version: '1.22.0',
     date: '2026-10-27',

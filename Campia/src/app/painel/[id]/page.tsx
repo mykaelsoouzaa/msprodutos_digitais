@@ -9,7 +9,8 @@ import { FORMATS, allowsOnline, sportLabel, sportRules } from '@/lib/domain/spor
 import { isDecided, labels } from '@/lib/domain/standings';
 import { siteUrl } from '@/lib/env';
 import { brl, placeLabel, waLink } from '@/lib/format';
-import { priceText } from '@/lib/pricing';
+import { priceText, todayBr } from '@/lib/pricing';
+import { SOURCE_LABEL, type ViewRow, summarize, withOrigin } from '@/lib/visits';
 import PlaceFields from '@/components/PlaceFields';
 import { createClient } from '@/lib/supabase/server';
 import { refundLatePayment } from '../cancel-actions';
@@ -21,11 +22,11 @@ import { addHelper, updateYellowLimit, deleteChampionship, markPaidManually, rem
 export const metadata: Metadata = { title: 'Campeonato' };
 export const dynamic = 'force-dynamic';
 
-const TABS: Array<[string, string]> = [['jogos', 'Jogos'], ['tabela', 'Tabela'], ['times', 'Times e inscrições'], ['compartilhar', 'Compartilhar'], ['ajustes', 'Ajustes']];
+const TABS: Array<[string, string]> = [['jogos', 'Jogos'], ['tabela', 'Tabela'], ['times', 'Times e inscrições'], ['compartilhar', 'Compartilhar'], ['visitas', 'Visitas'], ['ajustes', 'Ajustes']];
 
 export default async function Campeonato({ params, searchParams }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ aba?: string; ok?: string; erro?: string }>;
+  searchParams: Promise<{ aba?: string; ok?: string; erro?: string; dias?: string }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
@@ -65,6 +66,13 @@ export default async function Campeonato({ params, searchParams }: {
     ? await supabase.rpc('vote_results', { champ: id })
     : { data: [] };
   const votes = (voteRows ?? []) as VoteResult[];
+  const days = sp.dias === '7' ? 7 : sp.dias === '90' ? 90 : 30;
+  const { data: viewRows } = owner && tab === 'visitas'
+    ? await supabase.from('page_views').select('day, page, source, views').eq('championship_id', id).returns<ViewRow[]>()
+    : { data: [] as ViewRow[] };
+  const visits = summarize(viewRows ?? [], todayBr(), days);
+  const peak = Math.max(1, ...visits.daily.map(d => d.views));
+  const dm = (day: string) => day.split('-').reverse().slice(0, 2).join('/');
   const base = `/painel/${id}`;
   const publicUrl = `${siteUrl()}/c/${champ.slug}`;
   const signupUrl = `${publicUrl}/inscricao`;
@@ -107,7 +115,7 @@ export default async function Campeonato({ params, searchParams }: {
             <p className="sub" style={{ margin: '4px 0 8px' }}>Cada capitão cadastra o time e paga {price.long} pelo PIX. A vaga é confirmada sozinha.</p>
             <div className="copybox">{signupUrl}</div>
             <div className="actions">
-              <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 Inscrições abertas: ${champ.name}\n${sportLabel(champ.sport)} · ${FORMATS[champ.format]}\n💰 ${price.long} por time (PIX)\n${champ.online ? '🌐 Online\n' : placeLabel(champ) ? `📍 ${placeLabel(champ)}\n` : ''}Inscreva seu time: ${signupUrl}`)}>Divulgar no WhatsApp</a>
+              <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 Inscrições abertas: ${champ.name}\n${sportLabel(champ.sport)} · ${FORMATS[champ.format]}\n💰 ${price.long} por time (PIX)\n${champ.online ? '🌐 Online\n' : placeLabel(champ) ? `📍 ${placeLabel(champ)}\n` : ''}Inscreva seu time: ${withOrigin(signupUrl, 'whatsapp')}`)}>Divulgar no WhatsApp</a>
             </div>
           </div>
           {champ.format !== 'pontos' && !games.some(isDecided) && (
@@ -204,10 +212,63 @@ export default async function Campeonato({ params, searchParams }: {
             <div className="card" key={l} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div className="grow"><b>{l}</b><span>Resultados e classificação</span></div>
               <a className="btn sm" href={`/c/${champ.slug}/arte?rodada=${encodeURIComponent(l)}`} target="_blank">Abrir arte</a>
-              <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `📊 ${champ.name} · ${l}\nTabela completa: ${publicUrl}`)}>Enviar</a>
+              <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `📊 ${champ.name} · ${l}\nTabela completa: ${withOrigin(publicUrl, 'whatsapp')}`)}>Enviar</a>
             </div>
           ))}
           {!games.some(isDecided) && <div className="card empty">Lance o primeiro resultado para gerar as artes.</div>}
+        </>
+      )}
+
+      {tab === 'visitas' && owner && (
+        <>
+          <nav className="chips" aria-label="Período">
+            {([['7', '7 dias'], ['30', '30 dias'], ['90', '90 dias']] as const).map(([d, l]) => (
+              <Link key={d} href={`${base}?aba=visitas&dias=${d}`} className={`tab ${String(days) === d ? 'on' : ''}`}>{l}</Link>
+            ))}
+          </nav>
+          <div className="stats">
+            <div className="stat"><b>{visits.total}</b><span>visitas na página</span></div>
+            <div className="stat"><b>{visits.signup}</b><span>abriram a inscrição</span></div>
+            <div className="stat"><b>{visits.total ? `${Math.min(100, Math.round((visits.signup / visits.total) * 100))}%` : '–'}</b><span>foram para a inscrição</span></div>
+          </div>
+          {visits.total === 0 && visits.signup === 0 ? (
+            <div className="card empty">
+              Nenhuma visita nesse período ainda. Divulgue o link no WhatsApp e no Instagram: as visitas aparecem aqui no mesmo dia.
+              <div className="actions" style={{ justifyContent: 'center' }}>
+                <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 ${champ.name}\n${withOrigin(publicUrl, 'whatsapp')}`)}>Divulgar no WhatsApp</a>
+              </div>
+            </div>
+          ) : (
+            <div className="stack">
+              <div className="card">
+                <b>Visitas por dia</b>
+                <div className={`vis-bars ${days > 30 ? 'dense' : ''}`} role="img" aria-label={`Visitas por dia nos últimos ${days} dias`}>
+                  {visits.daily.map(d => (
+                    <div key={d.day} className="vis-bar" title={`${dm(d.day)}: ${d.views} visita${d.views === 1 ? '' : 's'}`}>
+                      <i style={{ height: `${Math.max(d.views ? 4 : 0, (d.views / peak) * 100)}%` }} />
+                    </div>
+                  ))}
+                </div>
+                <div className="vis-axis"><span>{dm(visits.daily[0].day)}</span><span>pico: {peak === 1 && !visits.total ? 0 : peak}/dia</span><span>hoje</span></div>
+              </div>
+              {visits.sources.length > 0 && (
+                <div className="card">
+                  <b>De onde vieram</b>
+                  <div className="stack" style={{ marginTop: 10 }}>
+                    {visits.sources.map(r => (
+                      <div key={r.source} className="src-row">
+                        <span className="src-name">{SOURCE_LABEL[r.source]}</span>
+                        <span className="src-track"><i style={{ width: `${(r.views / visits.total) * 100}%` }} /></span>
+                        <span className="src-num">{r.views} · {Math.round((r.views / visits.total) * 100)}%</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="sub small" style={{ margin: '12px 0 0' }}>Os links de “Divulgar” da Campia já vão marcados como WhatsApp. “Link direto” é quem digitou o endereço ou abriu de um app que não informa a origem.</p>
+                </div>
+              )}
+            </div>
+          )}
+          <p className="sub small" style={{ marginTop: 14 }}>Conta uma visita cada vez que alguém abre a página (recarregar não soma). Suas próprias visitas e robôs de busca ficam de fora. Não guardamos IP nem dados de quem visitou.</p>
         </>
       )}
 
@@ -311,7 +372,7 @@ export default async function Campeonato({ params, searchParams }: {
             <div className="actions">
               {champ.voting !== 'aberta' && <form action={setVoting}><input type="hidden" name="championship" value={id} /><input type="hidden" name="state" value="aberta" /><button className="btn sm">{champ.voting === 'encerrada' ? 'Reabrir votação' : 'Abrir votação'}</button></form>}
               {champ.voting === 'aberta' && <form action={setVoting}><input type="hidden" name="championship" value={id} /><input type="hidden" name="state" value="encerrada" /><button className="btn sm">Encerrar e divulgar resultado</button></form>}
-              {champ.voting === 'aberta' && <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🗳 Votação do craque do ${champ.name} aberta! Vote aqui: ${publicUrl}?aba=votacao`)}>Divulgar</a>}
+              {champ.voting === 'aberta' && <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🗳 Votação do craque do ${champ.name} aberta! Vote aqui: ${withOrigin(`${publicUrl}?aba=votacao`, 'whatsapp')}`)}>Divulgar</a>}
               {champ.voting !== 'fechada' && <form action={setVoting}><input type="hidden" name="championship" value={id} /><input type="hidden" name="state" value="fechada" /><button className="btn ghost sm">Esconder votação</button></form>}
             </div>
           </div>

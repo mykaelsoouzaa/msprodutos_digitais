@@ -488,3 +488,16 @@ form.esports:has(input[name="online"][value="1"]:checked) .presencial { display:
 .vote-medal { font-size: 22px; width: 28px; text-align: center; }
 .vote-winner .grow b { color: var(--accent2); }
 .vote-cta { text-align: center; border-color: rgba(163, 230, 53, .35); }
+
+/* ---------- visitas ---------- */
+.vis-bars { display: flex; align-items: flex-end; gap: 3px; height: 120px; margin-top: 12px; }
+.vis-bars.dense { gap: 1px; }
+.vis-bar { flex: 1; height: 100%; display: flex; align-items: flex-end; min-width: 0; }
+.vis-bar i { display: block; width: 100%; background: var(--accent); border-radius: 3px 3px 0 0; }
+.vis-bar:hover i { background: var(--accent2); }
+.vis-axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 6px; border-top: 1px solid var(--line); padding-top: 4px; }
+.src-row { display: grid; grid-template-columns: minmax(90px, 140px) 1fr 84px; align-items: center; gap: 10px; font-size: 14px; }
+.src-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.src-track { height: 10px; background: var(--panel2); border-radius: 99px; overflow: hidden; }
+.src-track i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.src-num { text-align: right; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
