@@ -106,9 +106,22 @@ export function buildPlan({ format, teamCount, schedule, qualify = 2 }: PlanInpu
     id: uuid(), slot: i + 1, name: `Vaga ${i + 1}`, short: `V${i + 1}`, color: TEAM_COLORS[i % TEAM_COLORS.length],
     group: null, status: 'aberta', paid: false, captainName: '', captainPhone: '',
   }));
+  const { games, qualify: q } = gamesFor(format, teams, schedule, qualify);
+  return { teams, games, qualify: q };
+}
+
+/**
+ * Monta os jogos para times que já existem, na ordem recebida.
+ * Grupos: o 1º vai para o A, o 2º para o B... Mata-mata: 1º × último, 2º × penúltimo...
+ * Atualiza `team.group` no formato com grupos.
+ */
+export function gamesFor(format: Format, ordered: Team[], schedule: Schedule, qualify = 2): { games: Game[]; qualify: number } {
+  const teams = ordered;
+  const teamCount = teams.length;
   const games: Game[] = [];
 
   if (format === 'pontos') {
+    teams.forEach(t => { t.group = null; });
     roundRobin(teams.map(t => t.id)).forEach((round, ri) =>
       round.forEach(([h, a]) => games.push(newGame({ stage: 'liga', seq: ri + 1, label: `Rodada ${ri + 1}`, homeId: h, awayId: a }))));
   }
@@ -128,6 +141,7 @@ export function buildPlan({ format, teamCount, schedule, qualify = 2 }: PlanInpu
   }
 
   if (format === 'mata') {
+    teams.forEach(t => { t.group = null; });
     const first: Game[] = [];
     for (let i = 0; i < teamCount / 2; i++) {
       first.push(newGame({ srcHome: { type: 'team', id: teams[i].id }, srcAway: { type: 'team', id: teams[teamCount - 1 - i].id } }));
@@ -136,7 +150,17 @@ export function buildPlan({ format, teamCount, schedule, qualify = 2 }: PlanInpu
   }
 
   applySchedule(games, schedule);
-  return { teams, games, qualify };
+  return { games, qualify };
+}
+
+/** Embaralha (Fisher-Yates). `rng` devolve um número em [0, 1); nos testes dá para fixar. */
+export function shuffled<T>(items: T[], rng: () => number = Math.random): T[] {
+  const a = [...items];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 export function addDays(iso: string, days: number): string {

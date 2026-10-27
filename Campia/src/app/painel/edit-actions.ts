@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { gameRow, loadChampionship, teamRow } from '@/lib/data';
-import { applySchedule, buildPlan, teamCountError } from '@/lib/domain/build';
+import { applySchedule, buildPlan, gamesFor, shuffled, teamCountError } from '@/lib/domain/build';
 import { isDecided } from '@/lib/domain/standings';
 import { normalizePhone, parsePlayers, shortName } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
@@ -146,4 +146,23 @@ export async function saveTeam(formData: FormData) {
 
   revalidatePath(`/c/${data.champ.slug}`);
   go(`/painel/${champId}?aba=times`, 'ok', team!.status === 'aberta' ? `${v.name} inscrito manualmente` : `${v.name} atualizado`);
+}
+
+/* ---------- sorteio dos grupos (ou dos confrontos do mata-mata) ---------- */
+export async function drawChampionship(formData: FormData) {
+  const champId = String(formData.get('championship'));
+  const back = `/painel/${champId}?aba=times`;
+  const { supabase, data } = await requireOwner(champId, back);
+  if (data.champ.format === 'pontos') go(back, 'erro', 'Em pontos corridos todos jogam contra todos: não há sorteio.');
+  if (data.games.some(isDecided)) go(back, 'erro', 'O campeonato já tem resultados; o sorteio não pode ser refeito.');
+
+  const order = shuffled(data.teams);
+  const { games } = gamesFor(data.champ.format, order, data.champ.schedule, data.champ.rules.qualify);
+  await supabase.from('games').delete().eq('championship_id', champId);
+  for (const t of order) await supabase.from('teams').update({ grp: t.group }).eq('id', t.id);
+  const { error } = await supabase.from('games').insert(games.map(g => gameRow(champId, g)));
+  if (error) go(back, 'erro', 'Não foi possível salvar o sorteio. Tente de novo.');
+  await supabase.from('championships').update({ rules: { ...data.champ.rules, drawnAt: new Date().toISOString() } }).eq('id', champId);
+  revalidatePath(`/c/${data.champ.slug}`);
+  go(`/painel/${champId}?aba=tabela`, 'ok', data.champ.format === 'grupos' ? 'Grupos sorteados! Confira a tabela.' : 'Confrontos sorteados! Confira a chave.');
 }

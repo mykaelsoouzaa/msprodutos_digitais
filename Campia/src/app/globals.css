@@ -463,3 +463,7 @@ form.esports:has(input[name="online"][value="1"]:checked) .presencial { display:
   .dot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   a { color: inherit; text-decoration: none; }
 }
+.draw-card { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 12px; border-color: rgba(163, 230, 53, .35); }
+.draw-card .grow { flex: 1 1 240px; }
+.draw-card .grow b { display: block; margin-bottom: 2px; }
+.draw-card .grow span { font-size: 13px; color: var(--muted); }

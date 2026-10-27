@@ -127,6 +127,7 @@ export function TableTab({ champ, games, teams }: { champ: Championship; games: 
   return (
     <>
       {ch && <div className="champion">🏆 Campeão<b>{ch.name}</b></div>}
+      {champ.rules.drawnAt && <p className="sub small" style={{ margin: '0 0 10px' }}>🎲 {champ.format === 'grupos' ? 'Grupos sorteados' : 'Confrontos sorteados'} em {new Date(champ.rules.drawnAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' })}</p>}
       {champ.format !== 'mata' && <Standings champ={champ} games={games} teams={teams} />}
       {champ.format !== 'pontos' && <><h2>{champ.format === 'grupos' ? 'Mata-mata' : 'Chaveamento'}</h2><Bracket games={games} teams={teams} /></>}
     </>

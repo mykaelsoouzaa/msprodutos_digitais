@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.16.0';
+export const APP_VERSION = '1.17.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,15 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.17.0',
+    date: '2026-10-26',
+    title: 'Sorteio dos grupos e dos confrontos',
+    items: [
+      "Na aba Times, o botão Sortear agora distribui os times nos grupos (ou monta a chave do mata-mata) por sorteio, em vez da ordem de inscrição.",
+      "Dá para sortear de novo até o primeiro resultado, e a página do campeonato mostra quando o sorteio foi feito.",
+    ],
+  },
   {
     version: '1.16.0',
     date: '2026-10-26',

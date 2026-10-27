@@ -86,6 +86,7 @@ export type Tiebreak = 'v' | 'sg' | 'gp' | 'cd';
 export interface Rules {
   qualify: number;       // classificados por grupo
   yellowLimit?: number;  // amarelos acumulados que dão 1 jogo de suspensão (padrão 3)
+  drawnAt?: string;      // quando os grupos/confrontos foram sorteados (ISO)
   tiebreak: Tiebreak[];  // ordem dos critérios depois dos pontos
 }
 

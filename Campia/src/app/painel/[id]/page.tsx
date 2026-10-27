@@ -12,7 +12,7 @@ import { brl, placeLabel, waLink } from '@/lib/format';
 import PlaceFields from '@/components/PlaceFields';
 import { createClient } from '@/lib/supabase/server';
 import { refundLatePayment } from '../cancel-actions';
-import { rebuildChampionship, updateBasics, updateSchedule } from '../edit-actions';
+import { drawChampionship, rebuildChampionship, updateBasics, updateSchedule } from '../edit-actions';
 import { addHelper, updateYellowLimit, deleteChampionship, markPaidManually, removeHelper, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
 
 export const metadata: Metadata = { title: 'Campeonato' };
@@ -86,6 +86,18 @@ export default async function Campeonato({ params, searchParams }: {
               <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 Inscrições abertas: ${champ.name}\n${sportLabel(champ.sport)} · ${FORMATS[champ.format]}\n💰 ${brl(champ.feeCents)} por time (PIX)\n${champ.online ? '🌐 Online\n' : placeLabel(champ) ? `📍 ${placeLabel(champ)}\n` : ''}Inscreva seu time: ${signupUrl}`)}>Divulgar no WhatsApp</a>
             </div>
           </div>
+          {champ.format !== 'pontos' && !games.some(isDecided) && (
+            <form action={drawChampionship} className="card draw-card">
+              <input type="hidden" name="championship" value={id} />
+              <div className="grow">
+                <b>🎲 Sortear {champ.format === 'grupos' ? 'os grupos' : 'os confrontos'}</b>
+                <span>{champ.rules.drawnAt
+                  ? `Último sorteio: ${new Date(champ.rules.drawnAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' })}. Pode sortear de novo até o primeiro resultado (a agenda é refeita).`
+                  : `Hoje ${champ.format === 'grupos' ? 'os grupos seguem' : 'a chave segue'} a ordem de inscrição. Sorteie depois que as inscrições fecharem (dá para fazer ao vivo). A agenda dos jogos é refeita.`}</span>
+              </div>
+              <button className="btn sm">{champ.rules.drawnAt ? 'Sortear de novo' : 'Sortear agora'}</button>
+            </form>
+          )}
           <h2>Vagas</h2>
           <div className="card">
             {teams.map(t => {

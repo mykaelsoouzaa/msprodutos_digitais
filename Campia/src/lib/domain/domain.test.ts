@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applySchedule, buildPlan, qualifyOptions, roundRobin, teamCountError } from './build';
+import { applySchedule, buildPlan, gamesFor, qualifyOptions, roundRobin, shuffled, teamCountError } from './build';
 import { champion, isDecided, resolveKnockout, scoreError, standings, tables, topScorers, winnerId } from './standings';
 import type { Championship, Game, Goal, Player, Team } from './types';
 
@@ -164,4 +164,32 @@ test('tabelas por grupo carregam o número de classificados', () => {
   const ts = tables(c, plan.games, plan.teams);
   assert.deepEqual(ts.map(t => [t.title, t.rows.length, t.qualify]), [['Grupo A', 4, 1], ['Grupo B', 4, 1]]);
   assert.equal(plan.games.filter(g => g.stage === 'ko').length, 1);
+});
+
+test('sorteio: novos grupos e jogos com os mesmos times', () => {
+  const { teams } = buildPlan({ format: 'grupos', teamCount: 8, schedule });
+  let seed = 7;
+  const rng = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  const order = shuffled(teams, rng);
+  assert.deepEqual([...order].map(t => t.id).sort(), teams.map(t => t.id).sort(), 'mesmos times');
+  assert.notDeepEqual(order.map(t => t.id), teams.map(t => t.id), 'ordem mudou');
+  const { games } = gamesFor('grupos', order, schedule);
+  const ga = teams.filter(t => t.group === 'A').map(t => t.id);
+  assert.equal(ga.length, 4);
+  assert.deepEqual(ga.sort(), [order[0], order[2], order[4], order[6]].map(t => t.id).sort());
+  // cada time joga 3 vezes na fase de grupos, só contra o próprio grupo
+  for (const t of teams) {
+    const mine = games.filter(g => g.stage === 'grupo' && (g.homeId === t.id || g.awayId === t.id));
+    assert.equal(mine.length, 3);
+    assert.ok(mine.every(g => g.group === t.group));
+  }
+});
+
+test('sorteio do mata-mata: confrontos do primeiro com o último da ordem sorteada', () => {
+  const { teams } = buildPlan({ format: 'mata', teamCount: 4, schedule });
+  const order = [teams[2], teams[0], teams[3], teams[1]];
+  const { games } = gamesFor('mata', order, schedule);
+  const first = games.filter(g => g.label === 'Semifinal');
+  assert.deepEqual(first.map(g => [(g.srcHome as { id: string }).id, (g.srcAway as { id: string }).id]),
+    [[teams[2].id, teams[1].id], [teams[0].id, teams[3].id]]);
 });
