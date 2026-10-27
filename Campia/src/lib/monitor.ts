@@ -7,7 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 
 const LABEL: Record<string, string> = {
   webhook: 'webhook do Asaas', pix: 'geração de PIX', repasse: 'repasse automático', estorno: 'devolução de PIX',
-  email: 'envio de e-mails', 'agendador-erro': 'agendador',
+  email: 'envio de e-mails', whatsapp: 'WhatsApp', indicacao: 'prêmio de indicação', 'agendador-erro': 'agendador',
 };
 
 /** Último sinal de vida de uma parte do sistema (agendador, webhook). */

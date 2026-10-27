@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { extendPaidUntil } from '@/lib/plan';
 import { webhookAction } from '@/lib/signup';
+import { rewardReferrer } from '@/lib/referral-server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { beat, logEvent } from '@/lib/monitor';
 
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
       const { error } = await db.from('plans').update({ status: 'ativo', paid_until: extendPaidUntil(plan.paid_until, action.dueDate), updated_at: new Date().toISOString() })
         .eq('owner_id', plan.owner_id);
       if (error) { await logEvent('webhook', `Mensalidade do Pro não registrada: ${error.message}`); return NextResponse.json({ error: 'retry' }, { status: 500 }); }
+      await rewardReferrer(plan.owner_id);
     }
   } else if (action.type === 'inscricao') {
     // Confere que o pagamento é nosso pelos dois lados: id da Asaas e externalReference.

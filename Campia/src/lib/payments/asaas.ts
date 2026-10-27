@@ -107,3 +107,39 @@ export async function createAsaasSubscription(input: { ownerId: string; name: st
 export async function cancelAsaasSubscription(subscriptionId: string): Promise<void> {
   await asaas(`/subscriptions/${subscriptionId}`, { method: 'DELETE' });
 }
+
+/**
+ * Cobrança no cartão de crédito (POST /payments com billingType CREDIT_CARD). O capitão digita o cartão na
+ * página segura do Asaas (invoiceUrl); a Campia nunca vê o número. Parcelado: installmentCount + totalValue.
+ */
+export async function createAsaasCardCharge(input: PixChargeInput & { installments: number }) {
+  if (!input.payerCpfCnpj) throw new Error('CPF ou CNPJ do responsável é obrigatório');
+  const customer = await asaas<{ id: string }>('/customers', {
+    method: 'POST',
+    body: JSON.stringify({ name: input.payerName, cpfCnpj: input.payerCpfCnpj, mobilePhone: input.payerPhone, notificationDisabled: true }),
+  });
+  const n = Math.max(1, Math.min(12, Math.floor(input.installments)));
+  const body = {
+    customer: customer.id, billingType: 'CREDIT_CARD', dueDate: today(), description: input.description.slice(0, 500), externalReference: input.paymentId,
+    ...(n > 1 ? { installmentCount: n, totalValue: input.amountCents / 100 } : { value: input.amountCents / 100 }),
+  };
+  const create = (split?: PixChargeInput['split']) => asaas<{ id: string; invoiceUrl?: string; installment?: string | null }>('/payments', {
+    method: 'POST',
+    body: JSON.stringify(split ? { ...body, split: [{ walletId: split.walletId, percentualValue: split.percent }] } : body),
+  });
+  let payment: { id: string; invoiceUrl?: string; installment?: string | null };
+  let splitApplied = false;
+  if (input.split) {
+    try { payment = await create(input.split); splitApplied = true; }
+    catch (e) { console.error('Asaas recusou o split; cobrança sem repasse automático', e); payment = await create(); }
+  } else {
+    payment = await create();
+  }
+  if (!payment.invoiceUrl) throw new Error('O Asaas não devolveu o link de pagamento');
+  return { providerId: payment.id, invoiceUrl: payment.invoiceUrl, installmentId: payment.installment ?? null, splitApplied };
+}
+
+/** Devolve um parcelamento inteiro (todas as parcelas do cartão). */
+export async function refundAsaasInstallment(installmentId: string): Promise<void> {
+  await asaas(`/installments/${installmentId}/refund`, { method: 'POST', body: JSON.stringify({}) });
+}

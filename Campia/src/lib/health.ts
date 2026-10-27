@@ -57,9 +57,14 @@ export function healthChecks(i: {
       : i.webhookAt ? `último aviso ${ago(i.webhookAt, i.now)}` : 'sem avisos ainda',
   });
 
-  for (const [kind, label] of [['pix', 'Geração de PIX'], ['repasse', 'Repasse automático'], ['estorno', 'Devoluções'], ['email', 'E-mails'], ['agendador-erro', 'Tarefas do agendador']] as const) {
+  for (const [kind, label] of [['pix', 'Geração de PIX'], ['repasse', 'Repasse automático'], ['estorno', 'Devoluções'], ['email', 'E-mails'], ['whatsapp', 'WhatsApp'], ['agendador-erro', 'Tarefas do agendador']] as const) {
     const n = recent(kind).length;
     checks.push({ key: kind, label, state: n ? (kind === 'repasse' ? 'atencao' : 'erro') : 'ok', detail: n ? `${n} em 24 h: ${last(kind)!.message}` : 'sem falhas em 24 h' });
+  }
+
+  if (!i.env.WHATSAPP_TOKEN || !i.env.WHATSAPP_PHONE_ID) {
+    const wa = checks.find(c => c.key === 'whatsapp');
+    if (wa && wa.state === 'ok') { wa.state = 'atencao'; wa.detail = 'desligado (opcional): falta WHATSAPP_TOKEN e WHATSAPP_PHONE_ID'; }
   }
 
   const missing = REQUIRED_ENV.filter(([k]) => !i.env[k]).map(([, label]) => label);

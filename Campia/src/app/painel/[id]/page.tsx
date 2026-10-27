@@ -21,7 +21,7 @@ import ProLock from '@/components/ProLock';
 import { isProActive } from '@/lib/plan';
 import { myPlan } from '@/lib/plan-server';
 import { SPONSOR_LIMIT, SPONSOR_SELECT, type Sponsor, sortSponsors } from '@/lib/sponsors';
-import { addCoupon, drawChampionship, rebuildChampionship, removeCoupon, setVoting, updateBasics, updatePriceTiers, updateSchedule } from '../edit-actions';
+import { addCoupon, drawChampionship, rebuildChampionship, removeCoupon, setVoting, updateBasics, updateCardOption, updatePriceTiers, updateSchedule } from '../edit-actions';
 import { type VoteResult, categoriesFor, ranking } from '@/lib/voting';
 import { addHelper, updateYellowLimit, deleteChampionship, markPaidManually, removeHelper, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
 
@@ -312,6 +312,19 @@ export default async function Campeonato({ params, searchParams }: {
             </div>
             <p className="sub small" style={{ margin: '6px 0 0' }}>O novo valor vale para as próximas inscrições; quem já pagou não muda.</p>
             <div className="actions"><button className="btn sm">Salvar</button></div>
+          </form>
+          <form action={updateCardOption} className="card" id="cartao">
+            <input type="hidden" name="championship" value={id} />
+            <b>💳 Cartão de crédito</b>
+            <p className="sub" style={{ margin: '4px 0 10px' }}>Além do PIX, o capitão pode pagar no cartão, inclusive parcelado. A taxa do Asaas no cartão é maior que a do PIX (e maior ainda parcelado) e sai do valor recebido.</p>
+            <div className="grid2" style={{ alignItems: 'end' }}>
+              <select name="card_installments" className="inp" defaultValue={String(champ.cardInstallments ?? 0)} aria-label="Cartão de crédito">
+                <option value="0">Não aceitar cartão (só PIX)</option>
+                <option value="1">Cartão à vista</option>
+                {[2, 3, 4, 6, 10, 12].map(n => <option key={n} value={n}>Cartão em até {n}x</option>)}
+              </select>
+              <button className="btn ghost">Salvar</button>
+            </div>
           </form>
           <form action={updatePriceTiers} className="card">
             <input type="hidden" name="championship" value={id} />

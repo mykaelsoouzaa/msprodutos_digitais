@@ -11,6 +11,7 @@ import { sendPush } from '@/lib/push';
 import { siteUrl } from '@/lib/env';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { beat, logEvent } from '@/lib/monitor';
+import { WA_TEMPLATES, sendWhatsapp, whatsappEnabled } from '@/lib/whatsapp';
 
 // Envia os lembretes de jogo. Chamar a cada 10 minutos (ver README: Supabase Cron).
 // Protegido por CRON_SECRET no cabeçalho Authorization: Bearer <segredo>.
@@ -76,6 +77,65 @@ async function notifyWaitlist(db: ReturnType<typeof createAdminClient>, now: num
   return { sent };
 }
 
+/** Grava a chave antes de enviar: se já existe, a mensagem já saiu (ou está saindo) e não repete. */
+async function claimWhatsapp(db: ReturnType<typeof createAdminClient>, key: string) {
+  const { error } = await db.from('whatsapp_sent').insert({ key });
+  return !error;
+}
+
+/**
+ * WhatsApp oficial (só campeonatos de organizadores Pro, porque cada mensagem tem custo):
+ * lembrete do jogo para os capitães ~3 h antes e aviso de pagamento pendente.
+ */
+async function whatsappReminders(db: ReturnType<typeof createAdminClient>, now: number) {
+  if (!whatsappEnabled()) return { skipped: true };
+  const proCache = new Map<string, boolean>();
+  const isPro = async (owner: string) => {
+    if (!proCache.has(owner)) { const { data } = await db.rpc('pro_owner', { p_owner: owner }); proCache.set(owner, data === true); }
+    return proCache.get(owner)!;
+  };
+  const br = new Date(now - 3 * 3600_000);
+  const today = br.toISOString().slice(0, 10);
+  const nowMin = br.getUTCHours() * 60 + br.getUTCMinutes();
+  let jogos = 0, pix = 0;
+
+  // Jogos de hoje que começam entre 2h30 e 3h a partir de agora.
+  const { data: games } = await db.from('games').select('id, championship_id, home_team_id, away_team_id, time, field, home_score')
+    .eq('date', today).is('home_score', null).not('home_team_id', 'is', null).not('away_team_id', 'is', null)
+    .returns<Array<{ id: string; championship_id: string; home_team_id: string; away_team_id: string; time: string; field: string }>>();
+  const soon = (games ?? []).filter(g => { const [h, m] = (g.time || '').split(':').map(Number); const t = h * 60 + m; return Number.isFinite(t) && t - nowMin >= 150 && t - nowMin <= 180; });
+  for (const g of soon) {
+    const { data: c } = await db.from('championships').select('owner_id, name, slug').eq('id', g.championship_id).maybeSingle<{ owner_id: string; name: string; slug: string }>();
+    if (!c || !(await isPro(c.owner_id))) continue;
+    const { data: teams } = await db.from('teams').select('id, name').in('id', [g.home_team_id, g.away_team_id]).returns<Array<{ id: string; name: string }>>();
+    const { data: contacts } = await db.from('team_contacts').select('team_id, captain_phone').in('team_id', [g.home_team_id, g.away_team_id]).returns<Array<{ team_id: string; captain_phone: string }>>();
+    const name = (id: string) => teams?.find(t => t.id === id)?.name ?? '?';
+    for (const tid of [g.home_team_id, g.away_team_id]) {
+      const phone = contacts?.find(x => x.team_id === tid)?.captain_phone;
+      if (!phone || !(await claimWhatsapp(db, `jogo:${g.id}:${tid}`))) continue;
+      const r = await sendWhatsapp(phone, WA_TEMPLATES.jogo(), [name(tid), `${name(g.home_team_id)} x ${name(g.away_team_id)}`, `hoje às ${g.time}${g.field ? ` (${g.field})` : ''}`, `${siteUrl()}/c/${c.slug}`]);
+      if (r === 'ok') jogos++; else if (r !== 'skipped') await logEvent('whatsapp', r);
+    }
+  }
+
+  // Inscrição reservada há mais de 10 min e ainda sem pagamento.
+  const { data: pays } = await db.from('payments').select('id, team_id, championship_id, created_at')
+    .eq('status', 'pendente').lte('created_at', new Date(now - 10 * 60_000).toISOString()).gte('created_at', new Date(now - 30 * 60_000).toISOString()).limit(100)
+    .returns<Array<{ id: string; team_id: string; championship_id: string }>>();
+  for (const p of pays ?? []) {
+    const [{ data: c }, { data: t }, { data: ct }] = await Promise.all([
+      db.from('championships').select('owner_id, name').eq('id', p.championship_id).maybeSingle<{ owner_id: string; name: string }>(),
+      db.from('teams').select('name, status').eq('id', p.team_id).maybeSingle<{ name: string; status: string }>(),
+      db.from('team_contacts').select('captain_phone').eq('team_id', p.team_id).maybeSingle<{ captain_phone: string }>(),
+    ]);
+    if (!c || !t || t.status !== 'reservada' || !ct?.captain_phone || !(await isPro(c.owner_id))) continue;
+    if (!(await claimWhatsapp(db, `pix:${p.id}`))) continue;
+    const r = await sendWhatsapp(ct.captain_phone, WA_TEMPLATES.pix(), [t.name, c.name, `${siteUrl()}/pagamento/${p.id}`]);
+    if (r === 'ok') pix++; else if (r !== 'skipped') await logEvent('whatsapp', r);
+  }
+  return { jogos, pix };
+}
+
 async function run(request: NextRequest) {
   const secret = process.env.CRON_SECRET || '';
   const got = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
@@ -88,6 +148,7 @@ async function run(request: NextRequest) {
   await db.from('system_events').delete().lt('created_at', new Date(now - 30 * 86400_000).toISOString()).then(() => {}, () => {});
   const pix = await remindPendingPix(db, now).catch(async e => { await logEvent('agendador-erro', `Lembrete de PIX: ${e instanceof Error ? e.message : e}`); return { error: true }; });
   const espera = await notifyWaitlist(db, now).catch(async e => { await logEvent('agendador-erro', `Lista de espera: ${e instanceof Error ? e.message : e}`); return { error: true }; });
+  const whatsapp = await whatsappReminders(db, now).catch(async e => { await logEvent('agendador-erro', `WhatsApp: ${e instanceof Error ? e.message : e}`); return { error: true }; });
   const todayBr = new Date(now - 3 * 3600_000).toISOString().slice(0, 10);
   const leads = [...new Set([...DEFAULT_LEADS, 180, 30])];
 
@@ -98,7 +159,7 @@ async function run(request: NextRequest) {
   if (error) { await logEvent('agendador-erro', `Busca de jogos: ${error.message}`); return NextResponse.json({ error: error.message }, { status: 500 }); }
 
   const due = dueReminders((rows ?? []).map(toGame), now, leads);
-  if (!due.length) return NextResponse.json({ ok: true, sent: 0, pix, espera });
+  if (!due.length) return NextResponse.json({ ok: true, sent: 0, pix, espera, whatsapp });
 
   const champIds = [...new Set(due.map(d => (rows ?? []).find(r => r.id === d.game.id)!.championship_id))];
   const [{ data: subs }, { data: champs }, { data: teams }] = await Promise.all([
@@ -132,7 +193,7 @@ async function run(request: NextRequest) {
       if (result === 'error') await db.from('push_deliveries').delete().match({ subscription_id: s.id, game_id: game.id, lead });
     }
   }
-  return NextResponse.json({ ok: true, due: due.length, sent, removed, pix, espera });
+  return NextResponse.json({ ok: true, due: due.length, sent, removed, pix, espera, whatsapp });
 }
 
 export const GET = run;

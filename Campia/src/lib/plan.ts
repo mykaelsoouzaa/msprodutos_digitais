@@ -52,3 +52,10 @@ export const PRO_FEATURES: Array<[string, string]> = [
   ['📊', 'Estatísticas de visitas: de onde vem o público e quantos vão para a inscrição'],
   ['⬇️', 'Planilhas de times, atletas, pagamentos e jogos'],
 ];
+
+/** Lista do Pro, incluindo os lembretes pelo WhatsApp quando estiverem ligados. */
+export function proFeatures(): Array<[string, string]> {
+  return process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_ID
+    ? [...PRO_FEATURES, ['💬', 'Lembrete de jogo e de pagamento no WhatsApp dos capitães']]
+    : PRO_FEATURES;
+}

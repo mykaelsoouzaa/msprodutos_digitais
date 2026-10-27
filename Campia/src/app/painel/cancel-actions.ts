@@ -24,7 +24,7 @@ async function requireOwner(champId: string, back: string) {
 /** Faz o estorno no Asaas e marca o pagamento como estornado. Devolve a mensagem de erro, se houver. */
 async function refund(p: PaymentRow): Promise<string | null> {
   try {
-    await refundPix(p.provider, p.provider_id);
+    await refundPix(p.provider, p.provider_id, p.provider_installment_id);
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'O Asaas não aceitou a devolução';
     await logEvent('estorno', `Pagamento ${p.id}: ${msg}`);

@@ -6,7 +6,7 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { organizerPercent } from '../payout';
 import { quote, webhookAction } from '../signup';
-import { cancelAsaasSubscription, createAsaasPixCharge, createAsaasSubscription, platformWalletId, refundAsaasPayment } from './asaas';
+import { cancelAsaasSubscription, createAsaasCardCharge, refundAsaasInstallment, createAsaasPixCharge, createAsaasSubscription, platformWalletId, refundAsaasPayment } from './asaas';
 
 const CAMPIA_KEY = '$aact_campia_teste';
 const ARENA_KEY = '$aact_arena_teste';
@@ -38,8 +38,12 @@ before(async () => {
         if (s.walletId === WALLETS[key]) return send(400, { errors: [{ description: 'Não é permitido informar a própria carteira no split' }] });
         if (!Object.values(WALLETS).includes(s.walletId)) return send(400, { errors: [{ description: 'Wallet [walletId] inexistente' }] });
       }
-      const c: Charge = { id: `pay_${state.charges.length + 1}`, value: body.value, externalReference: body.externalReference, split: body.split };
+      const c: Charge = { id: `pay_${state.charges.length + 1}`, value: body.value ?? body.totalValue, externalReference: body.externalReference, split: body.split };
       state.charges.push(c);
+      if (body.billingType === 'CREDIT_CARD') {
+        if (body.installmentCount && !(body.totalValue > 0)) return send(400, { errors: [{ description: 'Informe o valor total do parcelamento' }] });
+        return send(200, { id: c.id, invoiceUrl: `https://sandbox.asaas.com/i/${c.id}`, installment: body.installmentCount ? 'ins_000001' : null });
+      }
       return send(200, { id: c.id });
     }
     const qr = path.match(/^\/payments\/(pay_\d+)\/pixQrCode$/);
@@ -60,6 +64,7 @@ before(async () => {
       const c = state.charges.find(x => x.id === del[1]); if (c) c.deleted = true;
       return send(200, { deleted: true, id: del[1] });
     }
+    if (req.method === 'POST' && path === '/installments/ins_000001/refund') return send(200, { id: 'ins_000001', status: 'REFUNDED' });
     if (req.method === 'POST' && path === '/subscriptions') {
       if (!body.customer || body.cycle !== 'MONTHLY' || !(body.value > 0)) return send(400, { errors: [{ description: 'assinatura inválida' }] });
       return send(200, { id: 'sub_000001', status: 'ACTIVE' });
@@ -188,4 +193,20 @@ test('10. fluxo inteiro: preço com cupom → PIX com repasse → Asaas avisa �
   // 4. o aviso que o Asaas manda aponta para a nossa inscrição
   const action = webhookAction({ event: 'PAYMENT_RECEIVED', payment: { id: c.id, externalReference: c.externalReference } }, '2026-10-27');
   assert.deepEqual(action, { type: 'inscricao', asaasId: charge.providerId, reference: 'fluxo-1' });
+});
+
+test('11. cartão parcelado: valor total, split, link de pagamento e devolução do parcelamento inteiro', async () => {
+  const before = state.calls.length;
+  const c = await createAsaasCardCharge({ ...input('cartao-1'), amountCents: 30000, installments: 3, split: { walletId: WALLETS[ARENA_KEY], percent: 90 } });
+  assert.equal(c.invoiceUrl, `https://sandbox.asaas.com/i/${c.providerId}`);
+  assert.equal(c.installmentId, 'ins_000001');
+  assert.equal(c.splitApplied, true);
+  const post = state.calls.slice(before).find(x => x.method === 'POST' && x.path === '/payments')!;
+  assert.deepEqual([post.body.billingType, post.body.installmentCount, post.body.totalValue, post.body.value], ['CREDIT_CARD', 3, 300, undefined]);
+  const vista = await createAsaasCardCharge({ ...input('cartao-2'), installments: 1 });
+  assert.equal(vista.installmentId, null);
+  const p2 = state.calls.filter(x => x.method === 'POST' && x.path === '/payments').at(-1)!;
+  assert.deepEqual([p2.body.value, p2.body.installmentCount], [300, undefined]);
+  await refundAsaasInstallment('ins_000001');
+  assert.equal(state.calls.at(-1)!.path, '/installments/ins_000001/refund');
 });

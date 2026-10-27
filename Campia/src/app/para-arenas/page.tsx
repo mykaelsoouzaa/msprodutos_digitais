@@ -5,7 +5,7 @@ import { COMPANY } from '@/lib/company';
 import { SPORT_GROUPS, sportsIn } from '@/lib/domain/sports';
 import { brl } from '@/lib/format';
 import { campiaFeePercent, organizerPercent } from '@/lib/payout';
-import { PRO_FEATURES, proFeePercent, proPriceCents } from '@/lib/plan';
+import { proFeatures, proFeePercent, proPriceCents } from '@/lib/plan';
 
 export const metadata: Metadata = {
   alternates: { canonical: '/para-arenas' },
@@ -104,7 +104,7 @@ export default function ParaArenas() {
             <span className="badge pro">Pro</span>
             <div className="plan-price">{brl(proPriceCents())}<span>/mês</span></div>
             <ul className="plan-list">
-              {PRO_FEATURES.map(([icon, text], i) => <li key={text}><span>{icon}</span><span>{i === 0 ? <>Taxa de só <b>{proFeePercent()}%</b> por inscrição</> : text}</span></li>)}
+              {proFeatures().map(([icon, text], i) => <li key={text}><span>{icon}</span><span>{i === 0 ? <>Taxa de só <b>{proFeePercent()}%</b> por inscrição</> : text}</span></li>)}
             </ul>
             <div className="actions"><Link href="/entrar?voltar=/painel/plano" className="btn">Assinar o Pro</Link></div>
           </div>

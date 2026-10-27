@@ -32,6 +32,9 @@ Passo a passo para colocar a Campia no ar, na ordem. Cada etapa diz onde clicar 
    19. `supabase/migrations/20261027240000_avulsos.sql`
    20. `supabase/migrations/20261027250000_plano_pro.sql`
    21. `supabase/migrations/20261027260000_saude.sql`
+   22. `supabase/migrations/20261027270000_indicacao.sql`
+   23. `supabase/migrations/20261027280000_cartao.sql`
+   24. `supabase/migrations/20261027290000_whatsapp.sql`
 
    **Banco já criado e precisa atualizar?** Rode só `supabase/atualizar-banco.sql`. Ele confere o que já existe e cria só o que falta; pode rodar de novo sem problema.
 3. Em *Authentication › URL Configuration*:
@@ -176,3 +179,19 @@ Troque `SEU_CRON_SECRET` pelo valor do passo 2. Para conferir: `select * from cr
 | Vercel | grátis para testar; Pro (US$ 20 por mês) para uso comercial |
 | Asaas | sem mensalidade; taxa por PIX recebido (veja a tabela atual no site da Asaas) |
 | SMTP (Resend/Brevo) | grátis até alguns milhares de e-mails por mês |
+
+
+## WhatsApp oficial (opcional)
+
+Lembretes no WhatsApp dos capitães, só para campeonatos de organizadores **Pro** (cada mensagem tem custo na Meta):
+lembrete do jogo ~3 h antes e aviso de pagamento pendente. Fica desligado até configurar.
+
+1. Em [business.facebook.com](https://business.facebook.com), crie (ou use) o Gerenciador de Negócios da empresa e verifique a empresa.
+2. Em [developers.facebook.com](https://developers.facebook.com) › Criar app › tipo **Empresa** › adicione o produto **WhatsApp**.
+3. Cadastre um número de telefone só para a Campia (não pode estar em uso no app do WhatsApp) e adicione uma forma de pagamento.
+4. Crie um **usuário do sistema** com permissão no app e gere um **token permanente** (permissões `whatsapp_business_messaging` e `whatsapp_business_management`).
+5. Em WhatsApp › Modelos de mensagem, crie dois modelos na categoria **Utilidade**, idioma **Português (BR)**:
+   - `campia_lembrete_jogo`: `⚽ {{1}}, seu jogo é daqui a pouco: {{2}}, {{3}}. Tabela e detalhes: {{4}}`
+   - `campia_pagamento_pendente`: `Olá! A vaga do {{1}} no {{2}} está reservada, mas o pagamento ainda não caiu. Pague aqui: {{3}}`
+6. Na Vercel: `WHATSAPP_TOKEN` (Secret) e `WHATSAPP_PHONE_ID` (o "ID do número de telefone", não o número). Redeploy.
+7. Confira no /admin › Saúde: o item WhatsApp fica verde.

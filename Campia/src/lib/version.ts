@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.3.1';
+export const APP_VERSION = '2.6.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,34 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.6.0',
+    date: '2026-10-27',
+    title: 'WhatsApp oficial',
+    items: [
+      "Organizadores Pro podem ter lembretes no WhatsApp dos capitães: jogo daqui a 3 horas e pagamento pendente",
+      "Funciona quando a Campia ligar o WhatsApp oficial; até lá, nada muda",
+    ],
+  },
+  {
+    version: '2.5.0',
+    date: '2026-10-27',
+    title: 'Inscrição no cartão',
+    items: [
+      "O organizador pode aceitar cartão de crédito além do PIX, à vista ou parcelado em até 12x (em Ajustes)",
+      "O capitão escolhe PIX ou cartão na inscrição e paga na página segura do Asaas; a vaga confirma sozinha quando o pagamento é aprovado",
+      "Devolução de inscrição no cartão estorna todas as parcelas",
+    ],
+  },
+  {
+    version: '2.4.0',
+    date: '2026-10-27',
+    title: 'Indique uma arena',
+    items: [
+      "Em Plano Pro, cada organizador tem um link de indicação para mandar a outras arenas",
+      "Quando a arena indicada assina o Pro, quem indicou ganha 1 mês de Pro de presente, quantas vezes indicar",
+    ],
+  },
   {
     version: '2.3.1',
     date: '2026-10-27',

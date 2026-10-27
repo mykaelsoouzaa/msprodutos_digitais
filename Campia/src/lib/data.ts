@@ -7,7 +7,7 @@ import type { Card, Championship, Game, Goal, Player, Rules, Schedule, Source, T
 export interface ChampionshipRow {
   id: string; owner_id: string; slug: string; name: string; sport: string; format: Championship['format'];
   fee_cents: number; location: string; city: string; state: string; online: boolean; visibility: Championship['visibility'];
-  rules: Rules; schedule: Schedule; created_at: string; price_tiers?: Array<{ until: string; cents: number }>; voting?: 'fechada' | 'aberta' | 'encerrada';
+  rules: Rules; schedule: Schedule; created_at: string; price_tiers?: Array<{ until: string; cents: number }>; voting?: 'fechada' | 'aberta' | 'encerrada'; card_installments?: number;
 }
 export interface TeamRow {
   id: string; championship_id: string; slot: number; name: string; short: string; color: string; grp: string | null;
@@ -27,12 +27,13 @@ export interface PaymentRow {
   provider_id: string | null; status: 'pendente' | 'pago' | 'pago_tarde' | 'expirado' | 'cancelado' | 'estornado';
   pix_payload: string | null; pix_image: string | null; expires_at: string | null; created_at: string; paid_at: string | null;
   payout?: 'automatico' | 'manual'; manual_payout_done_at?: string | null; reminder_sent_at?: string | null; refunded_at?: string | null;
+  method?: 'pix' | 'cartao'; invoice_url?: string | null; installments?: number | null; provider_installment_id?: string | null;
 }
 
 /* ---------- conversões ---------- */
 export const toChampionship = (r: ChampionshipRow): Championship => ({
   id: r.id, slug: r.slug, name: r.name, sport: r.sport, format: r.format, feeCents: r.fee_cents,
-  location: r.location, city: r.city, state: r.state ?? '', online: !!r.online, priceTiers: r.price_tiers ?? [], voting: r.voting ?? 'fechada', visibility: r.visibility, rules: r.rules, schedule: r.schedule,
+  location: r.location, city: r.city, state: r.state ?? '', online: !!r.online, priceTiers: r.price_tiers ?? [], voting: r.voting ?? 'fechada', cardInstallments: r.card_installments ?? 0, visibility: r.visibility, rules: r.rules, schedule: r.schedule,
 });
 export const toTeam = (r: TeamRow, phone = '', email = ''): Team => ({
   id: r.id, slot: r.slot, name: r.name, short: r.short, color: r.color, group: r.grp, status: r.status,

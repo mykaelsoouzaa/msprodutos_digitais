@@ -38,6 +38,12 @@ export async function middleware(request: NextRequest) {
     url.searchParams.set('voltar', request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
+
+  // Link de indicação (?indicacao=codigo): guarda por 60 dias para dar o crédito a quem indicou.
+  const ref = request.nextUrl.searchParams.get('indicacao');
+  if (ref && /^[a-z0-9]{6,12}$/.test(ref) && !request.cookies.get('campia-indicacao')) {
+    response.cookies.set('campia-indicacao', ref, { path: '/', maxAge: 60 * 60 * 24 * 60, sameSite: 'lax', httpOnly: true });
+  }
   return response;
 }
 

@@ -22,7 +22,7 @@ export default async function Inscricao({ params, searchParams }: {
   const { slug } = await params;
   const sp = await searchParams;
   const supabase = await createClient();
-  const { data: champ } = await supabase.from('championships').select('id, owner_id, name, sport, fee_cents, price_tiers, location, city, state, online').eq('slug', slug).maybeSingle();
+  const { data: champ } = await supabase.from('championships').select('id, owner_id, name, sport, fee_cents, price_tiers, card_installments, location, city, state, online').eq('slug', slug).maybeSingle();
   if (!champ) notFound();
   const { count } = await supabase.from('teams').select('id', { count: 'exact', head: true }).eq('championship_id', champ.id).neq('status', 'inscrita');
   const { data: started } = await supabase.from('games').select('id').eq('championship_id', champ.id).not('home_score', 'is', null).limit(1);
@@ -73,9 +73,27 @@ export default async function Inscricao({ params, searchParams }: {
           <label htmlFor="email">E-mail do capitão</label>
           <input id="email" name="email" type="email" className="inp" required autoComplete="email" inputMode="email" placeholder="voce@exemplo.com" />
           <p className="sub small" style={{ margin: '6px 0 0' }}>Com esse e-mail você acompanha o time em <b>Meus times</b>: próximos jogos, resultados e posição.</p>
-          {needsCpf && <><label htmlFor="cpf">CPF ou CNPJ do responsável (para o PIX)</label><input id="cpf" name="cpf" className="inp" inputMode="numeric" required /></>}
+          {needsCpf && <><label htmlFor="cpf">CPF ou CNPJ do responsável (para a cobrança)</label><input id="cpf" name="cpf" className="inp" inputMode="numeric" required /></>}
           <label htmlFor="coupon">Cupom de desconto (se tiver)</label>
           <input id="coupon" name="coupon" className="inp" maxLength={20} autoCapitalize="characters" placeholder="Ex.: PARCEIRO10" />
+          {(champ.card_installments ?? 0) > 0 && (
+            <fieldset>
+              <legend>Como vai pagar</legend>
+              <div className="choice">
+                <label><input type="radio" name="method" value="pix" defaultChecked /> ⚡ PIX (confirma na hora)</label>
+                <label><input type="radio" name="method" value="cartao" /> 💳 Cartão de crédito{champ.card_installments > 1 ? ` (até ${champ.card_installments}x)` : ''}</label>
+              </div>
+              {champ.card_installments > 1 && (
+                <div className="if-card">
+                  <label htmlFor="installments">Parcelas no cartão</label>
+                  <select id="installments" name="installments" className="inp" defaultValue="1">
+                    {Array.from({ length: champ.card_installments }, (_, i) => i + 1).map(n => <option key={n} value={n}>{n === 1 ? 'À vista' : `${n}x sem juros para você`}</option>)}
+                  </select>
+                </div>
+              )}
+              <p className="sub small" style={{ margin: '6px 0 0' }}>No cartão, você digita os dados na página segura do Asaas; a Campia não vê o número do cartão.</p>
+            </fieldset>
+          )}
           <label htmlFor="players">{rules.who} (um por linha, com o número se quiser)</label>
           <textarea id="players" name="players" className="inp" required placeholder={'10 João\n7 Pedro\nCarlos'} />
           <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', color: 'var(--text)', fontSize: 13 }}>

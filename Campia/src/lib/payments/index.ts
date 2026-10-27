@@ -1,6 +1,6 @@
 // Cobrança PIX. Em desenvolvimento usa o provedor simulado; em produção, a Asaas.
 import { paymentProvider } from '../env';
-import { createAsaasPixCharge, refundAsaasPayment } from './asaas';
+import { createAsaasCardCharge, createAsaasPixCharge, refundAsaasInstallment, refundAsaasPayment } from './asaas';
 
 export interface PixChargeInput {
   paymentId: string;      // nosso id, enviado como externalReference
@@ -33,9 +33,16 @@ export async function createPixCharge(input: PixChargeInput): Promise<PixCharge>
   };
 }
 
-/** Devolve um PIX pago. No modo de teste (mock) não há dinheiro, então só confirma. */
-export async function refundPix(provider: 'mock' | 'asaas', providerId: string | null): Promise<void> {
+/** Devolve um pagamento (PIX ou cartão). No modo de teste (mock) não há dinheiro, então só confirma. */
+export async function refundPix(provider: 'mock' | 'asaas', providerId: string | null, installmentId?: string | null): Promise<void> {
   if (provider !== 'asaas') return;
+  if (installmentId) return refundAsaasInstallment(installmentId);
   if (!providerId) throw new Error('Cobrança sem identificador no Asaas');
   await refundAsaasPayment(providerId);
+}
+
+/** Cobrança no cartão: devolve o link da página de pagamento. No modo de teste, a página da Campia simula. */
+export async function createCardCharge(input: PixChargeInput & { installments: number }) {
+  if (paymentProvider() === 'asaas') return createAsaasCardCharge(input);
+  return { providerId: `mock_${input.paymentId}`, invoiceUrl: null as string | null, installmentId: null as string | null, splitApplied: !!input.split };
 }

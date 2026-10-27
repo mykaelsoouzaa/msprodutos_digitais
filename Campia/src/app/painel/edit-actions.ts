@@ -231,3 +231,15 @@ export async function setVoting(formData: FormData) {
   revalidatePath(`/c/${data.champ.slug}`);
   go(back, 'ok', state === 'aberta' ? 'Votação aberta! Divulgue o link da página do campeonato.' : state === 'encerrada' ? 'Votação encerrada: o resultado está na página do campeonato.' : 'Votação fechada');
 }
+
+/* ---------- cartão de crédito ---------- */
+export async function updateCardOption(formData: FormData) {
+  const champId = String(formData.get('championship'));
+  const back = `/painel/${champId}?aba=ajustes#cartao`;
+  const { supabase } = await requireOwner(champId, back);
+  const n = Math.max(0, Math.min(12, Math.floor(Number(formData.get('card_installments') ?? 0)) || 0));
+  const { error } = await supabase.from('championships').update({ card_installments: n }).eq('id', champId);
+  if (error) go(back, 'erro', 'Não foi possível salvar');
+  revalidatePath(`/painel/${champId}`);
+  go(back, 'ok', n === 0 ? 'Inscrição só no PIX' : n === 1 ? 'Cartão liberado (à vista)' : `Cartão liberado em até ${n}x`);
+}

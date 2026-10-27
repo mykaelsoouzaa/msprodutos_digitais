@@ -41,12 +41,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       .map(p => [teamName.get(p.teamId) ?? '', p.name, p.number, goals.filter(g => g.playerId === p.id).reduce((s, g) => s + (g.count ?? 1), 0)]);
   } else if (tipo === 'pagamentos') {
     const { data: pays } = await supabase.from('payments')
-      .select('team_id, amount_cents, discount_cents, coupon_code, status, payout, created_at, paid_at, refunded_at')
+      .select('team_id, amount_cents, discount_cents, coupon_code, status, payout, created_at, paid_at, refunded_at, method, installments')
       .eq('championship_id', id).order('created_at')
-      .returns<Array<{ team_id: string; amount_cents: number; discount_cents: number | null; coupon_code: string | null; status: string; payout: string | null; created_at: string; paid_at: string | null; refunded_at: string | null }>>();
-    header = ['Time', 'Valor (R$)', 'Desconto (R$)', 'Cupom', 'Situação', 'Repasse', 'Criado em', 'Pago em', 'Devolvido em'];
+      .returns<Array<{ team_id: string; amount_cents: number; discount_cents: number | null; coupon_code: string | null; status: string; payout: string | null; created_at: string; paid_at: string | null; refunded_at: string | null; method: string | null; installments: number | null }>>();
+    header = ['Time', 'Valor (R$)', 'Desconto (R$)', 'Cupom', 'Forma', 'Situação', 'Repasse', 'Criado em', 'Pago em', 'Devolvido em'];
     rows = (pays ?? []).map(p => [
       teamName.get(p.team_id) ?? '(time removido)', money(p.amount_cents), money(p.discount_cents ?? 0), p.coupon_code ?? '',
+      p.method === 'cartao' ? `Cartão${p.installments && p.installments > 1 ? ` ${p.installments}x` : ''}` : 'PIX',
       STATUS[p.status] ?? p.status, p.payout === 'automatico' ? 'Automático' : 'Manual',
       brDateTime(p.created_at), brDateTime(p.paid_at), brDateTime(p.refunded_at),
     ]);
