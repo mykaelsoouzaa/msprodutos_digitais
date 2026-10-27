@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.24.0';
+export const APP_VERSION = '1.25.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,15 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.25.0',
+    date: '2026-10-27',
+    title: 'Baixar planilhas',
+    items: [
+      "Na aba Times e inscrições: baixe planilhas de times e contatos, atletas, pagamentos e jogos",
+      "Abrem direto no Excel e no Google Planilhas, com acentos e valores em reais",
+    ],
+  },
   {
     version: '1.24.0',
     date: '2026-10-27',

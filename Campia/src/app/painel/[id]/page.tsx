@@ -198,6 +198,15 @@ export default async function Campeonato({ params, searchParams }: {
               </div>
             </>
           )}
+          <div className="card" style={{ marginTop: 16 }}>
+            <b>Baixar planilhas</b>
+            <p className="sub" style={{ margin: '4px 0 10px' }}>Abrem no Excel e no Google Planilhas. Úteis para a contabilidade, o seguro dos atletas e a súmula impressa.</p>
+            <div className="actions" style={{ marginTop: 0 }}>
+              {([['times', 'Times e contatos'], ['atletas', 'Atletas'], ['pagamentos', 'Pagamentos'], ['jogos', 'Jogos e resultados']] as const).map(([k, l]) => (
+                <a key={k} href={`${base}/exportar/${k}`} className="btn ghost sm" download>⬇ {l}</a>
+              ))}
+            </div>
+          </div>
         </>
       )}
 
