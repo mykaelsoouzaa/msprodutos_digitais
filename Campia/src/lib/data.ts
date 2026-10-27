@@ -7,7 +7,7 @@ import type { Card, Championship, Game, Goal, Player, Rules, Schedule, Source, T
 export interface ChampionshipRow {
   id: string; owner_id: string; slug: string; name: string; sport: string; format: Championship['format'];
   fee_cents: number; location: string; city: string; state: string; online: boolean; visibility: Championship['visibility'];
-  rules: Rules; schedule: Schedule; created_at: string;
+  rules: Rules; schedule: Schedule; created_at: string; price_tiers?: Array<{ until: string; cents: number }>;
 }
 export interface TeamRow {
   id: string; championship_id: string; slot: number; name: string; short: string; color: string; grp: string | null;
@@ -32,7 +32,7 @@ export interface PaymentRow {
 /* ---------- conversões ---------- */
 export const toChampionship = (r: ChampionshipRow): Championship => ({
   id: r.id, slug: r.slug, name: r.name, sport: r.sport, format: r.format, feeCents: r.fee_cents,
-  location: r.location, city: r.city, state: r.state ?? '', online: !!r.online, visibility: r.visibility, rules: r.rules, schedule: r.schedule,
+  location: r.location, city: r.city, state: r.state ?? '', online: !!r.online, priceTiers: r.price_tiers ?? [], visibility: r.visibility, rules: r.rules, schedule: r.schedule,
 });
 export const toTeam = (r: TeamRow, phone = '', email = ''): Team => ({
   id: r.id, slot: r.slot, name: r.name, short: r.short, color: r.color, group: r.grp, status: r.status,

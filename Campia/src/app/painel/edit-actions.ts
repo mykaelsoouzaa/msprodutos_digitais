@@ -166,3 +166,56 @@ export async function drawChampionship(formData: FormData) {
   revalidatePath(`/c/${data.champ.slug}`);
   go(`/painel/${champId}?aba=tabela`, 'ok', data.champ.format === 'grupos' ? 'Grupos sorteados! Confira a tabela.' : 'Confrontos sorteados! Confira a chave.');
 }
+
+/* ---------- lotes de preço ---------- */
+export async function updatePriceTiers(formData: FormData) {
+  const champId = String(formData.get('championship'));
+  const back = `/painel/${champId}?aba=ajustes`;
+  const tiers: Array<{ until: string; cents: number }> = [];
+  for (let i = 0; i < 3; i++) {
+    const until = String(formData.get(`until_${i}`) || '');
+    const value = String(formData.get(`value_${i}`) || '').replace(',', '.');
+    if (!until && !value) continue;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(until) || !value || Number.isNaN(Number(value)) || Number(value) < 0) {
+      go(back, 'erro', `Lote ${i + 1}: preencha a data e o valor`);
+    }
+    tiers.push({ until, cents: Math.round(Number(value) * 100) });
+  }
+  tiers.sort((a, b) => a.until.localeCompare(b.until));
+  if (new Set(tiers.map(t => t.until)).size !== tiers.length) go(back, 'erro', 'Dois lotes com a mesma data');
+  const { supabase, data } = await requireOwner(champId, back);
+  const { error } = await supabase.from('championships').update({ price_tiers: tiers }).eq('id', champId);
+  if (error) go(back, 'erro', 'Não foi possível salvar os lotes');
+  revalidatePath(`/c/${data.champ.slug}`);
+  go(back, 'ok', tiers.length ? 'Lotes de preço salvos' : 'Lotes removidos: vale o valor da inscrição');
+}
+
+/* ---------- cupons ---------- */
+export async function addCoupon(formData: FormData) {
+  const champId = String(formData.get('championship'));
+  const back = `/painel/${champId}?aba=ajustes`;
+  const code = String(formData.get('code') || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const kind = formData.get('kind') === 'valor' ? 'valor' : 'percent';
+  const value = Number(String(formData.get('value') || '').replace(',', '.'));
+  const max = String(formData.get('max') || '').trim();
+  if (!/^[A-Z0-9]{3,20}$/.test(code)) go(back, 'erro', 'Código do cupom: de 3 a 20 letras ou números');
+  if (!(value > 0) || (kind === 'percent' && value > 100)) go(back, 'erro', 'Desconto inválido');
+  if (max && !(Number.isInteger(Number(max)) && Number(max) > 0)) go(back, 'erro', 'Limite de usos inválido');
+  const { supabase } = await requireOwner(champId, back);
+  const { error } = await supabase.from('coupons').insert({
+    championship_id: champId, code,
+    percent: kind === 'percent' ? Math.round(value) : null,
+    amount_cents: kind === 'valor' ? Math.round(value * 100) : null,
+    max_uses: max ? Number(max) : null,
+  });
+  if (error) go(back, 'erro', error.code === '23505' ? 'Já existe um cupom com esse código' : 'Não foi possível criar o cupom');
+  go(back, 'ok', `Cupom ${code} criado`);
+}
+
+export async function removeCoupon(formData: FormData) {
+  const champId = String(formData.get('championship'));
+  const back = `/painel/${champId}?aba=ajustes`;
+  const { supabase } = await requireOwner(champId, back);
+  await supabase.from('coupons').delete().eq('id', String(formData.get('coupon'))).eq('championship_id', champId);
+  go(back, 'ok', 'Cupom removido');
+}

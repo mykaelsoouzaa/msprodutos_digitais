@@ -10,6 +10,7 @@ import { FORMATS, sportLabel, sportRules } from '@/lib/domain/sports';
 import { champion as getChampion, isDecided, ordered } from '@/lib/domain/standings';
 import { siteUrl } from '@/lib/env';
 import { brl, placeLabel, waLink } from '@/lib/format';
+import { priceText } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -76,7 +77,7 @@ export default async function Publico({ params, searchParams }: {
         <aside className="side">
           {signupOpen && (
             <div className="cta">
-              <div className="grow"><b>Inscrições abertas</b><span>{open} vaga{open > 1 ? 's' : ''} · {brl(champ.feeCents)} por time</span></div>
+              <div className="grow"><b>Inscrições abertas</b><span>{open} vaga{open > 1 ? 's' : ''} · {priceText(champ.feeCents, champ.priceTiers, brl).long} por time</span></div>
               <Link href={`/c/${champ.slug}/inscricao`} className="btn sm">Inscrever</Link>
             </div>
           )}

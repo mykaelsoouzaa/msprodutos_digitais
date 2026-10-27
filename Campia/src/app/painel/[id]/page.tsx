@@ -9,11 +9,12 @@ import { FORMATS, allowsOnline, sportLabel, sportRules } from '@/lib/domain/spor
 import { isDecided, labels } from '@/lib/domain/standings';
 import { siteUrl } from '@/lib/env';
 import { brl, placeLabel, waLink } from '@/lib/format';
+import { priceText } from '@/lib/pricing';
 import PlaceFields from '@/components/PlaceFields';
 import { createClient } from '@/lib/supabase/server';
 import { refundLatePayment } from '../cancel-actions';
 import { removeFromWaitlist } from '../waitlist-actions';
-import { drawChampionship, rebuildChampionship, updateBasics, updateSchedule } from '../edit-actions';
+import { addCoupon, drawChampionship, rebuildChampionship, removeCoupon, updateBasics, updatePriceTiers, updateSchedule } from '../edit-actions';
 import { addHelper, updateYellowLimit, deleteChampionship, markPaidManually, removeHelper, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
 
 export const metadata: Metadata = { title: 'Campeonato' };
@@ -50,12 +51,25 @@ export default async function Campeonato({ params, searchParams }: {
     ? await supabase.from('waitlist').select('id, team_name, captain_name, email, phone, notified_at, created_at').eq('championship_id', id).order('created_at')
       .returns<Array<{ id: string; team_name: string; captain_name: string; email: string; phone: string; notified_at: string | null; created_at: string }>>()
     : { data: [] as Array<{ id: string; team_name: string; captain_name: string; email: string; phone: string; notified_at: string | null; created_at: string }> };
+  const { data: coupons } = owner && tab === 'ajustes'
+    ? await supabase.from('coupons').select('id, code, percent, amount_cents, max_uses').eq('championship_id', id).order('created_at')
+      .returns<Array<{ id: string; code: string; percent: number | null; amount_cents: number | null; max_uses: number | null }>>()
+    : { data: [] as Array<{ id: string; code: string; percent: number | null; amount_cents: number | null; max_uses: number | null }> };
+  const { data: couponUses } = owner && tab === 'ajustes'
+    ? await supabase.from('payments').select('coupon_code').eq('championship_id', id).in('status', ['pago', 'pendente']).not('coupon_code', 'is', null)
+      .returns<Array<{ coupon_code: string }>>()
+    : { data: [] as Array<{ coupon_code: string }> };
+  const tiers = [...(champ.priceTiers ?? [])].sort((a, b) => a.until.localeCompare(b.until));
   const base = `/painel/${id}`;
   const publicUrl = `${siteUrl()}/c/${champ.slug}`;
   const signupUrl = `${publicUrl}/inscricao`;
   const done = games.filter(isDecided).length;
   const signed = teams.filter(t => t.status === 'inscrita');
-  const received = teams.filter(t => t.paid).length * champ.feeCents;
+  const { data: paidRows } = owner
+    ? await supabase.from('payments').select('amount_cents').eq('championship_id', id).eq('status', 'pago').returns<Array<{ amount_cents: number }>>()
+    : { data: [] as Array<{ amount_cents: number }> };
+  const received = (paidRows ?? []).reduce((s, p) => s + p.amount_cents, 0);
+  const price = priceText(champ.feeCents, champ.priceTiers, brl);
 
   return (
     <>
@@ -65,7 +79,7 @@ export default async function Campeonato({ params, searchParams }: {
       <div className="stats">
         <div className="stat"><b>{signed.length}/{teams.length}</b><span>times inscritos</span></div>
         <div className="stat"><b>{done}/{games.length}</b><span>jogos</span></div>
-        {owner && <div className="stat"><b className="money">{brl(received)}</b><span>recebido</span></div>}
+        {owner && <div className="stat"><b className="money">{brl(received)}</b><span>recebido pelo PIX</span></div>}
       </div>
       {!owner && <div className="note" style={{ margin: '0 0 16px' }}>Você é <b>ajudante</b> deste campeonato: pode lançar resultados e ajustar data, horário e campo dos jogos.</div>}
       <Flash ok={sp.ok} erro={sp.erro} />
@@ -85,10 +99,10 @@ export default async function Campeonato({ params, searchParams }: {
         <>
           <div className="card">
             <b>Link de inscrição</b>
-            <p className="sub" style={{ margin: '4px 0 8px' }}>Cada capitão cadastra o time e paga {brl(champ.feeCents)} pelo PIX. A vaga é confirmada sozinha.</p>
+            <p className="sub" style={{ margin: '4px 0 8px' }}>Cada capitão cadastra o time e paga {price.long} pelo PIX. A vaga é confirmada sozinha.</p>
             <div className="copybox">{signupUrl}</div>
             <div className="actions">
-              <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 Inscrições abertas: ${champ.name}\n${sportLabel(champ.sport)} · ${FORMATS[champ.format]}\n💰 ${brl(champ.feeCents)} por time (PIX)\n${champ.online ? '🌐 Online\n' : placeLabel(champ) ? `📍 ${placeLabel(champ)}\n` : ''}Inscreva seu time: ${signupUrl}`)}>Divulgar no WhatsApp</a>
+              <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 Inscrições abertas: ${champ.name}\n${sportLabel(champ.sport)} · ${FORMATS[champ.format]}\n💰 ${price.long} por time (PIX)\n${champ.online ? '🌐 Online\n' : placeLabel(champ) ? `📍 ${placeLabel(champ)}\n` : ''}Inscreva seu time: ${signupUrl}`)}>Divulgar no WhatsApp</a>
             </div>
           </div>
           {champ.format !== 'pontos' && !games.some(isDecided) && (
@@ -130,7 +144,7 @@ export default async function Campeonato({ params, searchParams }: {
                   {t.status === 'reservada' && (
                     <form action={markPaidManually} style={{ display: 'flex', gap: 6 }}>
                       <input type="hidden" name="championship" value={id} /><input type="hidden" name="team" value={t.id} />
-                      {t.captainPhone && <a className="btn wa sm" target="_blank" rel="noopener" href={waLink(t.captainPhone, `Olá, ${t.captainName}! Falta o pagamento da inscrição do ${t.name} no ${champ.name} (${brl(champ.feeCents)}).`)}>Cobrar</a>}
+                      {t.captainPhone && <a className="btn wa sm" target="_blank" rel="noopener" href={waLink(t.captainPhone, `Olá, ${t.captainName}! Falta o pagamento da inscrição do ${t.name} no ${champ.name}.`)}>Cobrar</a>}
                       <button className="btn ghost sm" title="Recebi por fora">Confirmar</button>
                     </form>
                   )}
@@ -204,6 +218,48 @@ export default async function Campeonato({ params, searchParams }: {
             <p className="sub small" style={{ margin: '6px 0 0' }}>O novo valor vale para as próximas inscrições; quem já pagou não muda.</p>
             <div className="actions"><button className="btn sm">Salvar</button></div>
           </form>
+          <form action={updatePriceTiers} className="card">
+            <input type="hidden" name="championship" value={id} />
+            <b>Lotes de preço</b>
+            <p className="sub" style={{ margin: '4px 0 0' }}>Valores mais baratos para quem se inscreve antes. Cada lote vale até o fim do dia escolhido; depois do último, vale o valor da inscrição ({brl(champ.feeCents)}). Hoje: <b style={{ color: 'var(--text)' }}>{price.long}</b>.</p>
+            {[0, 1, 2].map(i => (
+              <div className="grid2" key={i}>
+                <div><label htmlFor={`until_${i}`}>{i + 1}º lote até</label><input id={`until_${i}`} name={`until_${i}`} type="date" className="inp" defaultValue={tiers[i]?.until ?? ''} /></div>
+                <div><label htmlFor={`value_${i}`}>Valor (R$)</label><input id={`value_${i}`} name={`value_${i}`} type="number" min={0} step="0.01" className="inp" defaultValue={tiers[i] ? (tiers[i].cents / 100).toFixed(2) : ''} /></div>
+              </div>
+            ))}
+            <p className="sub small" style={{ margin: '6px 0 0' }}>Deixe em branco para não usar lotes.</p>
+            <div className="actions"><button className="btn sm">Salvar lotes</button></div>
+          </form>
+          <div className="card">
+            <b>Cupons de desconto</b>
+            <p className="sub" style={{ margin: '4px 0 10px' }}>O capitão digita o código na inscrição. Bom para times parceiros, quem jogou a edição passada ou divulgação.</p>
+            {coupons?.map(c => {
+              const used = (couponUses ?? []).filter(u => u.coupon_code === c.code).length;
+              return (
+                <form action={removeCoupon} className="row helper-row" key={c.id}>
+                  <input type="hidden" name="championship" value={id} /><input type="hidden" name="coupon" value={c.id} />
+                  <div className="grow"><b>{c.code}</b><span>{c.percent ? `${c.percent}% de desconto` : `${brl(c.amount_cents ?? 0)} de desconto`} · usado {used}{c.max_uses ? ` de ${c.max_uses}` : ''} vez{used === 1 ? '' : 'es'}</span></div>
+                  <button className="btn ghost sm">Remover</button>
+                </form>
+              );
+            })}
+            <form action={addCoupon} style={{ marginTop: 6 }}>
+              <input type="hidden" name="championship" value={id} />
+              <div className="grid2">
+                <div><label htmlFor="c-code">Código</label><input id="c-code" name="code" className="inp" required maxLength={20} placeholder="PARCEIRO10" style={{ textTransform: 'uppercase' }} /></div>
+                <div><label htmlFor="c-max">Limite de usos</label><input id="c-max" name="max" type="number" min={1} className="inp" placeholder="sem limite" /></div>
+              </div>
+              <div className="grid2">
+                <div>
+                  <label htmlFor="c-kind">Tipo</label>
+                  <select id="c-kind" name="kind" className="inp" defaultValue="percent"><option value="percent">% de desconto</option><option value="valor">R$ de desconto</option></select>
+                </div>
+                <div><label htmlFor="c-value">Desconto</label><input id="c-value" name="value" type="number" min={0.01} step="0.01" className="inp" required placeholder="10" /></div>
+              </div>
+              <div className="actions"><button className="btn sm">Criar cupom</button></div>
+            </form>
+          </div>
           <form action={updateSchedule} className="card">
             <input type="hidden" name="championship" value={id} />
             <b>Agenda</b>

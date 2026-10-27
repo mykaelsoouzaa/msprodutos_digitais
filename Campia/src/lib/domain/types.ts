@@ -106,6 +106,8 @@ export interface Championship {
   visibility: Visibility;
   rules: Rules;
   schedule: Schedule;
+  /** Lotes de preço por data (o feeCents vale depois do último lote). */
+  priceTiers?: Array<{ until: string; cents: number }>;
 }
 
 export interface StandingRow {

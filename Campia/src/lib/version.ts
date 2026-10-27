@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '1.18.0';
+export const APP_VERSION = '1.19.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.19.0',
+    date: '2026-10-26',
+    title: 'Lotes de preço e cupom de desconto',
+    items: [
+      "Defina até 3 lotes com valores mais baratos para quem se inscreve antes; a página mostra o lote atual e o próximo preço.",
+      "Crie cupons de desconto (em % ou em R$) com limite de usos; o capitão digita o código na inscrição.",
+      "O valor recebido no painel passa a somar exatamente o que foi pago pelo PIX.",
+    ],
+  },
   {
     version: '1.18.0',
     date: '2026-10-26',

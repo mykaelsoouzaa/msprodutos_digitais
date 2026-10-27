@@ -5,6 +5,7 @@ import { paymentProvider } from '@/lib/env';
 import { normalizePhone, onlyDigits, parsePlayers, shortName, validCpfCnpj } from '@/lib/format';
 import { createPixCharge } from '@/lib/payments';
 import { organizerPercent } from '@/lib/payout';
+import { type Coupon, type PriceTier, couponDiscount, currentPrice, normalizeCode, todayBr } from '@/lib/pricing';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 const RESERVE_MINUTES = 30;
@@ -17,6 +18,7 @@ const Signup = z.object({
   phone: z.string().transform(s => normalizePhone(s)).refine(Boolean, 'WhatsApp com DDD inválido'),
   email: z.string().trim().toLowerCase().email('E-mail do capitão inválido').max(120),
   cpf: z.string().default(''),
+  coupon: z.string().default(''),
   players: z.string().max(4000).default(''),
   consent: z.literal('on', { errorMap: () => ({ message: 'É preciso aceitar os Termos de Uso e a Política de Privacidade' }) }),
 });
@@ -39,11 +41,28 @@ export async function registerTeam(formData: FormData) {
   if (needsCpf && !validCpfCnpj(f.cpf)) fail('CPF ou CNPJ inválido (exigido para gerar o PIX)');
 
   const db = createAdminClient();
-  const { data: champ } = await db.from('championships').select('id, name, fee_cents, owner_id').eq('slug', f.slug).maybeSingle();
+  const { data: champ } = await db.from('championships').select('id, name, fee_cents, owner_id, price_tiers').eq('slug', f.slug).maybeSingle();
   if (!champ) fail('Campeonato não encontrado');
 
   const { data: hasResults } = await db.from('games').select('id').eq('championship_id', champ!.id).not('home_score', 'is', null).limit(1);
   if (hasResults?.length) fail('As inscrições estão encerradas: o campeonato já começou');
+
+  // Preço de hoje (lote) e cupom, validados antes de reservar a vaga.
+  const price = currentPrice(champ!.fee_cents, champ!.price_tiers as PriceTier[], todayBr()).cents;
+  let discount = 0;
+  const code = normalizeCode(f.coupon);
+  if (code) {
+    const { data: coupon } = await db.from('coupons').select('code, percent, amount_cents, max_uses')
+      .eq('championship_id', champ!.id).eq('code', code).maybeSingle<Coupon>();
+    if (!coupon) fail('Cupom inválido para este campeonato');
+    if (coupon!.max_uses) {
+      const { count } = await db.from('payments').select('id', { count: 'exact', head: true })
+        .eq('championship_id', champ!.id).eq('coupon_code', code).in('status', ['pago', 'pendente']);
+      if ((count ?? 0) >= coupon!.max_uses) fail('Esse cupom já foi usado o número máximo de vezes');
+    }
+    discount = couponDiscount(price, coupon!);
+  }
+  const amount = price - discount;
 
   const { data: teamId, error: reserveError } = await db.rpc('reserve_slot', {
     p_championship: champ!.id, p_name: f.name, p_short: shortName(f.name, f.short), p_captain: f.captain,
@@ -58,13 +77,16 @@ export async function registerTeam(formData: FormData) {
   await db.from('players').insert(players.map(p => ({ championship_id: champ!.id, team_id: teamId, name: p.name, number: p.number })));
 
   // Inscrição grátis: confirma direto.
-  if (champ!.fee_cents === 0) {
+  if (amount === 0) {
+    // Cupom de 100%: registra o uso para contar no limite do cupom.
+    if (code) await db.from('payments').insert({ championship_id: champ!.id, team_id: teamId, amount_cents: 0, provider: 'mock', status: 'pago', paid_at: new Date().toISOString(), coupon_code: code, discount_cents: discount });
     await db.from('teams').update({ status: 'inscrita', paid: true, reserved_until: null }).eq('id', teamId);
     redirect(`/c/${f.slug}?ok=${encodeURIComponent(`${f.name} está inscrito!`)}`);
   }
 
   const { data: payment, error: payError } = await db.from('payments').insert({
-    championship_id: champ!.id, team_id: teamId, amount_cents: champ!.fee_cents, provider: paymentProvider(),
+    championship_id: champ!.id, team_id: teamId, amount_cents: amount, provider: paymentProvider(),
+    coupon_code: code || null, discount_cents: discount,
   }).select('id').single();
   if (payError || !payment) fail('Não foi possível criar a cobrança');
 
@@ -74,7 +96,7 @@ export async function registerTeam(formData: FormData) {
 
   try {
     const charge = await createPixCharge({
-      paymentId: payment!.id, amountCents: champ!.fee_cents, description: `Inscrição ${f.name} · ${champ!.name}`,
+      paymentId: payment!.id, amountCents: amount, description: `Inscrição ${f.name} · ${champ!.name}`,
       payerName: f.captain, payerPhone: f.phone!, payerCpfCnpj: needsCpf ? onlyDigits(f.cpf) : undefined, split,
     });
     await db.from('payments').update({

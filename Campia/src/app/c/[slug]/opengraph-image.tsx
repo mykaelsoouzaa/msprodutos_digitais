@@ -4,6 +4,7 @@ import { FORMATS, sportLabel } from '@/lib/domain/sports';
 import { isDecided } from '@/lib/domain/standings';
 import { brl, placeLabel } from '@/lib/format';
 import { OG_SIZE, OgFrame } from '@/lib/og';
+import { priceText } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase/server';
 
 export const size = OG_SIZE;
@@ -25,7 +26,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     : open > 0 ? { text: 'Inscrições abertas', color: '#22c55e' }
     : { text: 'Em breve', color: '#a3e635' };
   const status = played === 0 && open > 0
-    ? `${open} vaga${open > 1 ? 's' : ''} · ${champ.feeCents ? `${brl(champ.feeCents)} por time` : 'inscrição grátis'}`
+    ? `${open} vaga${open > 1 ? 's' : ''} · ${priceText(champ.feeCents, champ.priceTiers, brl).now ? `${priceText(champ.feeCents, champ.priceTiers, brl).long} por time` : 'inscrição grátis'}`
     : `${played} de ${games.length} jogos · ${teams.length} times`;
 
   return new ImageResponse(
