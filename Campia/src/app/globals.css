@@ -416,3 +416,19 @@ form.esports:has(input[name="online"][value="1"]:checked) .presencial { display:
 .admin-stats { grid-template-columns: repeat(2, 1fr); }
 @media (min-width: 760px) { .admin-stats { grid-template-columns: repeat(3, 1fr); } }
 .danger-zone { border-color: rgba(239, 68, 68, .35); }
+
+/* ---------- para arenas ---------- */
+.money-mock .money-row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.money-mock .money-row:last-of-type { border-bottom: 0; }
+.money-mock .money-row span { color: var(--muted); }
+.money-mock .money-row b.money { color: var(--accent); }
+.benefit { display: flex; flex-direction: column; gap: 4px; }
+.benefit-ico { font-size: 26px; margin-bottom: 6px; }
+.sport-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.sport-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); font-size: 14px; font-weight: 600; }
+.sport-chip .sport-ico { width: 28px; height: 28px; border-radius: 999px; }
+.faq { display: grid; gap: 8px; }
+.faq-item summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after { content: '+'; color: var(--accent); font-size: 20px; line-height: 1; }
+.faq-item[open] summary::after { content: '–'; }

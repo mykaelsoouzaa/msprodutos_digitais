@@ -47,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <img src="/brand/campia-logo-escuro.svg" alt="Campia" height={22} />
             <div className="foot-links">
               <Link href="/novidades" className="ver-chip"><span className="new" />v{APP_VERSION} · Novidades</Link>
+              <Link href="/#como-funciona">Como funciona</Link>
               <Link href="/termos">Termos</Link>
               <Link href="/privacidade">Privacidade</Link>
               <span>um produto MS Suporte TI</span>

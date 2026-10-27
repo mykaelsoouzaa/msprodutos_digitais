@@ -24,7 +24,7 @@ export default function Home() {
           <p className="lead">Tabela automática, inscrição com PIX, resultados pelo celular e tudo pronto para o grupo do WhatsApp.</p>
           <div className="ctas">
             <Link href="/painel/novo" className="btn lg">Criar meu campeonato</Link>
-            <Link href="/#como-funciona" className="btn ghost lg">Como funciona</Link>
+            <Link href="/para-arenas" className="btn ghost lg">Sou arena ou organizador</Link>
           </div>
           <p className="fine">Sem mensalidade para começar. Você só precisa de um e-mail.</p>
         </div>

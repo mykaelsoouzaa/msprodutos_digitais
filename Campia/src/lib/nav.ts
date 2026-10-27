@@ -2,6 +2,6 @@
 export const NAV_LINKS: Array<[string, string]> = [
   ['/campeonatos', 'Campeonatos'],
   ['/meus-times', 'Meus times'],
-  ['/#como-funciona', 'Como funciona'],
+  ['/para-arenas', 'Para arenas'],
   ['/novidades', 'Novidades'],
 ];
