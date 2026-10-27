@@ -18,7 +18,7 @@ const Signup = z.object({
   email: z.string().trim().toLowerCase().email('E-mail do capitão inválido').max(120),
   cpf: z.string().default(''),
   players: z.string().max(4000).default(''),
-  consent: z.literal('on', { errorMap: () => ({ message: 'É preciso aceitar os termos de exibição' }) }),
+  consent: z.literal('on', { errorMap: () => ({ message: 'É preciso aceitar os Termos de Uso e a Política de Privacidade' }) }),
 });
 
 /**

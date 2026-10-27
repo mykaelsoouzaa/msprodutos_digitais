@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Flash } from '@/components/champ';
 import { sendMagicLink } from './actions';
@@ -38,7 +39,7 @@ export default async function Entrar({ searchParams }: { searchParams: Promise<{
           <input id="email" name="email" type="email" className="inp" required autoComplete="email" inputMode="email" placeholder="voce@exemplo.com" />
           <div style={{ marginTop: 14 }}><button className="btn block lg">{sp.enviado ? 'Enviar outro link' : 'Receber link de acesso'}</button></div>
         </form>
-        <p className="tip">Primeira vez? É o mesmo caminho: o link cria sua conta automaticamente.</p>
+        <p className="tip">Primeira vez? É o mesmo caminho: o link cria sua conta automaticamente. Ao entrar, você concorda com os <Link href="/termos">Termos de Uso</Link> e a <Link href="/privacidade">Política de Privacidade</Link>.</p>
       </section>
     </div>
   );

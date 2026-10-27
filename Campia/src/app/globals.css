@@ -403,3 +403,13 @@ form.esports:has(input[name="online"][value="1"]:checked) .presencial { display:
 .prow.roster-edit { grid-template-columns: minmax(0, 1fr) 64px 56px; }
 .prow.roster-edit .inp { text-align: left; }
 .prow.roster-edit .inp + .inp { text-align: center; }
+
+/* ---------- termos e privacidade ---------- */
+.legal-body { line-height: 1.65; font-size: 15px; }
+.legal-body h2 { color: var(--text); text-transform: none; letter-spacing: 0; font-size: 17px; margin: 22px 0 8px; }
+.legal-body h2:first-child { margin-top: 0; }
+.legal-body p { margin: 0 0 10px; color: #c9d8cf; }
+.legal-body ul { margin: 0 0 10px; padding-left: 20px; color: #c9d8cf; }
+.legal-body li { margin-bottom: 6px; }
+.legal-body a, .legal a { color: var(--accent); }
+.auth-form .tip a, label a { color: var(--accent); }

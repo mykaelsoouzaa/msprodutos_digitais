@@ -51,7 +51,7 @@ export default async function Inscricao({ params, searchParams }: {
           <textarea id="players" name="players" className="inp" required placeholder={'10 João\n7 Pedro\nCarlos'} />
           <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', color: 'var(--text)', fontSize: 13 }}>
             <input type="checkbox" name="consent" required style={{ marginTop: 3 }} />
-            Os atletas autorizam exibir nome e estatísticas na página do campeonato. O WhatsApp não é exibido.
+            <span>Li e aceito os <Link href="/termos" target="_blank">Termos de Uso</Link> e a <Link href="/privacidade" target="_blank">Política de Privacidade</Link>. Os atletas autorizam exibir nome e estatísticas na página do campeonato; WhatsApp, e-mail e CPF não são exibidos.</span>
           </label>
           <div style={{ marginTop: 16 }}><button className="btn block">Continuar para o pagamento</button></div>
           <p className="sub small" style={{ margin: '10px 0 0' }}>A vaga fica reservada por 30 minutos enquanto o PIX não é pago.</p>
