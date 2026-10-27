@@ -46,16 +46,17 @@ export default function ParaArenas() {
           <p className="lead">A Campia cuida da inscrição com PIX, da tabela, dos resultados e da divulgação. Você cuida do jogo.</p>
           <div className="ctas">
             <Link href="/entrar?voltar=/painel/arena" className="btn lg">Criar minha conta grátis</Link>
+            <Link href="/exemplo" className="btn ghost lg">👀 Ver um exemplo</Link>
             <a href={`mailto:${COMPANY.email}?subject=${encodeURIComponent('Quero usar a Campia na minha arena')}`} className="btn ghost lg">Falar com a gente</a>
           </div>
-          <p className="fine">Sem mensalidade. Sem contrato de fidelidade.</p>
+          <p className="fine">Plano grátis sem mensalidade. Sem contrato de fidelidade.</p>
         </div>
         <div className="mock money-mock" aria-hidden="true">
           <div className="mock-head"><span className="sport-ico g-futebol" style={{ fontSize: 18 }}>💰</span><div className="grow"><b>Copa da sua arena</b><span>{example.teams} times · {brl(example.fee)} por time</span></div></div>
           <div className="money-row"><span>Inscrições pagas</span><b>{brl(gross)}</b></div>
           <div className="money-row"><span>Vai direto para a sua conta</span><b className="money">{yours}% do líquido</b></div>
           <div className="money-row"><span>Taxa da Campia</span><b>{fee}%</b></div>
-          <div className="money-row"><span>Mensalidade</span><b>R$ 0,00</b></div>
+          <div className="money-row"><span>Mensalidade (plano grátis)</span><b>R$ 0,00</b></div>
           <p className="sub small" style={{ margin: '10px 0 0' }}>Líquido = valor pago menos a tarifa do Asaas por PIX.</p>
         </div>
       </section>
