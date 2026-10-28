@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { extendPaidUntil } from '@/lib/plan';
 import { webhookAction } from '@/lib/signup';
 import { rewardReferrer } from '@/lib/referral-server';
+import { notifyPaymentConfirmed } from '@/lib/payment-notify';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { beat, logEvent } from '@/lib/monitor';
 
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
       const { error } = await db.rpc('confirm_payment', { p_payment: p.id });
       // Erro: responde 500 para a Asaas reenviar (confirm_payment é idempotente).
       if (error) { await logEvent('webhook', `Pagamento ${p.id} não confirmado: ${error.message}`); return NextResponse.json({ error: 'retry' }, { status: 500 }); }
+      await notifyPaymentConfirmed(p.id);
     }
   }
   // Só registra o evento depois de processado, para que uma falha no meio seja reenviada.

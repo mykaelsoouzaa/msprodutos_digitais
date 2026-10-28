@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.9.0';
+export const APP_VERSION = '2.10.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.10.0',
+    date: '2026-10-28',
+    title: 'Avisos de inscrição confirmada',
+    items: [
+      "O capitão recebe por e-mail a confirmação da inscrição com o comprovante (valor, forma, data e código)",
+      "A página do pagamento vira um comprovante para imprimir ou salvar em PDF",
+      "O organizador recebe um e-mail a cada time confirmado, com quantas vagas já foram preenchidas (e um aviso especial quando lota)",
+    ],
+  },
   {
     version: '2.9.0',
     date: '2026-10-28',
