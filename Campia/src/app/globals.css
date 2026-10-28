@@ -646,3 +646,5 @@ form:has(input[name="method"][value="cartao"]:checked) .if-card { display: block
 .admin-del summary::-webkit-details-marker { display: none; }
 .admin-del[open] summary { opacity: .6; }
 .admin-del-form { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; max-width: 280px; }
+.foot-ig { display: inline-flex; align-items: center; gap: 5px; }
+.foot-links a.foot-company { color: var(--muted); text-decoration: underline; text-decoration-color: var(--line); }
