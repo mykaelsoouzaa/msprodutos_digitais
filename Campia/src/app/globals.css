@@ -654,3 +654,7 @@ form:has(input[name="method"][value="cartao"]:checked) .if-card { display: block
 .receipt .receipt-title { display: block; font-weight: 800; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-bottom: 8px; border-bottom: 1px dashed var(--line); margin-bottom: 4px; }
 .mono { font-family: ui-monospace, Menlo, monospace; }
 @media print { .receipt { border-color: #999; } .receipt > div span { color: #555; } }
+.regulation { line-height: 1.6; font-size: 15px; }
+.regulation p:first-child { margin-top: 0; }
+.regulation p:last-child { margin-bottom: 0; }
+.reg-template { white-space: pre-wrap; font: inherit; font-size: 13px; color: var(--muted); background: var(--panel2); border-radius: 10px; padding: 12px; margin: 8px 0 0; user-select: all; }

@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.11.0';
+export const APP_VERSION = '2.12.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,15 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.12.0',
+    date: '2026-10-28',
+    title: 'Regulamento',
+    items: [
+      "O organizador escreve o regulamento em Ajustes (tem um modelo pronto para copiar) e ele aparece numa aba própria na página do campeonato",
+      "Na inscrição, o capitão aceita o regulamento junto com os Termos",
+    ],
+  },
   {
     version: '2.11.0',
     date: '2026-10-28',

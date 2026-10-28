@@ -20,6 +20,7 @@ import { brl, placeLabel, waLink } from '@/lib/format';
 import { currentPrice, priceText, todayBr } from '@/lib/pricing';
 import { eventJsonLd, safeJson } from '@/lib/seo';
 import { withOrigin } from '@/lib/visits';
+import { isHeading, paragraphs } from '@/lib/regulation';
 import { ownerIsPro } from '@/lib/plan-server';
 import { createClient } from '@/lib/supabase/server';
 
@@ -54,7 +55,7 @@ export default async function Publico({ params, searchParams }: {
   const { champ, teams, games, goals, players, cards } = data;
   const { data: arena } = await supabase.from('arenas').select('*').eq('owner_id', data.row.owner_id).maybeSingle<ArenaRow>();
   const rules = sportRules(champ.sport);
-  const tabs: Array<[string, string]> = [['jogos', 'Jogos'], ['tabela', champ.format === 'mata' ? 'Chave' : 'Tabela'], ...(rules.scorers ? [['artilharia', rules.unit === 'pontos' ? 'Cestinhas' : 'Artilharia'] as [string, string]] : []), ...(rules.cards ? [['cartoes', 'Cartões'] as [string, string]] : []), ['times', 'Times'], ...(champ.voting && champ.voting !== 'fechada' ? [['votacao', champ.voting === 'aberta' ? '🗳 Votação' : '🏅 Craques'] as [string, string]] : [])];
+  const tabs: Array<[string, string]> = [['jogos', 'Jogos'], ['tabela', champ.format === 'mata' ? 'Chave' : 'Tabela'], ...(rules.scorers ? [['artilharia', rules.unit === 'pontos' ? 'Cestinhas' : 'Artilharia'] as [string, string]] : []), ...(rules.cards ? [['cartoes', 'Cartões'] as [string, string]] : []), ['times', 'Times'], ...(champ.rules.regulation ? [['regulamento', 'Regulamento'] as [string, string]] : []), ...(champ.voting && champ.voting !== 'fechada' ? [['votacao', champ.voting === 'aberta' ? '🗳 Votação' : '🏅 Craques'] as [string, string]] : [])];
   const tab = tabs.some(t => t[0] === sp.aba) ? sp.aba! : 'jogos';
   const open = teams.filter(t => t.status !== 'inscrita').length;
   const started = games.some(isDecided);
@@ -127,6 +128,9 @@ export default async function Publico({ params, searchParams }: {
           {tab === 'jogos' && <GamesList games={games} teams={teams} />}
           {tab === 'tabela' && <TableTab champ={champ} games={games} teams={teams} />}
           {tab === 'artilharia' && <Scorers champ={champ} games={games} goals={goals} players={players} teams={teams} />}
+          {tab === 'regulamento' && champ.rules.regulation && (
+            <article className="card regulation">{paragraphs(champ.rules.regulation).map((lines, i) => <p key={i}>{lines.map((l, j) => <span key={j}>{isHeading(l) ? <b>{l}</b> : l}{j < lines.length - 1 && <br />}</span>)}</p>)}</article>
+          )}
           {tab === 'times' && <><TeamsTab champ={champ} teams={teams} players={players} /><FreeAgents champ={champ} finished={!!champion} isOwner={isOwner} /></>}
           {tab === 'votacao' && <VotingTab champ={champ} players={players} teams={teams} />}
           {tab === 'cartoes' && <Discipline champ={champ} games={games} cards={cards} players={players} teams={teams} />}

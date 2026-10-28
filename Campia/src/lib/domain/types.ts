@@ -89,6 +89,7 @@ export interface Rules {
   qualify: number;       // classificados por grupo
   yellowLimit?: number;  // amarelos acumulados que dão 1 jogo de suspensão (padrão 3)
   drawnAt?: string;      // quando os grupos/confrontos foram sorteados (ISO)
+  regulation?: string;   // regulamento escrito pelo organizador
   tiebreak: Tiebreak[];  // ordem dos critérios depois dos pontos
 }
 

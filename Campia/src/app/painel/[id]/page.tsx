@@ -22,7 +22,8 @@ import ProLock from '@/components/ProLock';
 import { isProActive } from '@/lib/plan';
 import { myPlan, ownerIsPro } from '@/lib/plan-server';
 import { SPONSOR_LIMIT, SPONSOR_SELECT, type Sponsor, sortSponsors } from '@/lib/sponsors';
-import { addCoupon, drawChampionship, rebuildChampionship, removeCoupon, setVoting, updateBasics, updateCardOption, updatePriceTiers, updateSchedule } from '../edit-actions';
+import { addCoupon, drawChampionship, rebuildChampionship, removeCoupon, setVoting, updateBasics, updateCardOption, updatePriceTiers, updateRegulation, updateSchedule } from '../edit-actions';
+import { regulationTemplate } from '@/lib/regulation';
 import { type VoteResult, categoriesFor, ranking } from '@/lib/voting';
 import { addHelper, updateYellowLimit, deleteChampionship, markPaidManually, removeHelper, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
 
@@ -331,6 +332,19 @@ export default async function Campeonato({ params, searchParams }: {
             </div>
             <p className="sub small" style={{ margin: '6px 0 0' }}>O novo valor vale para as próximas inscrições; quem já pagou não muda.</p>
             <div className="actions"><button className="btn sm">Salvar</button></div>
+          </form>
+          <form action={updateRegulation} className="card" id="regulamento">
+            <input type="hidden" name="championship" value={id} />
+            <b>📜 Regulamento</b>
+            <p className="sub" style={{ margin: '4px 0 10px' }}>Aparece numa aba própria na página do campeonato, e o capitão aceita ao se inscrever. Deixe em branco para não ter regulamento.</p>
+            <textarea name="regulation" className="inp" rows={10} maxLength={10000} style={{ minHeight: 220, fontSize: 14 }} defaultValue={champ.rules.regulation ?? ''} placeholder="Escreva as regras do campeonato. Linha em branco separa os itens." aria-label="Regulamento" />
+            {!champ.rules.regulation && (
+              <details style={{ marginTop: 8 }}>
+                <summary className="sub small" style={{ cursor: 'pointer' }}>Ver um modelo para copiar</summary>
+                <pre className="reg-template">{regulationTemplate(champ.sport, champ.rules.yellowLimit ?? 3)}</pre>
+              </details>
+            )}
+            <div style={{ marginTop: 12 }}><button className="btn sm">Salvar regulamento</button></div>
           </form>
           <form action={updateCardOption} className="card" id="cartao">
             <input type="hidden" name="championship" value={id} />
