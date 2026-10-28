@@ -8,6 +8,7 @@ import TeamsTab from '@/components/TeamsTab';
 import FreeAgents from '@/components/FreeAgents';
 import ViewBeacon from '@/components/ViewBeacon';
 import Sponsors from '@/components/Sponsors';
+import CalendarButtons from '@/components/CalendarButtons';
 import { SPONSOR_SELECT, type Sponsor } from '@/lib/sponsors';
 import ReminderButton from '@/components/ReminderButton';
 import { type ArenaRow, initials } from '@/lib/arena';
@@ -97,6 +98,7 @@ export default async function Publico({ params, searchParams }: {
         )}
         <div className="actions">
           <Link href={`/c/${champ.slug}/imprimir`} className="btn ghost sm">🖨 Imprimir / PDF</Link>
+          <CalendarButtons slug={champ.slug} />
           <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 ${champ.name}: jogos, tabela e artilharia\n${withOrigin(url, 'whatsapp')}`)}>Compartilhar</a>
         </div>
       </div>

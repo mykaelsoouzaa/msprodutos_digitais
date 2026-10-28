@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { claimPlayer } from '@/app/atleta/actions';
 import type { Championship, Player, Team } from '@/lib/domain/types';
 import { createClient } from '@/lib/supabase/server';
+import CalendarButtons from './CalendarButtons';
 
 /** Elenco dos times inscritos. Quem jogou toca em "Sou eu" para levar os números para o perfil de atleta. */
 export default async function TeamsTab({ champ, teams, players }: { champ: Championship; teams: Team[]; players: Player[] }) {
@@ -32,7 +33,7 @@ export default async function TeamsTab({ champ, teams, players }: { champ: Champ
           const roster = players.filter(p => p.teamId === t.id);
           return (
             <section key={t.id} className="card roster-team">
-              <div className="roster-head"><span className="dot" style={{ background: t.color }}>{t.short}</span><b>{t.name}</b><span className="sub small" style={{ marginLeft: 'auto' }}>{roster.length} atleta{roster.length === 1 ? '' : 's'}</span></div>
+              <div className="roster-head"><span className="dot" style={{ background: t.color }}>{t.short}</span><b>{t.name}</b><span className="sub small" style={{ marginLeft: 'auto' }}>{roster.length} atleta{roster.length === 1 ? '' : 's'}</span><CalendarButtons slug={champ.slug} teamId={t.id} label="📅" /></div>
               {roster.length ? roster.map(p => {
                 const handle = handleOf.get(p.id);
                 return (
