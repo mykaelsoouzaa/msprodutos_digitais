@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.14.0';
+export const APP_VERSION = '2.15.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,15 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.15.0',
+    date: '2026-10-28',
+    title: 'Modo TV',
+    items: [
+      "Nova tela para a TV da arena: placar ao vivo, próximos jogos, tabela, artilharia e resultados passando sozinhos",
+      "Atualiza sozinha a cada 20 segundos e mostra o endereço para a torcida abrir no celular (abra pela aba Compartilhar do painel)",
+    ],
+  },
   {
     version: '2.14.0',
     date: '2026-10-28',
