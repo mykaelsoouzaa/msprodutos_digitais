@@ -14,6 +14,7 @@ import { UFS, slugify } from '@/lib/format';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { attributeReferral } from '@/lib/referral-server';
+import { notifyTeamConfirmed } from '@/lib/payment-notify';
 
 const fail = (path: string, msg: string): never => redirect(`${path}${path.includes('?') ? '&' : '?'}erro=${encodeURIComponent(msg)}`);
 
@@ -235,7 +236,10 @@ export async function markPaidManually(formData: FormData) {
   // Pago por fora: cancela o PIX pendente. Se ele ainda for pago, o webhook registra como "pago_tarde" (para devolver).
   // O organizador não altera pagamentos pelo RLS; confere que o campeonato é dele e usa a service role.
   const { data: own } = await supabase.from('championships').select('id, owner_id').eq('id', champId).maybeSingle<{ id: string; owner_id: string }>();
-  if (own && (await canManage(supabase, own, user))) await createAdminClient().from('payments').update({ status: 'cancelado' }).eq('team_id', teamId).eq('championship_id', champId).eq('status', 'pendente');
+  if (own && (await canManage(supabase, own, user))) {
+    await createAdminClient().from('payments').update({ status: 'cancelado' }).eq('team_id', teamId).eq('championship_id', champId).eq('status', 'pendente');
+    await notifyTeamConfirmed(champId, teamId, { amountCents: -1, method: 'pago direto ao organizador', paidAt: new Date().toISOString(), code: teamId.slice(0, 8).toUpperCase(), receiptUrl: null, key: `manual:${teamId}` });
+  }
   revalidatePath(`/painel/${champId}`);
   redirect(`/painel/${champId}?aba=times&ok=${encodeURIComponent('Inscrição confirmada')}`);
 }

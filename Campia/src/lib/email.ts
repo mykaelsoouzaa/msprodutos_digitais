@@ -4,7 +4,7 @@
 export const escapeHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-export async function sendEmail(msg: { to: string; name?: string; subject: string; html: string }, opts: { log?: boolean } = {}): Promise<'ok' | 'skipped' | 'error'> {
+export async function sendEmail(msg: { to: string; name?: string; subject: string; html: string; replyTo?: string }, opts: { log?: boolean } = {}): Promise<'ok' | 'skipped' | 'error'> {
   const key = process.env.BREVO_API_KEY;
   if (!key) return 'skipped';
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -15,6 +15,7 @@ export async function sendEmail(msg: { to: string; name?: string; subject: strin
       to: [{ email: msg.to, ...(msg.name ? { name: msg.name } : {}) }],
       subject: msg.subject,
       htmlContent: msg.html,
+      ...(msg.replyTo ? { replyTo: { email: msg.replyTo } } : {}),
     }),
     cache: 'no-store',
   }).catch(() => null);

@@ -11,6 +11,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { Flash } from '@/components/champ';
 import { decideClaim } from '../atleta/actions';
+import CalendarButtons from '@/components/CalendarButtons';
 
 export const metadata: Metadata = { title: 'Meus times' };
 export const dynamic = 'force-dynamic';
@@ -129,7 +130,10 @@ export default async function MeusTimes({ searchParams }: { searchParams: Promis
                   </div>
                 </>
               )}
-              <Link href={`/c/${d.champ.slug}`} className="btn ghost sm block">Ver tabela e jogos</Link>
+              <div className="actions" style={{ marginTop: 0 }}>
+                <Link href={`/c/${d.champ.slug}`} className="btn ghost sm">Ver tabela e jogos</Link>
+                {team.status === 'inscrita' && <CalendarButtons slug={d.champ.slug} teamId={team.id} label="📅 Jogos na agenda" />}
+              </div>
             </article>
           ))}
         </div>

@@ -9,6 +9,7 @@ import { type Coupon, type PriceTier, normalizeCode, todayBr } from '@/lib/prici
 import { quote } from '@/lib/signup';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logEvent } from '@/lib/monitor';
+import { notifyTeamConfirmed } from '@/lib/payment-notify';
 
 const RESERVE_MINUTES = 30;
 
@@ -83,6 +84,7 @@ export async function registerTeam(formData: FormData) {
     // Cupom de 100%: registra o uso para contar no limite do cupom.
     if (code) await db.from('payments').insert({ championship_id: champ!.id, team_id: teamId, amount_cents: 0, provider: 'mock', status: 'pago', paid_at: new Date().toISOString(), coupon_code: code, discount_cents: discount });
     await db.from('teams').update({ status: 'inscrita', paid: true, reserved_until: null }).eq('id', teamId);
+    await notifyTeamConfirmed(champ!.id, teamId as string, { amountCents: 0, method: code ? `Cupom ${code}` : 'Inscrição grátis', paidAt: new Date().toISOString(), code: String(teamId).slice(0, 8).toUpperCase(), receiptUrl: null, key: `gratis:${teamId}` });
     redirect(`/c/${f.slug}?ok=${encodeURIComponent(`${f.name} está inscrito!`)}`);
   }
 

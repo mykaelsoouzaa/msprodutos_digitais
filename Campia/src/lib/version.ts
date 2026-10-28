@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.8.0';
+export const APP_VERSION = '2.14.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,62 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.14.0',
+    date: '2026-10-28',
+    title: 'Jogos na agenda do celular',
+    items: [
+      "Botão Agenda na página do campeonato, em cada time e em Meus times: os jogos entram no Google Agenda, no iPhone ou no Outlook",
+      "A agenda se atualiza sozinha quando o organizador muda data, horário ou campo",
+    ],
+  },
+  {
+    version: '2.13.0',
+    date: '2026-10-28',
+    title: 'Fotos do campeonato',
+    items: [
+      "O organizador e os ajudantes sobem fotos pelo celular (várias de uma vez) na aba Compartilhar",
+      "As fotos aparecem numa nova aba Fotos na página do campeonato",
+      "No rodapé, um botão leva ao Instagram da MS Soluções Tecnológicas",
+    ],
+  },
+  {
+    version: '2.12.0',
+    date: '2026-10-28',
+    title: 'Regulamento',
+    items: [
+      "O organizador escreve o regulamento em Ajustes (tem um modelo pronto para copiar) e ele aparece numa aba própria na página do campeonato",
+      "Na inscrição, o capitão aceita o regulamento junto com os Termos",
+    ],
+  },
+  {
+    version: '2.11.0',
+    date: '2026-10-28',
+    title: 'Recado para os capitães',
+    items: [
+      "Na aba Compartilhar, o organizador manda um recado por e-mail para todos os capitães de uma vez (chuva, mudança de horário, aviso de premiação)",
+      "Se o capitão responder, a resposta chega direto no e-mail do organizador",
+    ],
+  },
+  {
+    version: '2.10.0',
+    date: '2026-10-28',
+    title: 'Avisos de inscrição confirmada',
+    items: [
+      "O capitão recebe por e-mail a confirmação da inscrição com o comprovante (valor, forma, data e código)",
+      "A página do pagamento vira um comprovante para imprimir ou salvar em PDF",
+      "O organizador recebe um e-mail a cada time confirmado, com quantas vagas já foram preenchidas (e um aviso especial quando lota)",
+    ],
+  },
+  {
+    version: '2.9.0',
+    date: '2026-10-28',
+    title: 'Redes sociais e Sobre',
+    items: [
+      "Instagram da Campia (@campia.appbr) no rodapé e no menu",
+      "Nova página Sobre, com os contatos da Campia e da MS Soluções Tecnológicas (@ms.solucoestech)",
+    ],
+  },
   {
     version: '2.8.0',
     date: '2026-10-27',

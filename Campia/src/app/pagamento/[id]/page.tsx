@@ -8,6 +8,8 @@ import { paymentProvider } from '@/lib/env';
 import { brl } from '@/lib/format';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { simulatePayment } from './actions';
+import PrintButton from '@/components/PrintButton';
+import { methodLabel } from '@/lib/payment-emails';
 
 export const metadata: Metadata = { title: 'Pagamento', robots: { index: false } };
 export const dynamic = 'force-dynamic';
@@ -31,10 +33,20 @@ export default async function Pagamento({ params }: { params: Promise<{ id: stri
       <div className="card narrow" style={{ textAlign: 'center', marginTop: 20 }}>
         <div style={{ fontSize: 54 }}>✅</div>
         <h1>{team.name} está inscrito!</h1>
-        <p className="sub">Pagamento de {brl(p.amount_cents)} confirmado. Os jogos e a tabela ficam na página do campeonato.</p>
+        <p className="sub">Pagamento confirmado. Os jogos e a tabela ficam na página do campeonato.</p>
+        <div className="receipt">
+          <div className="receipt-title">Comprovante de inscrição</div>
+          <div><span>Campeonato</span><b>{champ.name}</b></div>
+          <div><span>Time</span><b>{team.name}</b></div>
+          <div><span>Valor</span><b>{brl(p.amount_cents)}</b></div>
+          <div><span>Forma</span><b>{methodLabel(p.method, p.installments)}</b></div>
+          <div><span>Pago em</span><b>{p.paid_at ? new Date(p.paid_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}</b></div>
+          <div><span>Código</span><b className="mono">{p.id.slice(0, 8).toUpperCase()}</b></div>
+        </div>
         <div className="actions" style={{ justifyContent: 'center' }}>
           <Link href={`/c/${champ.slug}`} className="btn">Ver {champ.name}</Link>
           <Link href="/meus-times" className="btn ghost">Acompanhar em Meus times</Link>
+          <PrintButton label="Imprimir comprovante" />
         </div>
       </div>
     );

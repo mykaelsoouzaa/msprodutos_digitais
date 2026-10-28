@@ -244,3 +244,16 @@ export async function updateCardOption(formData: FormData) {
   revalidatePath(`/painel/${champId}`);
   go(back, 'ok', n === 0 ? 'Inscrição só no PIX' : n === 1 ? 'Cartão liberado (à vista)' : `Cartão liberado em até ${n}x`);
 }
+
+/* ---------- regulamento ---------- */
+export async function updateRegulation(formData: FormData) {
+  const champId = String(formData.get('championship'));
+  const back = `/painel/${champId}?aba=ajustes#regulamento`;
+  const { supabase, data } = await requireOwner(champId, back);
+  const text = String(formData.get('regulation') ?? '').replace(/\r\n/g, '\n').trim();
+  if (text.length > 10000) go(back, 'erro', 'O regulamento pode ter até 10.000 caracteres');
+  const { error } = await supabase.from('championships').update({ rules: { ...data.row.rules, regulation: text } }).eq('id', champId);
+  if (error) go(back, 'erro', 'Não foi possível salvar');
+  revalidatePath(`/c/${data.row.slug}`);
+  go(back, 'ok', text ? 'Regulamento salvo: aparece na aba Regulamento e na inscrição' : 'Regulamento removido');
+}

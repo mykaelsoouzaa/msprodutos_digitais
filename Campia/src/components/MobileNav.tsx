@@ -15,6 +15,8 @@ export default function MobileNav() {
       <nav className="mnav-panel" aria-label="Menu">
         {NAV_LINKS.map(([href, label]) => <Link key={href} href={href} className={path === href ? 'on' : ''}>{label}</Link>)}
         <Link href="/painel">Painel do organizador</Link>
+        <Link href="/sobre">Sobre a Campia</Link>
+        <a href="https://instagram.com/campia.appbr" target="_blank" rel="noopener">Instagram @campia.appbr</a>
         <Link href="/painel/novo" className="btn">Criar campeonato</Link>
       </nav>
     </details>

@@ -16,12 +16,17 @@ import { createClient } from '@/lib/supabase/server';
 import { refundLatePayment } from '../cancel-actions';
 import { removeFromWaitlist } from '../waitlist-actions';
 import { addSponsor, removeSponsor } from '../sponsor-actions';
+import { sendAnnouncement } from '../announce-actions';
+import PhotoUploader from '@/components/PhotoUploader';
+import { removePhoto } from '../photo-actions';
+import { PHOTO_LIMIT, sortPhotos } from '@/lib/photos';
 import { initials } from '@/lib/arena';
 import ProLock from '@/components/ProLock';
 import { isProActive } from '@/lib/plan';
 import { myPlan, ownerIsPro } from '@/lib/plan-server';
 import { SPONSOR_LIMIT, SPONSOR_SELECT, type Sponsor, sortSponsors } from '@/lib/sponsors';
-import { addCoupon, drawChampionship, rebuildChampionship, removeCoupon, setVoting, updateBasics, updateCardOption, updatePriceTiers, updateSchedule } from '../edit-actions';
+import { addCoupon, drawChampionship, rebuildChampionship, removeCoupon, setVoting, updateBasics, updateCardOption, updatePriceTiers, updateRegulation, updateSchedule } from '../edit-actions';
+import { regulationTemplate } from '@/lib/regulation';
 import { type VoteResult, categoriesFor, ranking } from '@/lib/voting';
 import { addHelper, updateYellowLimit, deleteChampionship, markPaidManually, removeHelper, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
 
@@ -229,6 +234,39 @@ export default async function Campeonato({ params, searchParams }: {
 
       {tab === 'compartilhar' && (
         <>
+          <section className="card" id="fotos" style={{ marginBottom: 12 }}>
+            <b>📷 Fotos do campeonato</b>
+            <p className="sub" style={{ margin: '4px 0 10px' }}>Aparecem na aba Fotos da página do campeonato. Pode escolher várias de uma vez; o celular reduz antes de enviar. Até {PHOTO_LIMIT} fotos.</p>
+            <PhotoUploader championshipId={id} />
+            {(champ.rules.photos ?? []).length > 0 && (
+              <div className="photo-grid admin" style={{ marginTop: 12 }}>
+                {sortPhotos(champ.rules.photos).map(p => (
+                  <form key={p.path} action={removePhoto} className="photo-item">
+                    <input type="hidden" name="championship" value={id} />
+                    <input type="hidden" name="path" value={p.path} />
+                    <img src={p.url} alt="" loading="lazy" />
+                    <button className="photo-del" aria-label="Remover foto">✕</button>
+                  </form>
+                ))}
+              </div>
+            )}
+          </section>
+          {owner && (
+            <form action={sendAnnouncement} className="card" id="recado" style={{ marginBottom: 12 }}>
+              <input type="hidden" name="championship" value={id} />
+              <b>📣 Recado para os capitães</b>
+              <p className="sub" style={{ margin: '4px 0 10px' }}>Chega no e-mail de cada capitão. Se alguém responder, a resposta vai para o seu e-mail.</p>
+              <label htmlFor="an-subject" style={{ marginTop: 0 }}>Assunto</label>
+              <input id="an-subject" name="subject" className="inp" required minLength={3} maxLength={100} placeholder="Ex.: Rodada de sábado adiada por causa da chuva" />
+              <label htmlFor="an-text">Recado</label>
+              <textarea id="an-text" name="text" className="inp" required minLength={5} maxLength={1500} rows={5} style={{ minHeight: 110 }} placeholder="Escreva o recado. Dá para pular linha." />
+              <div className="choice" style={{ marginTop: 10 }}>
+                <label><input type="radio" name="who" value="inscritos" defaultChecked /> Times inscritos</label>
+                <label><input type="radio" name="who" value="todos" /> Inscritos e reservas (aguardando PIX)</label>
+              </div>
+              <div style={{ marginTop: 12 }}><button className="btn sm">Enviar recado</button></div>
+            </form>
+          )}
           <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <div className="grow"><b>Tabela e jogos para imprimir</b><span>Classificação, jogos, artilharia e cartões numa folha. Dá para salvar em PDF.</span></div>
             <Link className="btn sm" href={`/c/${champ.slug}/imprimir`} target="_blank">Abrir</Link>
@@ -314,6 +352,19 @@ export default async function Campeonato({ params, searchParams }: {
             </div>
             <p className="sub small" style={{ margin: '6px 0 0' }}>O novo valor vale para as próximas inscrições; quem já pagou não muda.</p>
             <div className="actions"><button className="btn sm">Salvar</button></div>
+          </form>
+          <form action={updateRegulation} className="card" id="regulamento">
+            <input type="hidden" name="championship" value={id} />
+            <b>📜 Regulamento</b>
+            <p className="sub" style={{ margin: '4px 0 10px' }}>Aparece numa aba própria na página do campeonato, e o capitão aceita ao se inscrever. Deixe em branco para não ter regulamento.</p>
+            <textarea name="regulation" className="inp" rows={10} maxLength={10000} style={{ minHeight: 220, fontSize: 14 }} defaultValue={champ.rules.regulation ?? ''} placeholder="Escreva as regras do campeonato. Linha em branco separa os itens." aria-label="Regulamento" />
+            {!champ.rules.regulation && (
+              <details style={{ marginTop: 8 }}>
+                <summary className="sub small" style={{ cursor: 'pointer' }}>Ver um modelo para copiar</summary>
+                <pre className="reg-template">{regulationTemplate(champ.sport, champ.rules.yellowLimit ?? 3)}</pre>
+              </details>
+            )}
+            <div style={{ marginTop: 12 }}><button className="btn sm">Salvar regulamento</button></div>
           </form>
           <form action={updateCardOption} className="card" id="cartao">
             <input type="hidden" name="championship" value={id} />

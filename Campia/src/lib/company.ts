@@ -5,5 +5,10 @@ export const COMPANY = {
   cnpj: process.env.NEXT_PUBLIC_EMPRESA_CNPJ || '',
   email: 'contato@campia.app.br',
   site: 'campia.app.br',
+  /** Perfis oficiais. */
+  instagram: 'campia.appbr',
+  companyInstagram: 'ms.solucoestech',
 };
+
+export const instagramUrl = (handle: string) => `https://instagram.com/${handle}`;
 export const LEGAL_UPDATED = '27/10/2026';

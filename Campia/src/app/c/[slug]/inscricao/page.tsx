@@ -22,7 +22,7 @@ export default async function Inscricao({ params, searchParams }: {
   const { slug } = await params;
   const sp = await searchParams;
   const supabase = await createClient();
-  const { data: champ } = await supabase.from('championships').select('id, owner_id, name, sport, fee_cents, price_tiers, card_installments, location, city, state, online').eq('slug', slug).maybeSingle();
+  const { data: champ } = await supabase.from('championships').select('id, owner_id, name, sport, fee_cents, price_tiers, card_installments, rules, location, city, state, online').eq('slug', slug).maybeSingle();
   if (!champ) notFound();
   const { count } = await supabase.from('teams').select('id', { count: 'exact', head: true }).eq('championship_id', champ.id).neq('status', 'inscrita');
   const { data: started } = await supabase.from('games').select('id').eq('championship_id', champ.id).not('home_score', 'is', null).limit(1);
@@ -98,7 +98,7 @@ export default async function Inscricao({ params, searchParams }: {
           <textarea id="players" name="players" className="inp" required placeholder={'10 João\n7 Pedro\nCarlos'} />
           <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', color: 'var(--text)', fontSize: 13 }}>
             <input type="checkbox" name="consent" required style={{ marginTop: 3 }} />
-            <span>Li e aceito os <Link href="/termos" target="_blank">Termos de Uso</Link> e a <Link href="/privacidade" target="_blank">Política de Privacidade</Link>. Os atletas autorizam exibir nome e estatísticas na página do campeonato; WhatsApp, e-mail e CPF não são exibidos.</span>
+            <span>Li e aceito {(champ.rules as { regulation?: string } | null)?.regulation ? <>o <Link href={`/c/${slug}?aba=regulamento`} target="_blank">Regulamento do campeonato</Link>, </> : ''}os <Link href="/termos" target="_blank">Termos de Uso</Link> e a <Link href="/privacidade" target="_blank">Política de Privacidade</Link>. Os atletas autorizam exibir nome e estatísticas na página do campeonato; WhatsApp, e-mail e CPF não são exibidos.</span>
           </label>
           <div style={{ marginTop: 16 }}><button className="btn block">Continuar para o pagamento</button></div>
           <p className="sub small" style={{ margin: '10px 0 0' }}>A vaga fica reservada por 30 minutos enquanto o PIX não é pago.</p>
