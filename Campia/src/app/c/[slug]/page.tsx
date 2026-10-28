@@ -90,7 +90,7 @@ export default async function Publico({ params, searchParams }: {
         <div className="meta">
           <span>{teams.length} times</span>
           <span>{games.filter(isDecided).length} de {games.length} jogos</span>
-          {champ.online ? <span className="badge online">🌐 Online</span> : placeLabel(champ) && <span>📍 {placeLabel(champ)}</span>}
+          {champ.online ? <span className="badge online">🌐 Online</span> : placeLabel(champ) && <a className="place-link" target="_blank" rel="noopener" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([champ.location, champ.city, champ.state].filter(Boolean).join(', '))}`}>📍 {placeLabel(champ)} <span>· Como chegar</span></a>}
         </div>
         {arena && (
           <Link href={`/arena/${arena.slug}`} className="organizer">

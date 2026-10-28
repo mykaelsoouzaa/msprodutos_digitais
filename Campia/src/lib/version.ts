@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.24.0';
+export const APP_VERSION = '2.25.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,17 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.25.0',
+    date: '2026-10-28',
+    title: 'Pré-jogo, cronômetro, como chegar e central de ajuda',
+    items: [
+      "Página do jogo mostra o pré-jogo: posição, campanha e últimos jogos de cada time, e o confronto direto",
+      "Placar ao vivo com cronômetro (⏱ minutos desde o início)",
+      "Local do campeonato abre o Google Maps com um toque (Como chegar)",
+      "Nova Central de ajuda com as dúvidas mais comuns de organizadores e capitães",
+    ],
+  },
   {
     version: '2.24.0',
     date: '2026-10-28',

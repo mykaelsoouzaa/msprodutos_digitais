@@ -858,3 +858,11 @@ td.form-col, th.form-col { text-align: left; white-space: nowrap; }
 .group-text { border-top: 1px solid var(--line); padding: 10px 0; }
 .group-text summary { cursor: pointer; font-weight: 700; }
 .group-text pre { white-space: pre-wrap; font-family: inherit; font-size: 13px; background: var(--panel2); border-radius: 12px; padding: 12px; margin: 10px 0; max-height: 260px; overflow: auto; }
+.live-clock { font-variant-numeric: tabular-nums; margin-left: 4px; color: var(--text); text-transform: none; }
+.place-link { text-decoration: none; } .place-link span { color: var(--accent); font-weight: 700; } .place-link:hover span { text-decoration: underline; }
+.faq { display: grid; gap: 8px; }
+.faq-item summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 10px; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after { content: '+'; color: var(--accent); font-weight: 800; }
+.faq-item[open] summary::after { content: '−'; }
+.faq-item p { margin: 10px 0 0; color: var(--muted); line-height: 1.5; }

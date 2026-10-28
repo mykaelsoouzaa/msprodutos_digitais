@@ -1,4 +1,5 @@
 // Peças visuais compartilhadas entre o painel e a página pública (Server Components).
+import LiveClock from '@/components/LiveClock';
 import { type Outcome, recentForm } from '@/lib/domain/stats';
 import Link from 'next/link';
 import { sportRules } from '@/lib/domain/sports';
@@ -33,7 +34,7 @@ export function GameRow({ g, teams, games, href }: { g: Game; teams: Team[]; gam
       <div className="gline">
         <div className={`team ${h.tbd ? 'tbd' : ''}`}><Dot team={h.team} /><span className="nm">{h.name}</span></div>
         {g.live && !done
-          ? <div className="score live"><span className="live-tag"><span className="live-dot" />ao vivo</span>{g.live.home} × {g.live.away}</div>
+          ? <div className="score live"><span className="live-tag"><span className="live-dot" />ao vivo <LiveClock since={g.live.since} /></span>{g.live.home} × {g.live.away}</div>
           : done
           ? g.wo === 'both'
             ? <div className="score"><span className="wo-tag" style={{ fontSize: 13 }}>W.O. duplo</span></div>
