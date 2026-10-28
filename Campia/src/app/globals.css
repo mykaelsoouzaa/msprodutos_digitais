@@ -713,3 +713,7 @@ body:has(.tv-mode) main .container { max-width: none; padding: 0 clamp(16px, 3vw
 a.fin-row { text-decoration: none; color: inherit; }
 .fin-val { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
 .fin-val span { font-size: 12px; color: var(--muted); }
+.about { text-align: center; }
+.about h1 { margin-bottom: 8px; }
+.about .lead { margin-left: auto; margin-right: auto; max-width: 560px; }
+.about .link-card { text-align: left; }
