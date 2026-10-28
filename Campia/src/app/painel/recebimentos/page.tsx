@@ -37,7 +37,7 @@ export default async function Recebimentos({ searchParams }: { searchParams: Pro
 
   return (
     <div className="narrow">
-      <Link href="/painel" className="back-link">‹ Seus campeonatos</Link>
+      <Link href="/painel/financeiro" className="back-link">‹ Financeiro</Link>
       <h1>Recebimentos</h1>
       <p className="sub">Como o dinheiro das inscrições chega até você.</p>
       <Flash ok={sp.ok} erro={sp.erro} />
