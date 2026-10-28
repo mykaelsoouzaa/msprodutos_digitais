@@ -17,6 +17,9 @@ import { refundLatePayment } from '../cancel-actions';
 import { removeFromWaitlist } from '../waitlist-actions';
 import { addSponsor, removeSponsor } from '../sponsor-actions';
 import { sendAnnouncement } from '../announce-actions';
+import PhotoUploader from '@/components/PhotoUploader';
+import { removePhoto } from '../photo-actions';
+import { PHOTO_LIMIT, sortPhotos } from '@/lib/photos';
 import { initials } from '@/lib/arena';
 import ProLock from '@/components/ProLock';
 import { isProActive } from '@/lib/plan';
@@ -231,6 +234,23 @@ export default async function Campeonato({ params, searchParams }: {
 
       {tab === 'compartilhar' && (
         <>
+          <section className="card" id="fotos" style={{ marginBottom: 12 }}>
+            <b>📷 Fotos do campeonato</b>
+            <p className="sub" style={{ margin: '4px 0 10px' }}>Aparecem na aba Fotos da página do campeonato. Pode escolher várias de uma vez; o celular reduz antes de enviar. Até {PHOTO_LIMIT} fotos.</p>
+            <PhotoUploader championshipId={id} />
+            {(champ.rules.photos ?? []).length > 0 && (
+              <div className="photo-grid admin" style={{ marginTop: 12 }}>
+                {sortPhotos(champ.rules.photos).map(p => (
+                  <form key={p.path} action={removePhoto} className="photo-item">
+                    <input type="hidden" name="championship" value={id} />
+                    <input type="hidden" name="path" value={p.path} />
+                    <img src={p.url} alt="" loading="lazy" />
+                    <button className="photo-del" aria-label="Remover foto">✕</button>
+                  </form>
+                ))}
+              </div>
+            )}
+          </section>
           {owner && (
             <form action={sendAnnouncement} className="card" id="recado" style={{ marginBottom: 12 }}>
               <input type="hidden" name="championship" value={id} />

@@ -64,7 +64,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/privacidade">Privacidade</Link>
               <Link href="/sobre">Sobre</Link>
               <a href={instagramUrl(COMPANY.instagram)} target="_blank" rel="noopener" className="foot-ig" aria-label={`Instagram da Campia (@${COMPANY.instagram})`}><InstagramIcon /> @{COMPANY.instagram}</a>
-              <span>um produto <a href={instagramUrl(COMPANY.companyInstagram)} target="_blank" rel="noopener" className="foot-company">{COMPANY.name}</a></span>
+              <a href={instagramUrl(COMPANY.companyInstagram)} target="_blank" rel="noopener" className="foot-company" aria-label={`${COMPANY.name} no Instagram (@${COMPANY.companyInstagram})`}>
+                <InstagramIcon size={14} /><span>um produto <b>{COMPANY.name}</b></span>
+              </a>
             </div>
           </div>
         </footer>

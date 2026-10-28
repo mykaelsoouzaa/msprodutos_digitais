@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.12.0';
+export const APP_VERSION = '2.13.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.13.0',
+    date: '2026-10-28',
+    title: 'Fotos do campeonato',
+    items: [
+      "O organizador e os ajudantes sobem fotos pelo celular (várias de uma vez) na aba Compartilhar",
+      "As fotos aparecem numa nova aba Fotos na página do campeonato",
+      "No rodapé, um botão leva ao Instagram da MS Soluções Tecnológicas",
+    ],
+  },
   {
     version: '2.12.0',
     date: '2026-10-28',
