@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Flash } from '@/components/champ';
+import Prizes from '@/components/Prizes';
+import type { Rules } from '@/lib/domain/types';
 import ViewBeacon from '@/components/ViewBeacon';
 import SportIcon from '@/components/SportIcon';
 import { sportLabel, sportRules } from '@/lib/domain/sports';
@@ -9,6 +11,7 @@ import { paymentProvider } from '@/lib/env';
 import { brl, placeLabel } from '@/lib/format';
 import { priceText } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase/server';
+import { previousTeam } from '@/lib/previous-team';
 import { registerTeam } from './actions';
 import { joinWaitlist } from './waitlist-actions';
 
@@ -17,7 +20,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function Inscricao({ params, searchParams }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ erro?: string; ok?: string }>;
+  searchParams: Promise<{ erro?: string; ok?: string; novo?: string }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -30,6 +33,7 @@ export default async function Inscricao({ params, searchParams }: {
   const place = placeLabel({ online: champ.online, location: champ.location, city: champ.city, state: champ.state ?? '' });
   const needsCpf = paymentProvider() === 'asaas';
   const { data: { user } } = await supabase.auth.getUser();
+  const prev = user?.email && sp.novo !== '1' ? await previousTeam(user.email, champ.id, champ.sport) : null;
 
   return (
     <div className="narrow">
@@ -37,6 +41,7 @@ export default async function Inscricao({ params, searchParams }: {
       <Link href={`/c/${slug}`} className="back-link">‹ {champ.name}</Link>
       <h1>Inscrição de {rules.who === 'Dupla' ? 'dupla' : 'time'}</h1>
       <p className="sub" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><SportIcon sport={champ.sport} size={16} plain />{sportLabel(champ.sport)} · {priceText(champ.fee_cents, champ.price_tiers, brl).long} · {count ?? 0} vaga{count === 1 ? '' : 's'} em aberto{place ? ` · ${place}` : ''}</p>
+      <Prizes prizes={(champ.rules as Rules | null)?.prizes} compact />
       <Flash erro={sp.erro} ok={sp.ok} />
       {started?.length ? <div className="card empty">As inscrições estão encerradas: o campeonato já começou.</div> : !count ? (
         sp.ok ? null : (
@@ -60,18 +65,27 @@ export default async function Inscricao({ params, searchParams }: {
         </form>
         )
       ) : (
+        <>
+        {prev ? (
+          <div className="card prefill-note">
+            <span>🔁 Preenchemos com o seu time do <b>{prev.champName}</b>. Confira os atletas antes de enviar.</span>
+            <Link href={`/c/${slug}/inscricao?novo=1`} className="btn ghost sm">Começar do zero</Link>
+          </div>
+        ) : !user && (
+          <p className="sub small" style={{ margin: '0 0 10px' }}>Já jogou um campeonato na Campia? <Link href={`/entrar?voltar=${encodeURIComponent(`/c/${slug}/inscricao`)}`}>Entre com o e-mail do capitão</Link> e o formulário vem preenchido com o seu time.</p>
+        )}
         <form action={registerTeam} className="card">
           <input type="hidden" name="slug" value={slug} />
           <label htmlFor="name" style={{ marginTop: 0 }}>Nome {rules.who === 'Dupla' ? 'da dupla' : 'do time'}</label>
-          <input id="name" name="name" className="inp" required minLength={2} maxLength={40} placeholder={rules.who === 'Dupla' ? 'Ex.: Ana & Bia' : 'Ex.: Resenha FC'} />
+          <input id="name" name="name" className="inp" required minLength={2} maxLength={40} placeholder={rules.who === 'Dupla' ? 'Ex.: Ana & Bia' : 'Ex.: Resenha FC'} defaultValue={prev?.name} />
           <div className="grid2">
-            <div><label htmlFor="short">Sigla (3 letras)</label><input id="short" name="short" className="inp" maxLength={3} placeholder="RES" /></div>
-            <div><label htmlFor="captain">Capitão</label><input id="captain" name="captain" className="inp" required /></div>
+            <div><label htmlFor="short">Sigla (3 letras)</label><input id="short" name="short" className="inp" maxLength={3} placeholder="RES" defaultValue={prev?.short} /></div>
+            <div><label htmlFor="captain">Capitão</label><input id="captain" name="captain" className="inp" required defaultValue={prev?.captain} /></div>
           </div>
           <label htmlFor="phone">WhatsApp do capitão</label>
-          <input id="phone" name="phone" className="inp" inputMode="tel" required placeholder="(11) 99999-9999" />
+          <input id="phone" name="phone" className="inp" inputMode="tel" required placeholder="(11) 99999-9999" defaultValue={prev?.phone} />
           <label htmlFor="email">E-mail do capitão</label>
-          <input id="email" name="email" type="email" className="inp" required autoComplete="email" inputMode="email" placeholder="voce@exemplo.com" />
+          <input id="email" name="email" type="email" className="inp" required autoComplete="email" inputMode="email" placeholder="voce@exemplo.com" defaultValue={user?.email ?? undefined} />
           <p className="sub small" style={{ margin: '6px 0 0' }}>Com esse e-mail você acompanha o time em <b>Meus times</b>: próximos jogos, resultados e posição.</p>
           {needsCpf && <><label htmlFor="cpf">CPF ou CNPJ do responsável (para a cobrança)</label><input id="cpf" name="cpf" className="inp" inputMode="numeric" required /></>}
           <label htmlFor="coupon">Cupom de desconto (se tiver)</label>
@@ -95,7 +109,7 @@ export default async function Inscricao({ params, searchParams }: {
             </fieldset>
           )}
           <label htmlFor="players">{rules.who} (um por linha, com o número se quiser)</label>
-          <textarea id="players" name="players" className="inp" required placeholder={'10 João\n7 Pedro\nCarlos'} />
+          <textarea id="players" name="players" className="inp" required placeholder={'10 João\n7 Pedro\nCarlos'} defaultValue={prev?.players} rows={prev ? Math.min(14, prev.players.split('\n').length + 1) : undefined} />
           <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', color: 'var(--text)', fontSize: 13 }}>
             <input type="checkbox" name="consent" required style={{ marginTop: 3 }} />
             <span>Li e aceito {(champ.rules as { regulation?: string } | null)?.regulation ? <>o <Link href={`/c/${slug}?aba=regulamento`} target="_blank">Regulamento do campeonato</Link>, </> : ''}os <Link href="/termos" target="_blank">Termos de Uso</Link> e a <Link href="/privacidade" target="_blank">Política de Privacidade</Link>. Os atletas autorizam exibir nome e estatísticas na página do campeonato; WhatsApp, e-mail e CPF não são exibidos.</span>
@@ -103,6 +117,7 @@ export default async function Inscricao({ params, searchParams }: {
           <div style={{ marginTop: 16 }}><button className="btn block">Continuar para o pagamento</button></div>
           <p className="sub small" style={{ margin: '10px 0 0' }}>A vaga fica reservada por 30 minutos enquanto o PIX não é pago.</p>
         </form>
+        </>
       )}
     </div>
   );

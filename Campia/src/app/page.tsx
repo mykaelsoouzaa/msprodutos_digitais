@@ -19,7 +19,7 @@ export default function Home() {
     <>
       <section className="home-hero">
         <div>
-          <span className="eyebrow">Futebol, quadra, areia, raquete e games</span>
+          <span className="eyebrow">Futebol, quadra, areia, raquete, mesa e games</span>
           <h1 className="title-xl">Seu campeonato organizado em 2 minutos</h1>
           <p className="lead">Tabela automática, inscrição com PIX, resultados pelo celular e tudo pronto para o grupo do WhatsApp.</p>
           <div className="ctas">

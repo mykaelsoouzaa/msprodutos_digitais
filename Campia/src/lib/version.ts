@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.17.1';
+export const APP_VERSION = '2.23.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,65 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.23.0',
+    date: '2026-10-28',
+    title: 'Mais esportes e jogos de mesa',
+    items: [
+      "Novos esportes: Futebol de areia, Pickleball, Badminton, League of Legends e Rocket League",
+      "Novo grupo Mesa: Sinuca, Truco, Dominó e Xadrez, com placar por partidas (no Xadrez vale empate)",
+      "No campeonato de exemplo, um quadro explica como funcionam os patrocinadores com logo",
+    ],
+  },
+  {
+    version: '2.22.0',
+    date: '2026-10-28',
+    title: 'Modo claro',
+    items: [
+      "O site segue o tema do celular ou computador: claro de dia, escuro se o aparelho estiver no escuro",
+      "Botão no rodapé para escolher automático, claro ou escuro (fica guardado no aparelho)",
+    ],
+  },
+  {
+    version: '2.21.0',
+    date: '2026-10-28',
+    title: 'Inscrever o time de novo em um toque',
+    items: [
+      "Capitão que já jogou na Campia entra com o e-mail e a inscrição vem preenchida com nome, sigla, contato e atletas do último time",
+      "Botão Começar do zero para inscrever um time diferente",
+      "Mapa do site liberado para o Google encontrar as páginas mais rápido",
+    ],
+  },
+  {
+    version: '2.20.0',
+    date: '2026-10-28',
+    title: 'Aviso de resultado e agenda da arena',
+    items: [
+      "Quem ativou os lembretes de um time recebe no celular o placar assim que o resultado é lançado",
+      "Página da arena ganhou a aba Agenda: todos os jogos dos próximos 14 dias, de todos os campeonatos, por dia, horário e campo",
+    ],
+  },
+  {
+    version: '2.19.0',
+    date: '2026-10-28',
+    title: 'Página do time, página do jogo e súmula',
+    items: [
+      "Cada time tem sua página: posição, pontos, elenco com gols e cartões, próximos jogos e resultados (é só tocar no nome do time)",
+      "Cada jogo tem sua página com placar, gols, cartões, árbitro e os lances em vídeo",
+      "Arte de stories com o resultado de um jogo, pronta para postar",
+      "No painel, o organizador ou ajudante coloca o árbitro e links de vídeo (YouTube toca direto na página)",
+      "Súmula para imprimir: elenco dos dois times com espaço para gols, cartões, observações e assinaturas",
+    ],
+  },
+  {
+    version: '2.18.0',
+    date: '2026-10-28',
+    title: 'Premiação',
+    items: [
+      "O organizador cadastra a premiação (campeão, vice, 3º e craque) em Ajustes; ela aparece na página do campeonato e na inscrição",
+      "Botão Falar com a organização no WhatsApp da arena, na página do campeonato",
+    ],
+  },
   {
     version: '2.17.1',
     date: '2026-10-28',

@@ -15,6 +15,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { attributeReferral } from '@/lib/referral-server';
 import { notifyTeamConfirmed } from '@/lib/payment-notify';
+import { notifyResult } from '@/lib/result-push';
 
 const fail = (path: string, msg: string): never => redirect(`${path}${path.includes('?') ? '&' : '?'}erro=${encodeURIComponent(msg)}`);
 
@@ -204,9 +205,11 @@ export async function saveResult(formData: FormData) {
 
   Object.assign(g!, { homeScore: home, awayScore: away, penHome: tie ? penHome : null, penAway: tie ? penAway : null, wo });
   await persistKnockout(supabase, data!);
+  await notifyResult(data!.champ, g!, data!.teams);
 
   revalidatePath(`/painel/${champId}`);
   revalidatePath(`/c/${data!.champ.slug}`);
+  revalidatePath(`/c/${data!.champ.slug}/jogo/${gameId}`);
   redirect(`/painel/${champId}?aba=jogos&ok=${encodeURIComponent('Resultado salvo · tabela atualizada')}`);
 }
 

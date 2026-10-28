@@ -1,7 +1,7 @@
 // Regras de placar por esporte.
 
-export type SportIcon = 'futebol' | 'basquete' | 'volei' | 'handebol' | 'tenis' | 'padel' | 'pingpong' | 'games';
-export type SportGroup = 'Futebol' | 'Quadra' | 'Areia' | 'Raquete' | 'Games';
+export type SportIcon = 'futebol' | 'basquete' | 'volei' | 'handebol' | 'tenis' | 'padel' | 'pingpong' | 'peteca' | 'games' | 'sinuca' | 'cartas' | 'domino' | 'xadrez';
+export type SportGroup = 'Futebol' | 'Quadra' | 'Areia' | 'Raquete' | 'Mesa' | 'Games';
 
 export interface SportRules {
   icon: string;
@@ -9,8 +9,8 @@ export interface SportRules {
   label: string;
   group: SportGroup;
   glyph: SportIcon;
-  /** O que o placar conta: gols, pontos, sets ou mapas. */
-  unit: 'gols' | 'pontos' | 'sets' | 'mapas';
+  /** O que o placar conta: gols, pontos, sets, partidas ou mapas. */
+  unit: 'gols' | 'pontos' | 'sets' | 'partidas' | 'mapas';
   draws: boolean;
   /** Registra quem marcou (artilharia / cestinha). */
   scorers: boolean;
@@ -44,15 +44,25 @@ export const SPORTS: Record<string, SportRules> = {
   'Vôlei': { ...SETS, icon: '🏐', label: 'Vôlei', group: 'Quadra', glyph: 'volei', woScore: [3, 0] },
   'Vôlei de praia': { ...SETS, icon: '🏐', label: 'Vôlei de praia', group: 'Areia', glyph: 'volei', who: 'Dupla' },
   'Futevôlei': { ...SETS, icon: '⚽', label: 'Futevôlei', group: 'Areia', glyph: 'futebol', who: 'Dupla' },
+  'Futebol de areia': { ...FOOT, icon: '⚽', label: 'Futebol de areia', group: 'Areia', glyph: 'futebol', tieLabel: 'Pênaltis' },
   'Beach tennis': { ...SETS, icon: '🎾', label: 'Beach tennis', group: 'Areia', glyph: 'tenis', who: 'Dupla' },
   'Tênis': { ...SETS, icon: '🎾', label: 'Tênis', group: 'Raquete', glyph: 'tenis' },
   'Padel': { ...SETS, icon: '🎾', label: 'Padel', group: 'Raquete', glyph: 'padel', who: 'Dupla' },
   'Tênis de mesa': { ...SETS, icon: '🏓', label: 'Tênis de mesa', group: 'Raquete', glyph: 'pingpong', woScore: [3, 0] },
+  'Pickleball': { ...SETS, icon: '🏓', label: 'Pickleball', group: 'Raquete', glyph: 'padel' },
+  'Badminton': { ...SETS, icon: '🏸', label: 'Badminton', group: 'Raquete', glyph: 'peteca' },
+  'Sinuca': { ...SETS, icon: '🎱', label: 'Sinuca', group: 'Mesa', glyph: 'sinuca', unit: 'partidas', diff: 'SP' },
+  'Truco': { ...SETS, icon: '🃏', label: 'Truco', group: 'Mesa', glyph: 'cartas', unit: 'partidas', diff: 'SP', who: 'Dupla' },
+  'Dominó': { ...SETS, icon: '🁢', label: 'Dominó', group: 'Mesa', glyph: 'domino', unit: 'partidas', diff: 'SP', who: 'Dupla' },
+  // Xadrez: vitória 2, empate 1 (igual a 1 e meio ponto, sem fração). Placar em partidas do confronto.
+  'Xadrez': { ...SETS, icon: '♟️', label: 'Xadrez', group: 'Mesa', glyph: 'xadrez', unit: 'partidas', diff: 'SP', draws: true, points: [2, 1, 0], woScore: [1, 0] },
   'E-sports (EA FC)': { ...FOOT, icon: '🎮', label: 'EA FC', group: 'Games', glyph: 'games', cards: false },
   'E-sports (CS2/Valorant)': { ...SETS, icon: '🎮', label: 'CS2 e Valorant', group: 'Games', glyph: 'games', unit: 'mapas', diff: 'SM' },
+  'E-sports (LoL)': { ...SETS, icon: '🎮', label: 'League of Legends', group: 'Games', glyph: 'games', unit: 'partidas', diff: 'SP' },
+  'E-sports (Rocket League)': { ...FOOT, icon: '🎮', label: 'Rocket League', group: 'Games', glyph: 'games', cards: false, draws: false, points: [3, 0, 0], tieLabel: '' },
 };
 
-export const SPORT_GROUPS: SportGroup[] = ['Futebol', 'Quadra', 'Areia', 'Raquete', 'Games'];
+export const SPORT_GROUPS: SportGroup[] = ['Futebol', 'Quadra', 'Areia', 'Raquete', 'Mesa', 'Games'];
 
 /** Esportes de um grupo, na ordem de exibição. */
 export const sportsIn = (group: SportGroup) => Object.entries(SPORTS).filter(([, r]) => r.group === group);
