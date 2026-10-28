@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import CalendarButtons from '@/components/CalendarButtons';
-import { GameRow } from '@/components/champ';
+import { Form, GameRow } from '@/components/champ';
+import { recentForm } from '@/lib/domain/stats';
 import { loadChampionship } from '@/lib/data';
 import { sportLabel, sportRules } from '@/lib/domain/sports';
 import { champion, isDecided, ordered, tables } from '@/lib/domain/standings';
@@ -71,6 +72,7 @@ export default async function TimePublico({ params }: { params: Promise<{ slug: 
         <div className="stat"><b>{done.length}</b><span>jogos</span></div>
         <div className="stat"><b>{row ? `${row.V}-${row.E}-${row.D}` : '—'}</b><span>V-E-D</span></div>
         <div className="stat"><b>{row ? `${row.GP}:${row.GC}` : '—'}</b><span>{rules.unit === 'gols' ? 'gols pró:contra' : `${rules.unit} pró:contra`}</span></div>
+        <div className="stat"><b><Form list={recentForm(d.games, team.id)} /></b><span>últimos jogos</span></div>
       </div>
 
       <h2>Elenco</h2>

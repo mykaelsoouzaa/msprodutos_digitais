@@ -16,6 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/campeonatos`, changeFrequency: 'daily', priority: 0.9 },
     { url: `${base}/para-arenas`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/exemplo`, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${base}/ajuda`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${base}/sobre`, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${base}/novidades`, changeFrequency: 'weekly', priority: 0.4 },
     { url: `${base}/termos`, changeFrequency: 'yearly', priority: 0.2 },

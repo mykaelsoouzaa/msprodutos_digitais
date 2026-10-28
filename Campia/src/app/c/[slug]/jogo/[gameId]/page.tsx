@@ -2,10 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AutoRefresh from '@/components/AutoRefresh';
-import { Dot } from '@/components/champ';
+import LiveClock from '@/components/LiveClock';
+import { Dot, Form } from '@/components/champ';
 import { loadChampionship } from '@/lib/data';
 import { sportLabel, sportRules } from '@/lib/domain/sports';
-import { isDecided, sourceLabel } from '@/lib/domain/standings';
+import { isDecided, sourceLabel, tables } from '@/lib/domain/standings';
+import { headToHead, recentForm } from '@/lib/domain/stats';
 import { siteUrl } from '@/lib/env';
 import { fmtDate, waLink } from '@/lib/format';
 import { type GameInfo, videoLabel, youtubeId } from '@/lib/game-info';
@@ -64,7 +66,7 @@ export default async function JogoPublico({ params }: { params: Promise<{ slug: 
         <div className="match-board">
           <TeamSide s={home} slug={champ.slug} />
           <div className={`match-score ${g.live && !done ? 'live' : ''}`}>
-            {g.live && !done && <span className="live-tag"><span className="live-dot" /> ao vivo</span>}
+            {g.live && !done && <span className="live-tag"><span className="live-dot" /> ao vivo <LiveClock since={g.live.since} /></span>}
             <b>{scoreText}</b>
             {done && g.penHome !== null && g.homeScore === g.awayScore && <span className="sub small">{rules.tieLabel || 'Desempate'} {g.penHome} × {g.penAway}</span>}
             {g.wo && g.wo !== 'both' && <span className="sub small">W.O.</span>}
@@ -74,6 +76,43 @@ export default async function JogoPublico({ params }: { params: Promise<{ slug: 
         {!done && !g.live && <p className="sub small" style={{ textAlign: 'center', margin: '8px 0 0' }}>{meta ? 'Jogo marcado' : 'Data a definir'}</p>}
         {info.referee && <p className="sub small" style={{ textAlign: 'center', margin: '8px 0 0' }}>Árbitro: <b>{info.referee}</b></p>}
       </section>
+
+      {!done && home.team && away.team && (() => {
+        const row = (id: string) => {
+          for (const t of tables(champ, games, teams)) {
+            const i = t.rows.findIndex(r => r.team.id === id);
+            if (i >= 0) return { pos: i + 1, title: t.title, r: t.rows[i] };
+          }
+          return null;
+        };
+        const h2h = headToHead(games, home.team.id, away.team.id, g.id);
+        const nameOf = (id: string | null) => teams.find(t => t.id === id)?.name ?? '?';
+        return (
+          <section style={{ marginTop: 16 }}>
+            <h2>{g.live ? 'Campanha no campeonato' : 'Pré-jogo'}</h2>
+            <div className="match-cols">
+              {[home.team, away.team].map(t => {
+                const x = row(t.id);
+                return (
+                  <div key={t.id} className="card">
+                    <b>{t.name}</b>
+                    {x && x.r.J > 0
+                      ? <span className="sub small">{x.pos}º {x.title ? `do ${x.title}` : 'na tabela'} · {x.r.P} pts · {x.r.V}V {x.r.E}E {x.r.D}D</span>
+                      : <span className="sub small">Ainda não jogou</span>}
+                    <Form list={recentForm(games, t.id)} />
+                  </div>
+                );
+              })}
+            </div>
+            {h2h.length > 0 && (
+              <div className="card" style={{ marginTop: 10 }}>
+                <b>Confronto direto neste campeonato</b>
+                {h2h.map(x => <div key={x.id} className="match-line">{nameOf(x.homeId)} {x.wo === 'both' ? 'W.O.' : `${x.homeScore} × ${x.awayScore}`} {nameOf(x.awayId)} <span className="sub small">· {x.stage === 'ko' ? x.name : x.label}</span></div>)}
+              </div>
+            )}
+          </section>
+        );
+      })()}
 
       {done && (rules.scorers || rules.cards) && (
         <div className="match-cols">

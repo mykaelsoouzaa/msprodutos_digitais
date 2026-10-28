@@ -1,4 +1,6 @@
 // Peças visuais compartilhadas entre o painel e a página pública (Server Components).
+import LiveClock from '@/components/LiveClock';
+import { type Outcome, recentForm } from '@/lib/domain/stats';
 import Link from 'next/link';
 import { sportRules } from '@/lib/domain/sports';
 import { champion, isDecided, labels, ordered, sourceLabel, tables, topScorers, winnerId } from '@/lib/domain/standings';
@@ -32,7 +34,7 @@ export function GameRow({ g, teams, games, href }: { g: Game; teams: Team[]; gam
       <div className="gline">
         <div className={`team ${h.tbd ? 'tbd' : ''}`}><Dot team={h.team} /><span className="nm">{h.name}</span></div>
         {g.live && !done
-          ? <div className="score live"><span className="live-tag"><span className="live-dot" />ao vivo</span>{g.live.home} × {g.live.away}</div>
+          ? <div className="score live"><span className="live-tag"><span className="live-dot" />ao vivo <LiveClock since={g.live.since} /></span>{g.live.home} × {g.live.away}</div>
           : done
           ? g.wo === 'both'
             ? <div className="score"><span className="wo-tag" style={{ fontSize: 13 }}>W.O. duplo</span></div>
@@ -73,14 +75,14 @@ export function Standings({ champ, games, teams }: { champ: Championship; games:
           {tb.title && <b style={{ fontSize: 13, display: 'block', padding: '4px 2px' }}>{tb.title}</b>}
           <div className="table-wrap"><table>
             <thead>
-              <tr><th>#</th><th className="t">Time</th><th>P</th><th>J</th><th>V</th>{rules.draws && <th>E</th>}<th>D</th><th>{rules.diff}</th></tr>
+              <tr><th>#</th><th className="t">Time</th><th>P</th><th>J</th><th>V</th>{rules.draws && <th>E</th>}<th>D</th><th>{rules.diff}</th><th className="form-col">Últimos</th></tr>
             </thead>
             <tbody>
               {tb.rows.map((r, i) => (
                 <tr key={r.team.id} className={i < tb.qualify ? 'lead' : ''}>
                   <td>{i + 1}</td>
                   <td className="t"><div><Dot team={r.team} />{r.team.name}</div></td>
-                  <td><b>{r.P}</b></td><td>{r.J}</td><td>{r.V}</td>{rules.draws && <td>{r.E}</td>}<td>{r.D}</td><td>{r.GP - r.GC}</td>
+                  <td><b>{r.P}</b></td><td>{r.J}</td><td>{r.V}</td>{rules.draws && <td>{r.E}</td>}<td>{r.D}</td><td>{r.GP - r.GC}</td><td className="form-col"><Form list={recentForm(games, r.team.id)} /></td>
                 </tr>
               ))}
             </tbody>
@@ -91,6 +93,14 @@ export function Standings({ champ, games, teams }: { champ: Championship; games:
       {champ.format === 'grupos' && <p className="sub small" style={{ marginTop: 8 }}>Os {champ.rules.qualify} primeiros de cada grupo vão para o mata-mata.</p>}
     </>
   );
+}
+
+const FORM_TITLE = { V: 'Vitória', E: 'Empate', D: 'Derrota' } as const;
+
+/** Bolinhas dos últimos jogos: verde vitória, cinza empate, vermelho derrota. */
+export function Form({ list }: { list: Outcome[] }) {
+  if (!list.length) return <span className="sub small">–</span>;
+  return <span className="form" aria-label={`Últimos jogos: ${list.map(o => FORM_TITLE[o]).join(', ')}`}>{list.map((o, i) => <i key={i} className={`f-${o}`} title={FORM_TITLE[o]}>{o}</i>)}</span>;
 }
 
 export function Bracket({ games, teams }: { games: Game[]; teams: Team[] }) {
