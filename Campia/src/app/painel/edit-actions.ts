@@ -257,3 +257,17 @@ export async function updateRegulation(formData: FormData) {
   revalidatePath(`/c/${data.row.slug}`);
   go(back, 'ok', text ? 'Regulamento salvo: aparece na aba Regulamento e na inscrição' : 'Regulamento removido');
 }
+
+/* ---------- premiação ---------- */
+export async function updatePrizes(formData: FormData) {
+  const champId = String(formData.get('championship'));
+  const back = `/painel/${champId}?aba=ajustes#premiacao`;
+  const { supabase, data } = await requireOwner(champId, back);
+  const field = (k: string) => String(formData.get(k) ?? '').trim().replace(/\s+/g, ' ').slice(0, 80);
+  const prizes = { first: field('first'), second: field('second'), third: field('third'), best: field('best') };
+  const empty = !Object.values(prizes).some(Boolean);
+  const { error } = await supabase.from('championships').update({ rules: { ...data.row.rules, prizes: empty ? undefined : prizes } }).eq('id', champId);
+  if (error) go(back, 'erro', 'Não foi possível salvar');
+  revalidatePath(`/c/${data.row.slug}`);
+  go(back, 'ok', empty ? 'Premiação removida' : 'Premiação salva: aparece na página e na inscrição');
+}

@@ -90,6 +90,7 @@ export interface Rules {
   yellowLimit?: number;  // amarelos acumulados que dão 1 jogo de suspensão (padrão 3)
   drawnAt?: string;      // quando os grupos/confrontos foram sorteados (ISO)
   regulation?: string;   // regulamento escrito pelo organizador
+  prizes?: { first?: string; second?: string; third?: string; best?: string }; // premiação
   photos?: Array<{ url: string; path: string; caption?: string; at: string }>; // fotos do campeonato
   tiebreak: Tiebreak[];  // ordem dos critérios depois dos pontos
 }

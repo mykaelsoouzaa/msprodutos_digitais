@@ -717,3 +717,10 @@ a.fin-row { text-decoration: none; color: inherit; }
 .about h1 { margin-bottom: 8px; }
 .about .lead { margin-left: auto; margin-right: auto; max-width: 560px; }
 .about .link-card { text-align: left; }
+.prizes { display: flex; flex-direction: column; gap: 4px; }
+.prizes.compact { margin: 0 0 16px; }
+.prize-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); }
+.prize-row:first-of-type { border-top: 0; margin-top: 6px; }
+.prize-row .grow { display: flex; flex-direction: column; min-width: 0; }
+.prize-icon { font-size: 22px; width: 28px; text-align: center; }
+.prize-label { font-size: 12px; color: var(--muted); }

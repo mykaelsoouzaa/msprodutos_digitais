@@ -9,6 +9,7 @@ import FreeAgents from '@/components/FreeAgents';
 import ViewBeacon from '@/components/ViewBeacon';
 import Sponsors from '@/components/Sponsors';
 import CalendarButtons from '@/components/CalendarButtons';
+import Prizes from '@/components/Prizes';
 import { SPONSOR_SELECT, type Sponsor } from '@/lib/sponsors';
 import ReminderButton from '@/components/ReminderButton';
 import { type ArenaRow, initials } from '@/lib/arena';
@@ -99,6 +100,7 @@ export default async function Publico({ params, searchParams }: {
         <div className="actions">
           <Link href={`/c/${champ.slug}/imprimir`} className="btn ghost sm">🖨 Imprimir / PDF</Link>
           <CalendarButtons slug={champ.slug} />
+          {arena?.whatsapp && <a className="btn ghost sm" target="_blank" rel="noopener" href={waLink(arena.whatsapp, `Olá! Vi o ${champ.name} na Campia e queria tirar uma dúvida.`)}>💬 Falar com a organização</a>}
           <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `🏆 ${champ.name}: jogos, tabela e artilharia\n${withOrigin(url, 'whatsapp')}`)}>Compartilhar</a>
         </div>
       </div>
@@ -111,6 +113,7 @@ export default async function Publico({ params, searchParams }: {
               <Link href={`/c/${champ.slug}/inscricao`} className="btn sm">Inscrever</Link>
             </div>
           )}
+          <Prizes prizes={champ.rules.prizes} />
           {!champion && <ReminderButton championshipId={champ.id} teams={teams.filter(t => t.status === 'inscrita').map(t => ({ id: t.id, name: t.name }))} />}
           {upcoming.length > 0 && tab === 'jogos' && (
             <div>

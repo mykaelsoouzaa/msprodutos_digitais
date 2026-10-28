@@ -25,7 +25,7 @@ import ProLock from '@/components/ProLock';
 import { isProActive } from '@/lib/plan';
 import { myPlan, ownerIsPro } from '@/lib/plan-server';
 import { SPONSOR_LIMIT, SPONSOR_SELECT, type Sponsor, sortSponsors } from '@/lib/sponsors';
-import { addCoupon, drawChampionship, rebuildChampionship, removeCoupon, setVoting, updateBasics, updateCardOption, updatePriceTiers, updateRegulation, updateSchedule } from '../edit-actions';
+import { addCoupon, drawChampionship, rebuildChampionship, removeCoupon, setVoting, updateBasics, updateCardOption, updatePriceTiers, updateRegulation, updateSchedule, updatePrizes } from '../edit-actions';
 import { regulationTemplate } from '@/lib/regulation';
 import { type VoteResult, categoriesFor, ranking } from '@/lib/voting';
 import { addHelper, updateYellowLimit, deleteChampionship, markPaidManually, removeHelper, setCaptainEmail, updatePlace, updateVisibility } from '../actions';
@@ -356,6 +356,18 @@ export default async function Campeonato({ params, searchParams }: {
             </div>
             <p className="sub small" style={{ margin: '6px 0 0' }}>O novo valor vale para as próximas inscrições; quem já pagou não muda.</p>
             <div className="actions"><button className="btn sm">Salvar</button></div>
+          </form>
+          <form action={updatePrizes} className="card" id="premiacao">
+            <input type="hidden" name="championship" value={id} />
+            <b>🏆 Premiação</b>
+            <p className="sub" style={{ margin: '4px 0 10px' }}>Aparece na página do campeonato e na inscrição. Premiação atrai time: escreva troféu, medalhas e valores. Deixe em branco o que não tiver.</p>
+            <div className="grid2">
+              <div><label htmlFor="pz-1" style={{ marginTop: 0 }}>🥇 Campeão</label><input id="pz-1" name="first" className="inp" maxLength={80} defaultValue={champ.rules.prizes?.first ?? ''} placeholder="Ex.: Troféu + R$ 1.000" /></div>
+              <div><label htmlFor="pz-2" style={{ marginTop: 0 }}>🥈 Vice</label><input id="pz-2" name="second" className="inp" maxLength={80} defaultValue={champ.rules.prizes?.second ?? ''} placeholder="Ex.: Medalhas + R$ 400" /></div>
+              <div><label htmlFor="pz-3">🥉 3º lugar</label><input id="pz-3" name="third" className="inp" maxLength={80} defaultValue={champ.rules.prizes?.third ?? ''} placeholder="Ex.: Medalhas" /></div>
+              <div><label htmlFor="pz-4">⭐ Craque</label><input id="pz-4" name="best" className="inp" maxLength={80} defaultValue={champ.rules.prizes?.best ?? ''} placeholder="Ex.: Chuteira" /></div>
+            </div>
+            <div style={{ marginTop: 12 }}><button className="btn sm">Salvar premiação</button></div>
           </form>
           <form action={updateRegulation} className="card" id="regulamento">
             <input type="hidden" name="championship" value={id} />

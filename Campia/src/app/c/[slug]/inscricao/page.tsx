@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Flash } from '@/components/champ';
+import Prizes from '@/components/Prizes';
+import type { Rules } from '@/lib/domain/types';
 import ViewBeacon from '@/components/ViewBeacon';
 import SportIcon from '@/components/SportIcon';
 import { sportLabel, sportRules } from '@/lib/domain/sports';
@@ -37,6 +39,7 @@ export default async function Inscricao({ params, searchParams }: {
       <Link href={`/c/${slug}`} className="back-link">‹ {champ.name}</Link>
       <h1>Inscrição de {rules.who === 'Dupla' ? 'dupla' : 'time'}</h1>
       <p className="sub" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><SportIcon sport={champ.sport} size={16} plain />{sportLabel(champ.sport)} · {priceText(champ.fee_cents, champ.price_tiers, brl).long} · {count ?? 0} vaga{count === 1 ? '' : 's'} em aberto{place ? ` · ${place}` : ''}</p>
+      <Prizes prizes={(champ.rules as Rules | null)?.prizes} compact />
       <Flash erro={sp.erro} ok={sp.ok} />
       {started?.length ? <div className="card empty">As inscrições estão encerradas: o campeonato já começou.</div> : !count ? (
         sp.ok ? null : (

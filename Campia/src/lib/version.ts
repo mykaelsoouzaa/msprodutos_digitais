@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.17.1';
+export const APP_VERSION = '2.18.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,15 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.18.0',
+    date: '2026-10-28',
+    title: 'Premiação',
+    items: [
+      "O organizador cadastra a premiação (campeão, vice, 3º e craque) em Ajustes; ela aparece na página do campeonato e na inscrição",
+      "Botão Falar com a organização no WhatsApp da arena, na página do campeonato",
+    ],
+  },
   {
     version: '2.17.1',
     date: '2026-10-28',
