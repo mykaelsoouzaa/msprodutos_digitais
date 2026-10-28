@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import ChampNumbers from '@/components/ChampNumbers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Discipline, Flash, GameRow, GamesList, Scorers, TableTab, Tabs } from '@/components/champ';
@@ -58,7 +59,7 @@ export default async function Publico({ params, searchParams }: {
   const { champ, teams, games, goals, players, cards } = data;
   const { data: arena } = await supabase.from('arenas').select('*').eq('owner_id', data.row.owner_id).maybeSingle<ArenaRow>();
   const rules = sportRules(champ.sport);
-  const tabs: Array<[string, string]> = [['jogos', 'Jogos'], ['tabela', champ.format === 'mata' ? 'Chave' : 'Tabela'], ...(rules.scorers ? [['artilharia', rules.unit === 'pontos' ? 'Cestinhas' : 'Artilharia'] as [string, string]] : []), ...(rules.cards ? [['cartoes', 'Cartões'] as [string, string]] : []), ['times', 'Times'], ...(champ.rules.photos?.length ? [['fotos', `📷 Fotos`] as [string, string]] : []), ...(champ.rules.regulation ? [['regulamento', 'Regulamento'] as [string, string]] : []), ...(champ.voting && champ.voting !== 'fechada' ? [['votacao', champ.voting === 'aberta' ? '🗳 Votação' : '🏅 Craques'] as [string, string]] : [])];
+  const tabs: Array<[string, string]> = [['jogos', 'Jogos'], ['tabela', champ.format === 'mata' ? 'Chave' : 'Tabela'], ...(rules.scorers ? [['artilharia', rules.unit === 'pontos' ? 'Cestinhas' : 'Artilharia'] as [string, string]] : []), ...(rules.cards ? [['cartoes', 'Cartões'] as [string, string]] : []), ...(games.some(isDecided) ? [['numeros', '📊 Números'] as [string, string]] : []), ['times', 'Times'], ...(champ.rules.photos?.length ? [['fotos', `📷 Fotos`] as [string, string]] : []), ...(champ.rules.regulation ? [['regulamento', 'Regulamento'] as [string, string]] : []), ...(champ.voting && champ.voting !== 'fechada' ? [['votacao', champ.voting === 'aberta' ? '🗳 Votação' : '🏅 Craques'] as [string, string]] : [])];
   const tab = tabs.some(t => t[0] === sp.aba) ? sp.aba! : 'jogos';
   const open = teams.filter(t => t.status !== 'inscrita').length;
   const started = games.some(isDecided);
@@ -146,6 +147,7 @@ export default async function Publico({ params, searchParams }: {
           )}
           {tab === 'times' && <><TeamsTab champ={champ} teams={teams} players={players} /><FreeAgents champ={champ} finished={!!champion} isOwner={isOwner} /></>}
           {tab === 'votacao' && <VotingTab champ={champ} players={players} teams={teams} />}
+          {tab === 'numeros' && <ChampNumbers champ={champ} games={games} teams={teams} cards={cards} />}
           {tab === 'cartoes' && <Discipline champ={champ} games={games} cards={cards} players={players} teams={teams} />}
         </div>
       </div>

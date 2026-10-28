@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.23.0';
+export const APP_VERSION = '2.24.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,19 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.24.0',
+    date: '2026-10-28',
+    title: 'Números, últimos jogos, cartaz e textos para o grupo',
+    items: [
+      "Aba Números no campeonato: média de gols, melhor ataque, melhor defesa, maior goleada e ranking Fair Play",
+      "Tabela e página do time mostram os últimos 5 jogos (vitória, empate, derrota)",
+      "Arte da classificação para stories, com os últimos jogos de cada time",
+      "Textos prontos para o grupo do WhatsApp: resultados, próximos jogos e classificação, com botão Copiar",
+      "Cartaz A4 para imprimir com QR code que abre a inscrição",
+      "Remarcar uma rodada inteira em um clique (choveu? adie todos os jogos em X dias)",
+    ],
+  },
   {
     version: '2.23.0',
     date: '2026-10-28',

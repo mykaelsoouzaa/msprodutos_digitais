@@ -728,7 +728,7 @@ a.fin-row { text-decoration: none; color: inherit; }
 .prize-label { font-size: 12px; color: var(--muted); }
 .team-hero { display: flex; align-items: center; gap: 14px; margin: 6px 0 12px; }
 .dot.xl { width: 60px; height: 60px; border-radius: 16px; font-size: 16px; }
-.team-stats { grid-template-columns: repeat(5, 1fr); }
+.team-stats { grid-template-columns: repeat(3, 1fr); }
 @media (max-width: 560px) { .team-stats { grid-template-columns: repeat(3, 1fr); } }
 .roster-link { color: inherit; text-decoration: none; }
 .roster-link:hover { text-decoration: underline; }
@@ -816,3 +816,45 @@ a.fin-row { text-decoration: none; color: inherit; }
 @media print { :root, :root[data-theme="light"], :root:not([data-theme="dark"]) { --bg: #fff; --panel: #fff; --panel2: #f3f4f6; --line: #d1d5db; --text: #111827; --muted: #4b5563; --accent: #15803d; --accent2: #15803d; } }
 .sponsor-pitch { margin-top: 16px; border-color: rgba(163, 230, 53, .35); }
 .pitch-list { margin: 12px 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; }
+
+/* ---------- números e forma ---------- */
+.form { display: inline-flex; gap: 3px; vertical-align: middle; }
+.form i { width: 16px; height: 16px; border-radius: 5px; display: grid; place-items: center; font-style: normal; font-size: 9px; font-weight: 800; color: #fff; }
+.form .f-V { background: #16a34a; }
+.form .f-E { background: #64748b; }
+.form .f-D { background: #dc2626; }
+td.form-col, th.form-col { text-align: left; white-space: nowrap; }
+.numbers-grid { display: grid; gap: 10px; margin-top: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.num-card { display: flex; flex-direction: column; gap: 6px; }
+.num-label { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.num-team { display: flex; align-items: center; gap: 8px; }
+
+/* ---------- cartaz A4 ---------- */
+.poster-wrap { max-width: 760px; margin: 0 auto; }
+.poster { background: #fff; color: #0b1410; border-radius: 20px; padding: 40px 36px; display: flex; flex-direction: column; gap: 18px; text-align: center; border: 1px solid var(--line); }
+.poster h1 { font-size: clamp(34px, 7vw, 56px); line-height: 1.05; margin: 0; letter-spacing: -1px; }
+.poster-sport { display: inline-flex; align-self: center; gap: 8px; align-items: center; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; font-size: 14px; color: #15803d; }
+.poster-open { margin: 0; font-size: 22px; font-weight: 800; background: #16a34a; color: #fff; align-self: center; padding: 8px 20px; border-radius: 99px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.poster-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.poster-facts div { border: 2px solid #d6e2da; border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 2px; }
+.poster-facts span { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #587063; font-weight: 700; }
+.poster-facts b { font-size: 18px; }
+.poster-prizes { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: center; font-size: 17px; }
+.poster-prizes b { width: 100%; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #587063; }
+.poster-qr { display: flex; gap: 22px; align-items: center; justify-content: center; text-align: left; flex-wrap: wrap; border-top: 2px dashed #d6e2da; padding-top: 18px; }
+.poster-qr .qr-box { width: 220px; height: 220px; flex: none; }
+.poster-qr .qr-box svg { width: 100%; height: 100%; display: block; }
+.poster-qr div:last-child { display: flex; flex-direction: column; gap: 4px; max-width: 280px; }
+.poster-qr b { font-size: 22px; }
+.poster-qr span { font-size: 16px; }
+.poster-qr small { color: #587063; font-size: 12px; word-break: break-all; }
+.poster-foot { margin: 0; font-size: 13px; color: #587063; }
+@media print {
+  .poster-wrap { max-width: none; }
+  .poster { border: 0; border-radius: 0; padding: 10mm 6mm; min-height: 265mm; justify-content: space-between; }
+  .poster h1 { font-size: 52px; }
+  .poster-qr .qr-box { width: 70mm; height: 70mm; }
+}
+.group-text { border-top: 1px solid var(--line); padding: 10px 0; }
+.group-text summary { cursor: pointer; font-weight: 700; }
+.group-text pre { white-space: pre-wrap; font-family: inherit; font-size: 13px; background: var(--panel2); border-radius: 12px; padding: 12px; margin: 10px 0; max-height: 260px; overflow: auto; }

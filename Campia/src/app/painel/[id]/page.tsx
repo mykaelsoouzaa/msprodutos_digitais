@@ -6,7 +6,10 @@ import { roleIn } from '@/lib/access';
 import { loadChampionship } from '@/lib/data';
 import SportIcon from '@/components/SportIcon';
 import { FORMATS, allowsOnline, sportLabel, sportRules } from '@/lib/domain/sports';
-import { isDecided, labels } from '@/lib/domain/standings';
+import { isDecided, labels, tables } from '@/lib/domain/standings';
+import { nextGamesText, resultsText, standingsText } from '@/lib/group-text';
+import CopyButton from '@/components/CopyButton';
+import { shiftRound } from '../reschedule-actions';
 import { siteUrl } from '@/lib/env';
 import { brl, placeLabel, waLink } from '@/lib/format';
 import { priceText, todayBr } from '@/lib/pricing';
@@ -120,6 +123,28 @@ export default async function Campeonato({ params, searchParams }: {
         <>
           <p className="sub">Toque num jogo para lançar o resultado ou mudar data, horário e campo.</p>
           <GamesList games={games} teams={teams} hrefFor={g => (g.homeId && g.awayId ? `${base}/jogo/${g.id}` : undefined)} />
+          {(() => {
+            const pending = labels(games).filter(l => games.some(g => g.label === l && g.date && !isDecided(g)));
+            return pending.length > 0 && (
+              <details className="card" style={{ marginTop: 12 }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 700 }}>📆 Remarcar uma rodada inteira</summary>
+                <form action={shiftRound} style={{ marginTop: 10 }}>
+                  <input type="hidden" name="championship" value={id} />
+                  <p className="sub small" style={{ margin: '0 0 8px' }}>Choveu ou o campo fechou? Mude a data de todos os jogos da rodada que ainda não têm resultado. Horários e campos continuam iguais.</p>
+                  <div className="grid2">
+                    <div><label htmlFor="shift-label">Rodada</label>
+                      <select id="shift-label" name="label" className="inp">{pending.map(l => <option key={l} value={l}>{l}</option>)}</select></div>
+                    <div><label htmlFor="shift-days">Quantos dias</label>
+                      <select id="shift-days" name="days" className="inp" defaultValue="7">
+                        {[1, 2, 3, 7, 14, 21, 28].map(n => <option key={n} value={n}>Adiar {n} dia{n === 1 ? '' : 's'}{n % 7 === 0 ? ` (${n / 7} semana${n === 7 ? '' : 's'})` : ''}</option>)}
+                        {[-1, -7].map(n => <option key={n} value={n}>Adiantar {-n} dia{n === -1 ? '' : 's'}</option>)}
+                      </select></div>
+                  </div>
+                  <div style={{ marginTop: 12 }}><button className="btn sm">Remarcar rodada</button></div>
+                </form>
+              </details>
+            );
+          })()}
         </>
       )}
 
@@ -275,12 +300,47 @@ export default async function Campeonato({ params, searchParams }: {
             <div className="grow"><b>Tabela e jogos para imprimir</b><span>Classificação, jogos, artilharia e cartões numa folha. Dá para salvar em PDF.</span></div>
             <Link className="btn sm" href={`/c/${champ.slug}/imprimir`} target="_blank">Abrir</Link>
           </div>
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <div className="grow"><b>🪧 Cartaz com QR code</b><span>Folha A4 para colar na arena: valor, premiação e um QR code que abre a inscrição.</span></div>
+            <Link className="btn sm" href={`/c/${champ.slug}/cartaz`} target="_blank">Abrir</Link>
+          </div>
+          {(() => {
+            const today = new Date(Date.now() - 3 * 3600_000).toISOString().slice(0, 10);
+            const link = withOrigin(publicUrl, 'whatsapp');
+            const texts = [
+              ['🏁 Resultados da última rodada', resultsText(champ, games, teams, link)],
+              ['📅 Próximos jogos', nextGamesText(champ, games, teams, link, today)],
+              ['📊 Classificação', champ.format === 'mata' ? '' : standingsText(champ, games, teams, link)],
+            ].filter(([, t]) => t);
+            return texts.length > 0 && (
+              <section className="card" style={{ marginBottom: 12 }}>
+                <b>💬 Textos prontos para o grupo</b>
+                <p className="sub" style={{ margin: '4px 0 10px' }}>Copie e cole no grupo do WhatsApp, já formatado com negrito.</p>
+                {texts.map(([title, text]) => (
+                  <details key={title} className="group-text">
+                    <summary>{title}</summary>
+                    <pre>{text}</pre>
+                    <div className="actions">
+                      <CopyButton text={text} label="Copiar texto" />
+                      <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', text)}>Abrir no WhatsApp</a>
+                    </div>
+                  </details>
+                ))}
+              </section>
+            );
+          })()}
           <p className="sub">Artes no formato de stories (1080×1920) para o grupo do WhatsApp e o Instagram.</p>
           {labels(games).filter(l => games.some(g => g.label === l && isDecided(g))).map(l => (
             <div className="card" key={l} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div className="grow"><b>{l}</b><span>Resultados e classificação</span></div>
               <a className="btn sm" href={`/c/${champ.slug}/arte?rodada=${encodeURIComponent(l)}`} target="_blank">Abrir arte</a>
               <a className="btn wa sm" target="_blank" rel="noopener" href={waLink('', `📊 ${champ.name} · ${l}\nTabela completa: ${withOrigin(publicUrl, 'whatsapp')}`)}>Enviar</a>
+            </div>
+          ))}
+          {champ.format !== 'mata' && games.some(isDecided) && tables(champ, games, teams).map(t => (
+            <div className="card" key={`tab-${t.title ?? 'geral'}`} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div className="grow"><b>Classificação{t.title ? ` · ${t.title}` : ''}</b><span>Tabela com os últimos jogos de cada time</span></div>
+              <a className="btn sm" href={`/c/${champ.slug}/arte/tabela${t.title ? `?grupo=${encodeURIComponent(t.title.replace(/^Grupo /, ''))}` : ''}`} target="_blank">Abrir arte</a>
             </div>
           ))}
           {!games.some(isDecided) && <div className="card empty">Lance o primeiro resultado para gerar as artes.</div>}
