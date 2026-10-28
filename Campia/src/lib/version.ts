@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.20.0';
+export const APP_VERSION = '2.21.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.21.0',
+    date: '2026-10-28',
+    title: 'Inscrever o time de novo em um toque',
+    items: [
+      "Capitão que já jogou na Campia entra com o e-mail e a inscrição vem preenchida com nome, sigla, contato e atletas do último time",
+      "Botão Começar do zero para inscrever um time diferente",
+      "Mapa do site liberado para o Google encontrar as páginas mais rápido",
+    ],
+  },
   {
     version: '2.20.0',
     date: '2026-10-28',

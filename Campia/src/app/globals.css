@@ -784,3 +784,4 @@ a.fin-row { text-decoration: none; color: inherit; }
 .agenda-match { display: block; font-size: 15px; color: var(--text) !important; overflow-wrap: anywhere; }
 .agenda-row .agenda-match b { display: inline; margin: 0 4px; }
 .agenda-row .agenda-champ { font-size: 12px; }
+.prefill-note { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px; font-size: 14px; border-color: rgba(163, 230, 53, .35); }
