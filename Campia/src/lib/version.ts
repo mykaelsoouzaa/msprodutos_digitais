@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.10.0';
+export const APP_VERSION = '2.11.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,15 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.11.0',
+    date: '2026-10-28',
+    title: 'Recado para os capitães',
+    items: [
+      "Na aba Compartilhar, o organizador manda um recado por e-mail para todos os capitães de uma vez (chuva, mudança de horário, aviso de premiação)",
+      "Se o capitão responder, a resposta chega direto no e-mail do organizador",
+    ],
+  },
   {
     version: '2.10.0',
     date: '2026-10-28',

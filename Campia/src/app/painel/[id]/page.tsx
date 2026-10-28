@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/server';
 import { refundLatePayment } from '../cancel-actions';
 import { removeFromWaitlist } from '../waitlist-actions';
 import { addSponsor, removeSponsor } from '../sponsor-actions';
+import { sendAnnouncement } from '../announce-actions';
 import { initials } from '@/lib/arena';
 import ProLock from '@/components/ProLock';
 import { isProActive } from '@/lib/plan';
@@ -229,6 +230,22 @@ export default async function Campeonato({ params, searchParams }: {
 
       {tab === 'compartilhar' && (
         <>
+          {owner && (
+            <form action={sendAnnouncement} className="card" id="recado" style={{ marginBottom: 12 }}>
+              <input type="hidden" name="championship" value={id} />
+              <b>📣 Recado para os capitães</b>
+              <p className="sub" style={{ margin: '4px 0 10px' }}>Chega no e-mail de cada capitão. Se alguém responder, a resposta vai para o seu e-mail.</p>
+              <label htmlFor="an-subject" style={{ marginTop: 0 }}>Assunto</label>
+              <input id="an-subject" name="subject" className="inp" required minLength={3} maxLength={100} placeholder="Ex.: Rodada de sábado adiada por causa da chuva" />
+              <label htmlFor="an-text">Recado</label>
+              <textarea id="an-text" name="text" className="inp" required minLength={5} maxLength={1500} rows={5} style={{ minHeight: 110 }} placeholder="Escreva o recado. Dá para pular linha." />
+              <div className="choice" style={{ marginTop: 10 }}>
+                <label><input type="radio" name="who" value="inscritos" defaultChecked /> Times inscritos</label>
+                <label><input type="radio" name="who" value="todos" /> Inscritos e reservas (aguardando PIX)</label>
+              </div>
+              <div style={{ marginTop: 12 }}><button className="btn sm">Enviar recado</button></div>
+            </form>
+          )}
           <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <div className="grow"><b>Tabela e jogos para imprimir</b><span>Classificação, jogos, artilharia e cartões numa folha. Dá para salvar em PDF.</span></div>
             <Link className="btn sm" href={`/c/${champ.slug}/imprimir`} target="_blank">Abrir</Link>
