@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function Sobre() {
   return (
-    <div className="narrow">
+    <div className="narrow about">
       <h1>Sobre a Campia</h1>
       <p className="lead" style={{ marginTop: 0 }}>A Campia nasceu para tirar o campeonato amador do caderno e do grupo bagunçado de WhatsApp.</p>
       <div className="card">
@@ -31,7 +31,7 @@ export default function Sobre() {
           <span style={{ fontSize: 20 }}>✉️</span><span className="grow"><b>{COMPANY.email}</b><span>Dúvidas, parcerias e suporte</span></span><span style={{ color: 'var(--muted)' }}>›</span>
         </a>
       </div>
-      <div className="actions" style={{ marginTop: 20 }}>
+      <div className="actions" style={{ marginTop: 20, justifyContent: 'center' }}>
         <Link href="/para-arenas" className="btn">Para arenas e organizadores</Link>
         <Link href="/exemplo" className="btn ghost">Ver um exemplo</Link>
       </div>
