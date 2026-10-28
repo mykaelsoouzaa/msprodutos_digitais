@@ -1,3 +1,4 @@
+import type { Game } from './domain/types';
 // Informações extras de um jogo: árbitro e links de lances (guardados nas regras do campeonato).
 
 export interface GameInfo { referee?: string; videos?: string[] }
@@ -33,4 +34,11 @@ export function videoLabel(url: string) {
     if (/facebook|fb\.watch/.test(h)) return 'Facebook';
     return h;
   } catch { return 'Vídeo'; }
+}
+
+/** Placar em uma linha, para aviso no celular e compartilhamento. */
+export function resultText(g: Pick<Game, 'homeScore' | 'awayScore' | 'penHome' | 'penAway' | 'wo'>, home: string, away: string) {
+  if (g.wo === 'both') return `${home} e ${away}: W.O. duplo`;
+  const pen = g.penHome !== null && g.penAway !== null && g.homeScore === g.awayScore ? ` (${g.penHome} × ${g.penAway})` : '';
+  return `${home} ${g.homeScore} × ${g.awayScore} ${away}${pen}${g.wo ? ' · W.O.' : ''}`;
 }

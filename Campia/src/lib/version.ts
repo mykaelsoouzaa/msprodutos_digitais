@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.19.0';
+export const APP_VERSION = '2.20.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,15 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.20.0',
+    date: '2026-10-28',
+    title: 'Aviso de resultado e agenda da arena',
+    items: [
+      "Quem ativou os lembretes de um time recebe no celular o placar assim que o resultado é lançado",
+      "Página da arena ganhou a aba Agenda: todos os jogos dos próximos 14 dias, de todos os campeonatos, por dia, horário e campo",
+    ],
+  },
   {
     version: '2.19.0',
     date: '2026-10-28',

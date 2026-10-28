@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import ChampCard from '@/components/ChampCard';
 import { Tabs } from '@/components/champ';
 import { arenaRanking } from '@/lib/arena-ranking';
+import { type AgendaGame, AGENDA_DAYS, agendaDays, todayBr } from '@/lib/arena-agenda';
+import { isDecided, sourceLabel } from '@/lib/domain/standings';
 import { type ChampData, loadChampionship } from '@/lib/data';
 import type { VoteResult } from '@/lib/voting';
 import { unstable_cache } from 'next/cache';
@@ -11,7 +13,7 @@ import { createPublicClient } from '@/lib/supabase/public';
 import { type ArenaRow, initials } from '@/lib/arena';
 import { LISTING_SELECT, type ListingRow, toListing } from '@/lib/explore';
 import { siteUrl } from '@/lib/env';
-import { cityState, waLink } from '@/lib/format';
+import { cityState, fmtDate, waLink } from '@/lib/format';
 import { arenaJsonLd, safeJson } from '@/lib/seo';
 import { ownerIsPro } from '@/lib/plan-server';
 import { createClient } from '@/lib/supabase/server';
@@ -57,7 +59,8 @@ const loadRanking = unstable_cache(computeRanking, ['arena-ranking'], { revalida
 
 export default async function ArenaPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ aba?: string }> }) {
   const { slug } = await params;
-  const tab = (await searchParams).aba === 'ranking' ? 'ranking' : 'campeonatos';
+  const aba = (await searchParams).aba;
+  const tab = aba === 'ranking' || aba === 'agenda' ? aba : 'campeonatos';
   const { supabase, arena } = await getArena(slug);
   if (!arena) notFound();
 
@@ -86,8 +89,10 @@ export default async function ArenaPage({ params, searchParams }: { params: Prom
         </div>
       </section>
 
-      <div style={{ marginTop: 24 }}><Tabs items={[['campeonatos', 'Campeonatos'], ['ranking', '🏆 Ranking']]} current={tab} base={`/arena/${arena.slug}`} /></div>
-      {tab === 'ranking' ? <RankingView r={await loadRanking(items.map(c => c.id))} /> : (<>
+      <div style={{ marginTop: 24 }}><Tabs items={[['campeonatos', 'Campeonatos'], ['agenda', '📅 Agenda'], ['ranking', '🏆 Ranking']]} current={tab} base={`/arena/${arena.slug}`} /></div>
+      {tab === 'ranking' ? <RankingView r={await loadRanking(items.map(c => c.id))} />
+        : tab === 'agenda' ? <AgendaView days={agendaDays(await loadAgenda(supabase, current.map(c => c.id)), todayBr())} />
+        : (<>
       <h2 className="section-title" style={{ marginTop: 12 }}>Campeonatos</h2>
       {current.length ? <div className="grid-cards" style={{ marginTop: 12 }}>{current.map(c => <ChampCard key={c.id} c={c} />)}</div>
         : <div className="card empty" style={{ marginTop: 12 }}>Nenhum campeonato acontecendo agora.</div>}
@@ -101,6 +106,44 @@ export default async function ArenaPage({ params, searchParams }: { params: Prom
       </>)}
       {!pro && <p className="sub small" style={{ textAlign: 'center', marginTop: 32 }}>Organiza campeonatos? <Link href="/">Crie o seu na Campia</Link>.</p>}
     </>
+  );
+}
+
+/** Jogos marcados dos campeonatos em andamento (até 12 campeonatos). */
+async function loadAgenda(supabase: Awaited<ReturnType<typeof createClient>>, ids: string[]): Promise<AgendaGame[]> {
+  const datas = (await Promise.all(ids.slice(0, 12).map(id => loadChampionship(supabase, { id })))).filter((d): d is ChampData => !!d);
+  return datas.flatMap(({ champ, games, teams }) => games.filter(g => g.date).map(g => {
+    const name = (id: string | null, src: typeof g.srcHome) => teams.find(t => t.id === id)?.name ?? sourceLabel(games, src, teams);
+    return {
+      id: g.id, date: g.date, time: g.time, field: g.field, champ: { name: champ.name, slug: champ.slug },
+      home: name(g.homeId, g.srcHome), away: name(g.awayId, g.srcAway),
+      score: isDecided(g) ? (g.wo === 'both' ? 'W.O.' : `${g.homeScore} × ${g.awayScore}`) : null,
+    };
+  }));
+}
+
+function AgendaView({ days }: { days: ReturnType<typeof agendaDays> }) {
+  if (!days.length) return <div className="card empty" style={{ marginTop: 12 }}>Nenhum jogo marcado nos próximos {AGENDA_DAYS} dias.</div>;
+  const today = todayBr();
+  return (
+    <div className="agenda">
+      {days.map(d => (
+        <section key={d.date}>
+          <h2 className="section-title" style={{ marginTop: 20 }}>{d.date === today ? 'Hoje · ' : ''}{fmtDate(d.date)}</h2>
+          <div className="stack" style={{ marginTop: 8 }}>
+            {d.games.map(g => (
+              <Link key={g.id} href={`/c/${g.champ.slug}/jogo/${g.id}`} className="card agenda-row">
+                <span className="agenda-when"><b>{g.time || '--:--'}</b><span>{g.field}</span></span>
+                <span className="grow">
+                  <span className="agenda-champ">{g.champ.name}</span>
+                  <span className="agenda-match">{g.home} <b>{g.score ?? '×'}</b> {g.away}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
   );
 }
 

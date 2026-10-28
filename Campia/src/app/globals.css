@@ -772,3 +772,15 @@ a.fin-row { text-decoration: none; color: inherit; }
 .sumula-signs span { border-top: 1px solid var(--text); padding-top: 6px; }
 @media screen and (max-width: 700px) { .sumula-cols { grid-template-columns: 1fr; } }
 @media print { .sumula-table thead tr:first-child th { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+
+/* ---------- agenda da arena ---------- */
+.agenda-row { display: flex; gap: 14px; align-items: center; text-decoration: none; color: inherit; padding: 12px 14px; }
+.agenda-row:hover { border-color: var(--accent); }
+.agenda-when { display: flex; flex-direction: column; min-width: 64px; }
+.agenda-when b { font-size: 17px; font-variant-numeric: tabular-nums; }
+.agenda-when span { font-size: 12px; color: var(--muted); }
+.agenda-row .grow { display: block; min-width: 0; }
+.agenda-champ { display: block; font-size: 12px; color: var(--muted); }
+.agenda-match { display: block; font-size: 15px; color: var(--text) !important; overflow-wrap: anywhere; }
+.agenda-row .agenda-match b { display: inline; margin: 0 4px; }
+.agenda-row .agenda-champ { font-size: 12px; }
