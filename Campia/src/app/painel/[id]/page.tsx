@@ -268,6 +268,10 @@ export default async function Campeonato({ params, searchParams }: {
             </form>
           )}
           <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <div className="grow"><b>📺 Modo TV</b><span>Tela cheia para deixar na TV da arena: placar ao vivo, próximos jogos, tabela e artilharia passando sozinhos.</span></div>
+            <Link className="btn sm" href={`/c/${champ.slug}/tv`} target="_blank">Abrir</Link>
+          </div>
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <div className="grow"><b>Tabela e jogos para imprimir</b><span>Classificação, jogos, artilharia e cartões numa folha. Dá para salvar em PDF.</span></div>
             <Link className="btn sm" href={`/c/${champ.slug}/imprimir`} target="_blank">Abrir</Link>
           </div>

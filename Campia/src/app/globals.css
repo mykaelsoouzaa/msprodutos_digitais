@@ -676,3 +676,40 @@ label.btn.disabled { opacity: .6; }
 .cal-panel .sub { padding: 2px 6px 8px; }
 .cal-panel a { padding: 8px 8px; border-radius: 10px; text-decoration: none; font-size: 14px; color: var(--text); }
 .cal-panel a:hover { background: var(--panel2); }
+
+/* ---------- modo TV ---------- */
+body:has(.tv-mode) .top, body:has(.tv-mode) .foot, body:has(.tv-mode) .install { display: none; }
+body:has(.tv-mode) main .container { max-width: none; padding: 0 clamp(16px, 3vw, 48px); }
+.tv-mode { min-height: 100vh; padding: clamp(14px, 2.5vh, 32px) 0; font-size: clamp(15px, 1.25vw, 22px); }
+.tv-head { display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
+.tv-head h1 { font-size: clamp(28px, 3.4vw, 60px); margin: 2px 0 0; letter-spacing: -1px; }
+.tv-eyebrow { color: var(--accent2); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; font-size: .8em; }
+.tv-url { display: flex; flex-direction: column; text-align: right; color: var(--muted); font-size: .85em; }
+.tv-url b { color: var(--text); font-size: 1.15em; }
+.tv-bar { display: flex; align-items: center; gap: 16px; margin: 18px 0 14px; }
+.tv-dots { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+.tv-dots span { padding: 6px 14px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); color: var(--muted); font-weight: 700; font-size: .8em; }
+.tv-dots span.on { background: var(--accent); border-color: var(--accent); color: #06210f; }
+.tv-clock { font-size: 1.6em; font-weight: 800; font-variant-numeric: tabular-nums; }
+.tv-slide { animation: tvfade .6s ease; }
+@keyframes tvfade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.tv-slide h2 { font-size: 1.1em; }
+.tv-cols { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+.tv-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+.tv-mode .game, .tv-mode .row { font-size: 1em; }
+.tv-scorers { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+.tv-scorer { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); }
+.tv-scorer .grow { display: flex; flex-direction: column; }
+.tv-scorer .grow span { color: var(--muted); font-size: .85em; }
+.tv-pos { width: 2.2em; color: var(--muted); font-weight: 800; }
+.tv-total { font-size: 1.6em; color: var(--accent); }
+@media (min-width: 1000px) { .tv-slide, .tv-mode .sponsors { zoom: 1.25; } }
+@media (min-width: 1500px) { .tv-slide, .tv-mode .sponsors { zoom: 1.55; } }
+@media (min-width: 2400px) { .tv-slide, .tv-mode .sponsors { zoom: 2.1; } }
+.tv-mode .tv-cols, .tv-mode .tv-grid, .tv-mode .tv-scorers { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+.fin-stats { grid-template-columns: repeat(3, 1fr); }
+.fin-stats .stat b { font-size: clamp(16px, 4.2vw, 22px); }
+@media (max-width: 560px) { .fin-stats { grid-template-columns: repeat(2, 1fr); } }
+a.fin-row { text-decoration: none; color: inherit; }
+.fin-val { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.fin-val span { font-size: 12px; color: var(--muted); }
