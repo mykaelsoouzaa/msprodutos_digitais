@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/server';
 export const metadata: Metadata = {
   alternates: { canonical: '/campeonatos' },
   title: 'Campeonatos',
-  description: 'Encontre campeonatos amadores com inscrições abertas perto de você: futebol, quadra, areia, raquete e e-sports.',
+  description: 'Encontre campeonatos amadores com inscrições abertas perto de você: futebol, quadra, areia, raquete, jogos de mesa e e-sports.',
 };
 export const dynamic = 'force-dynamic';
 

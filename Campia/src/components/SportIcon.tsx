@@ -52,6 +52,39 @@ const PATHS: Record<Glyph, React.ReactNode> = {
       <circle cx="18.5" cy="5.5" r="2" />
     </>
   ),
+  peteca: (
+    <>
+      <circle cx="7" cy="17" r="3" />
+      <path d="M9.1 14.9L17 7M8.5 14.2l2.5-9.7 9 9-9.7 2.5M11 4.5l2.2 6.3 6.8 2.2" />
+    </>
+  ),
+  sinuca: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="11" r="3.6" />
+      <path d="M12 9.2v3.6" />
+    </>
+  ),
+  cartas: (
+    <>
+      <rect x="3.5" y="5" width="10" height="14" rx="1.6" transform="rotate(-12 8.5 12)" />
+      <rect x="10.5" y="5" width="10" height="14" rx="1.6" transform="rotate(10 15.5 12)" />
+      <path d="M15.3 10.5l1.2 1.8-1.2 1.8-1.2-1.8z" />
+    </>
+  ),
+  domino: (
+    <>
+      <rect x="7" y="2.5" width="10" height="19" rx="2" />
+      <path d="M7 12h10" />
+      <circle cx="12" cy="7.2" r=".8" /><circle cx="9.8" cy="15" r=".8" /><circle cx="14.2" cy="18.5" r=".8" /><circle cx="12" cy="16.8" r=".8" />
+    </>
+  ),
+  xadrez: (
+    <>
+      <circle cx="12" cy="6" r="2.6" />
+      <path d="M9.5 10.5h5M10.3 10.5c0 3-1 5.5-2.3 7.5h8c-1.3-2-2.3-4.5-2.3-7.5M6.5 20.5h11" />
+    </>
+  ),
   games: (
     <>
       <path d="M7 7h10a4 4 0 0 1 4 4l.6 4.4a2.6 2.6 0 0 1-4.6 2.1L15 15H9l-2 2.5a2.6 2.6 0 0 1-4.6-2.1L3 11a4 4 0 0 1 4-4z" />

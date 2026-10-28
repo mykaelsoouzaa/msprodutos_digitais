@@ -16,7 +16,7 @@ export default function Sobre() {
       <p className="lead" style={{ marginTop: 0 }}>A Campia nasceu para tirar o campeonato amador do caderno e do grupo bagunçado de WhatsApp.</p>
       <div className="card">
         <p style={{ marginTop: 0 }}>Com ela, a arena ou o organizador monta o campeonato em minutos: a tabela sai pronta, cada capitão inscreve o time e paga pelo PIX, os resultados são lançados pelo celular e a classificação, a artilharia e as artes para os stories se atualizam sozinhas.</p>
-        <p>Funciona para futebol, quadra, areia, raquete e e-sports, sem precisar instalar nada.</p>
+        <p>Funciona para futebol, quadra, areia, raquete, jogos de mesa e e-sports, sem precisar instalar nada.</p>
         <p style={{ marginBottom: 0 }}>A Campia é um produto da <b>{COMPANY.name}</b>.</p>
       </div>
       <h2 className="section-title" style={{ marginTop: 28 }}>Fale com a gente</h2>

@@ -103,6 +103,18 @@ export default async function Exemplo({ searchParams }: { searchParams: Promise<
         </div>
       </div>
       <Sponsors list={d.sponsors} />
+      <section className="card sponsor-pitch">
+        <span className="badge pro">Plano Pro</span>
+        <h2 className="section-title" style={{ margin: '10px 0 6px' }}>Patrocinador também ganha vitrine</h2>
+        <p className="sub" style={{ margin: 0 }}>Os patrocinadores acima são fictícios. No seu campeonato, você sobe a <b>logo de verdade</b> de cada patrocinador e transforma o campeonato em uma fonte de renda.</p>
+        <ul className="pitch-list">
+          <li><b>Até 12 patrocinadores</b> por campeonato, como <b>Master</b> (destaque maior) ou <b>Apoio</b></li>
+          <li>A logo aparece na <b>página do campeonato</b>, na <b>tabela impressa/PDF</b>, no <b>modo TV</b> do telão e nas <b>artes para stories</b> de cada rodada e de cada jogo</li>
+          <li>Cada logo leva para o <b>site ou Instagram</b> do patrocinador</li>
+          <li>Logo em PNG ou JPG, até 1 MB: sobe pelo celular em segundos</li>
+        </ul>
+        <p className="sub small" style={{ margin: '10px 0 0' }}>Dica: venda as cotas Master e Apoio para o comércio do bairro e a inscrição dos times sai mais barata.</p>
+      </section>
       <div className="final-cta" style={{ marginTop: 32 }}>
         <h2 className="section-title">Gostou? O seu fica pronto em 2 minutos.</h2>
         <div className="ctas" style={{ justifyContent: 'center' }}>

@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.22.0';
+export const APP_VERSION = '2.23.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,16 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.23.0',
+    date: '2026-10-28',
+    title: 'Mais esportes e jogos de mesa',
+    items: [
+      "Novos esportes: Futebol de areia, Pickleball, Badminton, League of Legends e Rocket League",
+      "Novo grupo Mesa: Sinuca, Truco, Dominó e Xadrez, com placar por partidas (no Xadrez vale empate)",
+      "No campeonato de exemplo, um quadro explica como funcionam os patrocinadores com logo",
+    ],
+  },
   {
     version: '2.22.0',
     date: '2026-10-28',
