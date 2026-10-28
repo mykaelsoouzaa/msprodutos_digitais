@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/server';
 import { clearResult, saveResult } from '../../../actions';
 import { scoreLive, startLive, stopLive } from '../../../live-actions';
 import { saveCheckin } from '../../../checkin-actions';
+import { updateGameInfo } from '../../../game-info-actions';
 
 export const metadata: Metadata = { title: 'Resultado' };
 export const dynamic = 'force-dynamic';
@@ -27,6 +28,7 @@ export default async function Jogo({ params, searchParams }: {
   if (!data || !g || !g.homeId || !g.awayId || !(await roleIn(supabase, data.row, user))) notFound();
 
   const rules = sportRules(data.champ.sport);
+  const info = data.champ.rules.gameInfo?.[g.id] ?? {};
   const home = data.teams.find(t => t.id === g.homeId)!;
   const away = data.teams.find(t => t.id === g.awayId)!;
   const goalsOf = (pid: string) => data.goals.find(x => x.gameId === g.id && x.playerId === pid)?.count ?? '';
@@ -177,6 +179,24 @@ export default async function Jogo({ params, searchParams }: {
           <button name="intent" value="result" className="btn">Salvar resultado</button>
         </div>
       </form>
+
+      <section id="sumula" className="card" style={{ marginTop: 16 }}>
+        <b>Árbitro, lances e súmula</b>
+        <form action={updateGameInfo}>
+          <input type="hidden" name="championship" value={id} />
+          <input type="hidden" name="game" value={g.id} />
+          <label htmlFor="referee">Árbitro</label>
+          <input id="referee" name="referee" className="inp" maxLength={60} defaultValue={info.referee ?? ''} placeholder="Nome do árbitro (opcional)" />
+          <label htmlFor="videos">Lances em vídeo</label>
+          <textarea id="videos" name="videos" className="inp" rows={3} defaultValue={(info.videos ?? []).join('\n')} placeholder="Um link por linha: YouTube, Instagram, TikTok… (até 5)" />
+          <p className="sub small" style={{ margin: '6px 0 0' }}>Vídeos do YouTube tocam direto na página do jogo; os outros aparecem como link.</p>
+          <div className="actions" style={{ marginTop: 12 }}>
+            <button className="btn sm">Salvar</button>
+            <a className="btn ghost sm" href={`/painel/${id}/jogo/${g.id}/sumula`} target="_blank">🖨 Súmula para imprimir</a>
+            <a className="btn ghost sm" href={`/c/${data.champ.slug}/jogo/${g.id}`} target="_blank">Ver página do jogo</a>
+          </div>
+        </form>
+      </section>
 
       {g.homeScore !== null && (
         <form action={clearResult} style={{ marginTop: 12 }}>

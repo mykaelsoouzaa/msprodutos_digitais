@@ -91,6 +91,7 @@ export interface Rules {
   drawnAt?: string;      // quando os grupos/confrontos foram sorteados (ISO)
   regulation?: string;   // regulamento escrito pelo organizador
   prizes?: { first?: string; second?: string; third?: string; best?: string }; // premiação
+  gameInfo?: Record<string, { referee?: string; videos?: string[] }>; // árbitro e lances por jogo
   photos?: Array<{ url: string; path: string; caption?: string; at: string }>; // fotos do campeonato
   tiebreak: Tiebreak[];  // ordem dos critérios depois dos pontos
 }

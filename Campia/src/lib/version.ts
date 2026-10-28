@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.18.0';
+export const APP_VERSION = '2.19.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,18 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.19.0',
+    date: '2026-10-28',
+    title: 'Página do time, página do jogo e súmula',
+    items: [
+      "Cada time tem sua página: posição, pontos, elenco com gols e cartões, próximos jogos e resultados (é só tocar no nome do time)",
+      "Cada jogo tem sua página com placar, gols, cartões, árbitro e os lances em vídeo",
+      "Arte de stories com o resultado de um jogo, pronta para postar",
+      "No painel, o organizador ou ajudante coloca o árbitro e links de vídeo (YouTube toca direto na página)",
+      "Súmula para imprimir: elenco dos dois times com espaço para gols, cartões, observações e assinaturas",
+    ],
+  },
   {
     version: '2.18.0',
     date: '2026-10-28',

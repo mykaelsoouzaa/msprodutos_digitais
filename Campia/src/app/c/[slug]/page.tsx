@@ -118,7 +118,7 @@ export default async function Publico({ params, searchParams }: {
           {upcoming.length > 0 && tab === 'jogos' && (
             <div>
               <h2 style={{ marginTop: 4 }}>Próximos jogos</h2>
-              <div className="stack">{upcoming.map(g => <GameRow key={g.id} g={g} teams={teams} games={games} />)}</div>
+              <div className="stack">{upcoming.map(g => <GameRow key={g.id} g={g} teams={teams} games={games} href={`/c/${champ.slug}/jogo/${g.id}`} />)}</div>
             </div>
           )}
         </aside>
@@ -128,10 +128,10 @@ export default async function Publico({ params, searchParams }: {
             <section className="live-now">
               <AutoRefresh seconds={15} />
               <h2 style={{ marginTop: 0 }}><span className="live-dot" /> Ao vivo agora</h2>
-              <div className="games">{liveNow.map(g => <GameRow key={g.id} g={g} teams={teams} games={games} />)}</div>
+              <div className="games">{liveNow.map(g => <GameRow key={g.id} g={g} teams={teams} games={games} href={`/c/${champ.slug}/jogo/${g.id}`} />)}</div>
             </section>
           )}
-          {tab === 'jogos' && <GamesList games={games} teams={teams} />}
+          {tab === 'jogos' && <GamesList games={games} teams={teams} hrefFor={g => `/c/${champ.slug}/jogo/${g.id}`} />}
           {tab === 'tabela' && <TableTab champ={champ} games={games} teams={teams} />}
           {tab === 'artilharia' && <Scorers champ={champ} games={games} goals={goals} players={players} teams={teams} />}
           {tab === 'fotos' && (

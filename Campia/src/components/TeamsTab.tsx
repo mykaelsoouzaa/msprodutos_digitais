@@ -33,7 +33,7 @@ export default async function TeamsTab({ champ, teams, players }: { champ: Champ
           const roster = players.filter(p => p.teamId === t.id);
           return (
             <section key={t.id} className="card roster-team">
-              <div className="roster-head"><span className="dot" style={{ background: t.color }}>{t.short}</span><b>{t.name}</b><span className="sub small" style={{ marginLeft: 'auto' }}>{roster.length} atleta{roster.length === 1 ? '' : 's'}</span><CalendarButtons slug={champ.slug} teamId={t.id} label="📅" /></div>
+              <div className="roster-head"><span className="dot" style={{ background: t.color }}>{t.short}</span><Link href={`/c/${champ.slug}/time/${t.id}`} className="roster-link"><b>{t.name}</b></Link><span className="sub small" style={{ marginLeft: 'auto' }}>{roster.length} atleta{roster.length === 1 ? '' : 's'}</span><CalendarButtons slug={champ.slug} teamId={t.id} label="📅" /></div>
               {roster.length ? roster.map(p => {
                 const handle = handleOf.get(p.id);
                 return (
