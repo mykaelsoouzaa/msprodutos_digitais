@@ -56,7 +56,7 @@ export default function Privacidade() {
       <p>Enquanto a conta ou o campeonato existir. Quando o organizador exclui um campeonato, os times, atletas, jogos e contatos dele são apagados. Registros de pagamento podem ser mantidos pelo prazo exigido pela legislação fiscal.</p>
 
       <h2>7. Seus direitos</h2>
-      <p>Você pode pedir a qualquer momento: confirmação de que tratamos seus dados, acesso, correção, anonimização ou exclusão, portabilidade, informação sobre com quem compartilhamos e revisão do consentimento. Basta escrever para <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>. Se o pedido for sobre um campeonato específico, também podemos encaminhá-lo ao organizador. Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</p>
+      <p>Você pode pedir a qualquer momento: confirmação de que tratamos seus dados, acesso, correção, anonimização ou exclusão, portabilidade, informação sobre com quem compartilhamos e revisão do consentimento. Em <b>Minha conta</b> você mesmo baixa seus dados e exclui sua conta; para o resto, basta escrever para <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>. Se o pedido for sobre um campeonato específico, também podemos encaminhá-lo ao organizador. Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</p>
 
       <h2>8. Segurança</h2>
       <p>Usamos conexão criptografada (HTTPS), acesso por link de uso único, controle de acesso por campeonato (cada organizador só vê os próprios dados) e contatos dos capitães separados da página pública.</p>
