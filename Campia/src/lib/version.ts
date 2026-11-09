@@ -17,6 +17,7 @@ export const CHANGELOG: Release[] = [
     title: 'Administração pela área do cliente',
     items: [
       "A administração da plataforma também abre direto da área do cliente MS Soluções, com a mesma verificação em duas etapas",
+      "Quem recebe um teste da Campia pela área do cliente MS Soluções já entra com a conta criada",
     ],
   },
   {
