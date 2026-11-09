@@ -1,7 +1,7 @@
 // Versão exibida no rodapé, na tela de abertura e na página de Novidades.
 // Ao lançar uma atualização: suba APP_VERSION (igual ao package.json) e adicione um item no topo de CHANGELOG.
 
-export const APP_VERSION = '2.25.0';
+export const APP_VERSION = '2.26.0';
 
 export interface Release {
   version: string;
@@ -11,6 +11,15 @@ export interface Release {
 }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.26.0',
+    date: '2026-11-09',
+    title: 'Entrada pela área do cliente MS Soluções',
+    items: [
+      "Quem é cliente da MS Soluções abre a Campia direto da área do cliente, sem digitar outro login",
+      "A Campia pode aparecer dentro da área do cliente, ao lado dos outros sistemas",
+    ],
+  },
   {
     version: '2.25.0',
     date: '2026-10-28',
