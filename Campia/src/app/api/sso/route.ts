@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { chavePortal, conferirAcessoPortal } from '@/lib/portal';
+import { chavePortal, conferirAcessoPortal, destinoPortal } from '@/lib/portal';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
@@ -13,7 +13,7 @@ const erro = (msg: string, status = 403) =>
     { status, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } },
   );
 
-// Entrada pela área do cliente da MS Soluções: confere o acesso assinado, abre a sessão e segue para o painel.
+// Entrada pela área do cliente da MS Soluções: confere o acesso assinado, abre a sessão e segue para o painel (ou o /admin).
 // Quem ativou a verificação em duas etapas na Campia ainda digita o código da Campia (o middleware cuida disso).
 export async function POST(request: NextRequest) {
   const emissor = process.env.PORTAL_URL || 'https://mssolucoestech.com.br';
@@ -37,5 +37,6 @@ export async function POST(request: NextRequest) {
   const { error: falhaSessao } = await supabase.auth.verifyOtp({ token_hash: hash, type: 'magiclink' });
   if (falhaSessao) return erro('Não foi possível abrir a sessão.');
 
-  return NextResponse.redirect(new URL('/painel', request.url), 303);
+  // O /admin continua conferindo o e-mail em ADMIN_EMAILS e pedindo o 2FA da Campia.
+  return NextResponse.redirect(new URL(destinoPortal(acesso), request.url), 303);
 }
