@@ -196,3 +196,19 @@ lembrete do jogo ~3 h antes e aviso de pagamento pendente. Fica desligado até c
    - `campia_pagamento_pendente`: `Olá! A vaga do {{1}} no {{2}} está reservada, mas o pagamento ainda não caiu. Pague aqui: {{3}}`
 6. Na Vercel: `WHATSAPP_TOKEN` (Secret) e `WHATSAPP_PHONE_ID` (o "ID do número de telefone", não o número). Redeploy.
 7. Confira no /admin › Saúde: o item WhatsApp fica verde.
+
+## Área do cliente MS Soluções (opcional)
+
+Faz a Campia abrir direto da área do cliente em `mssolucoestech.com.br`, sem outro login, e aparecer dentro dela.
+
+1. No Supabase › SQL Editor, rode a parte **2.26.0** de `supabase/atualizar-banco.sql` (cria a tabela `portal_acessos_usados`).
+2. Na Vercel › Settings › Environment Variables:
+   - `PORTAL_CHAVE_PUBLICA`: a chave pública do portal numa linha só. Na VPS, gere com `awk 'BEGIN{ORS="\\n"} 1' /home/ms/portal-publica.pem` e copie o resultado.
+   - `PORTAL_URL`: `https://mssolucoestech.com.br`
+   - Confira se `SUPABASE_SERVICE_ROLE_KEY` já existe (o PIX usa a mesma).
+3. Na Vercel › Settings › Domains, adicione `campia.mssolucoestech.com.br` e crie no Registro.br o CNAME que a Vercel mostrar. Redeploy.
+4. No portal › Sistemas › Campia:
+   - Endereço do sistema: `https://campia.mssolucoestech.com.br/painel`
+   - Endereço de entrada: `https://campia.mssolucoestech.com.br/api/sso`
+   - Abrir: **Dentro do portal**
+5. No portal, libere a Campia para o e-mail do organizador (o mesmo e-mail que ele usa na Campia). Quem ativou a verificação em duas etapas na Campia digita também o código da Campia na primeira entrada.

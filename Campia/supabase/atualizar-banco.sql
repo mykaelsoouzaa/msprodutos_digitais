@@ -1,5 +1,5 @@
 -- =============================================================================
--- Campia · atualizar o banco até a versão 2.8.0
+-- Campia · atualizar o banco até a versão 2.26.0
 --
 -- Pode rodar quantas vezes quiser: cada parte só cria o que ainda não existe.
 -- Use no Supabase › SQL Editor quando o banco já tem a primeira migração (init).
@@ -597,4 +597,13 @@ create policy "campeonato: dono altera" on public.championships
 create policy "campeonato: dono apaga" on public.championships
   for delete using (owner_id = auth.uid() or public.is_platform_admin());
 
-select 'Banco da Campia atualizado até a versão 2.8.0' as resultado;
+-- 2.26.0 · Entrada pela área do cliente MS Soluções -----------------------
+-- Entrada pela área do cliente da MS Soluções: cada acesso assinado pelo portal vale uma vez só.
+create table if not exists public.portal_acessos_usados (
+  jti        text primary key check (char_length(jti) between 8 and 80),
+  expira_em  timestamptz not null,
+  usado_em   timestamptz not null default now()
+);
+alter table public.portal_acessos_usados enable row level security; -- sem políticas: só o servidor lê e grava
+
+select 'Banco da Campia atualizado até a versão 2.26.0' as resultado;
