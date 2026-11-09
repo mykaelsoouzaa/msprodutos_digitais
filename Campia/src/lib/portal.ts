@@ -2,7 +2,7 @@
 // O portal assina um acesso (JWT EdDSA) que vale 60 segundos e uma vez só, para este sistema ("campia").
 import { createPublicKey, verify } from 'node:crypto';
 
-export interface AcessoPortal { email: string; nome: string; jti: string; exp: number }
+export interface AcessoPortal { email: string; nome: string; jti: string; exp: number; codigo: string; admin: boolean }
 
 /** Chave pública em uma linha (com \n no lugar das quebras), como fica na Vercel. */
 export const chavePortal = (raw = process.env.PORTAL_CHAVE_PUBLICA) => (raw ?? '').replace(/\\n/g, '\n').trim();
@@ -23,8 +23,14 @@ export function conferirAcessoPortal(
     if (d.aud !== 'campia' || d.iss !== opts.emissor.replace(/\/+$/, '')) return null;
     if (typeof d.exp !== 'number' || d.exp < agora || typeof d.iat !== 'number' || d.iat > agora + 30) return null;
     if (typeof d.jti !== 'string' || typeof d.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) return null;
-    return { email: d.email.toLowerCase(), nome: typeof d.nome === 'string' ? d.nome.slice(0, 60) : '', jti: d.jti.slice(0, 80), exp: d.exp };
+    return {
+      email: d.email.toLowerCase(), nome: typeof d.nome === 'string' ? d.nome.slice(0, 60) : '', jti: d.jti.slice(0, 80), exp: d.exp,
+      codigo: typeof d.codigo === 'string' ? d.codigo.slice(0, 60) : '', admin: d.admin === true,
+    };
   } catch {
     return null;
   }
 }
+
+/** Para onde a pessoa vai depois de entrar: o administrador da MS Soluções pode abrir direto o /admin. */
+export const destinoPortal = (a: Pick<AcessoPortal, 'codigo' | 'admin'>) => (a.codigo === 'admin' && a.admin ? '/admin' : '/painel');

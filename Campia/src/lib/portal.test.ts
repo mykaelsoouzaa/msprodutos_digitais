@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, randomUUID, sign, type KeyObject } from 'node:crypto';
-import { chavePortal, conferirAcessoPortal } from './portal';
+import { chavePortal, conferirAcessoPortal, destinoPortal } from './portal';
 
 const EMISSOR = 'https://mssolucoestech.com.br';
 const { privateKey, publicKey } = generateKeyPairSync('ed25519');
@@ -35,4 +35,10 @@ test('recusa outro sistema, outro emissor, chave errada, vencido e sem e-mail', 
 
 test('chave colada numa linha só', () => {
   assert.equal(chavePortal(chave.replace(/\n/g, '\\n')), chave.trim());
+});
+
+test('administrador da MS Soluções abre o /admin; o resto vai para o painel', () => {
+  assert.equal(destinoPortal(conferir(token({ codigo: 'admin', admin: true }))!), '/admin');
+  assert.equal(destinoPortal(conferir(token({ codigo: 'admin', admin: false }))!), '/painel');
+  assert.equal(destinoPortal(conferir(token())!), '/painel');
 });
