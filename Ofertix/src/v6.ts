@@ -353,7 +353,7 @@ export function proximasDatas(agora: number, quantas = 4, janelaDias = 120) {
 
 export const limparOrigemSite = (o: string) => String(o ?? '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 30);
 
-export function registrarSite(db: DB, tipo: 'visita' | 'teste' | 'demo', origem: string, plano: string, ua: string, em = Date.now()) {
+export function registrarSite(db: DB, tipo: 'visita' | 'teste' | 'demo' | 'zap', origem: string, plano: string, ua: string, em = Date.now()) {
   if (!ua || ROBO.test(ua)) return;
   db.prepare('INSERT INTO site_acessos (tipo, origem, plano, em) VALUES (?, ?, ?, ?)').run(tipo, limparOrigemSite(origem), String(plano ?? '').replace(/[^a-z]/g, '').slice(0, 12), em);
 }
@@ -361,8 +361,8 @@ export function registrarSite(db: DB, tipo: 'visita' | 'teste' | 'demo', origem:
 export function relatorioSite(db: DB, dias = 30, agora = Date.now()) {
   const de = agora - dias * DIA;
   const tot = (tipo: string) => Number((db.prepare('SELECT COUNT(*) AS n FROM site_acessos WHERE tipo = ? AND em >= ?').get(tipo, de) as any).n);
-  const origens = (db.prepare(`SELECT CASE WHEN origem = '' THEN 'direto' ELSE origem END AS origem, SUM(tipo = 'visita') AS visitas, SUM(tipo = 'teste') AS testes, SUM(tipo = 'demo') AS demos
-    FROM site_acessos WHERE em >= ? GROUP BY 1 ORDER BY visitas DESC LIMIT 20`).all(de) as any[]).map((o) => ({ origem: o.origem, visitas: Number(o.visitas), testes: Number(o.testes), demos: Number(o.demos) }));
+  const origens = (db.prepare(`SELECT CASE WHEN origem = '' THEN 'direto' ELSE origem END AS origem, SUM(tipo = 'visita') AS visitas, SUM(tipo = 'teste') AS testes, SUM(tipo = 'demo') AS demos, SUM(tipo = 'zap') AS zaps
+    FROM site_acessos WHERE em >= ? GROUP BY 1 ORDER BY visitas DESC LIMIT 20`).all(de) as any[]).map((o) => ({ origem: o.origem, visitas: Number(o.visitas), testes: Number(o.testes), demos: Number(o.demos), zaps: Number(o.zaps) }));
   const planos = (db.prepare("SELECT plano, COUNT(*) AS n FROM site_acessos WHERE tipo = 'teste' AND plano <> '' AND em >= ? GROUP BY plano ORDER BY n DESC").all(de) as any[]).map((p) => ({ plano: p.plano, n: Number(p.n) }));
   const porDia = new Map<string, { dia: string; visitas: number; testes: number }>();
   for (let i = dias - 1; i >= 0; i--) { const d = diaLocal(agora - i * DIA); porDia.set(d, { dia: d, visitas: 0, testes: 0 }); }
@@ -370,7 +370,7 @@ export function relatorioSite(db: DB, dias = 30, agora = Date.now()) {
     const x = porDia.get(diaLocal(Number(a.em))); if (!x) continue;
     if (a.tipo === 'visita') x.visitas++; else x.testes++;
   }
-  return { dias, visitas: tot('visita'), testes: tot('teste'), demos: tot('demo'), origens, planos, serie: [...porDia.values()] };
+  return { dias, visitas: tot('visita'), testes: tot('teste'), demos: tot('demo'), zaps: tot('zap'), origens, planos, serie: [...porDia.values()] };
 }
 
 export { hm };
