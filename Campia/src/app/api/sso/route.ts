@@ -29,12 +29,18 @@ export async function POST(request: NextRequest) {
   if (repetido) return erro('Este acesso já foi usado.');
   await admin.from('portal_acessos_usados').delete().lt('expira_em', new Date(Date.now() - 86_400_000).toISOString());
 
-  const { data: link, error: falhaLink } = await admin.auth.admin.generateLink({ type: 'magiclink', email: acesso.email });
+  // Quem já tem conta entra pelo link mágico; quem ainda não tem (ex.: teste liberado no portal) ganha a conta agora.
+  let tipo: 'magiclink' | 'invite' = 'magiclink';
+  let { data: link } = await admin.auth.admin.generateLink({ type: 'magiclink', email: acesso.email });
+  if (!link?.properties?.hashed_token) {
+    tipo = 'invite';
+    ({ data: link } = await admin.auth.admin.generateLink({ type: 'invite', email: acesso.email, options: { data: acesso.nome ? { name: acesso.nome } : undefined } }));
+  }
   const hash = link?.properties?.hashed_token;
-  if (falhaLink || !hash) return erro('Não foi possível entrar com este e-mail na Campia.');
+  if (!hash) return erro('Não foi possível entrar com este e-mail na Campia.');
 
   const supabase = await createClient();
-  const { error: falhaSessao } = await supabase.auth.verifyOtp({ token_hash: hash, type: 'magiclink' });
+  const { error: falhaSessao } = await supabase.auth.verifyOtp({ token_hash: hash, type: tipo });
   if (falhaSessao) return erro('Não foi possível abrir a sessão.');
 
   // O /admin continua conferindo o e-mail em ADMIN_EMAILS e pedindo o 2FA da Campia.
