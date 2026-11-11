@@ -74,14 +74,14 @@ export function paginaVendas(o: OpcoesVendas): string {
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#fffaf6;--bg-2:#fff1e8;--surface:#ffffff;--borda:#f1e2d8;--texto:#14182b;--texto-2:#4c5168;--mudo:#80849a;
+  --bg:#fffaf6;--bg-2:#fff1e8;--surface:#ffffff;--borda:#f1e2d8;--trilho:#efe1d6;--texto:#14182b;--texto-2:#4c5168;--mudo:#80849a;
   --laranja:#ff7a1a;--rosa:#e8355a;--grad:linear-gradient(120deg,#ff8a1f 0%,#f2554a 55%,#e8355a 100%);--marinho:#10162e;
   --verde-zap:#1fa855;--bolha:#dcf8c6;--sombra:0 1px 2px rgba(20,24,43,.05),0 12px 32px rgba(20,24,43,.08);--raio:18px;
   --fonte-t:'Space Grotesk',system-ui,sans-serif;--fonte:'Inter',system-ui,sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0d1020;--bg-2:#141831;--surface:#161a33;--borda:#262b4a;--texto:#eef0fa;--texto-2:#b2b6cc;--mudo:#7e83a0;--bolha:#1f4d36;--sombra:0 12px 40px rgba(0,0,0,.4);color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0d1020;--bg-2:#141831;--surface:#161a33;--borda:#262b4a;--texto:#eef0fa;--texto-2:#b2b6cc;--mudo:#7e83a0;--bolha:#1f4d36;--sombra:0 12px 40px rgba(0,0,0,.4);color-scheme:dark}
+  --bg:#0d1020;--bg-2:#141831;--surface:#161a33;--borda:#262b4a;--trilho:#2c3156;--texto:#eef0fa;--texto-2:#b2b6cc;--mudo:#7e83a0;--bolha:#1f4d36;--sombra:0 12px 40px rgba(0,0,0,.4);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d1020;--bg-2:#141831;--surface:#161a33;--borda:#262b4a;--trilho:#2c3156;--texto:#eef0fa;--texto-2:#b2b6cc;--mudo:#7e83a0;--bolha:#1f4d36;--sombra:0 12px 40px rgba(0,0,0,.4);color-scheme:dark}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--texto);font:16px/1.6 var(--fonte);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 a{color:inherit}
@@ -168,7 +168,7 @@ h1,h2,h3{font-family:var(--fonte-t);letter-spacing:-.02em;line-height:1.1;margin
 .calc form{background:var(--surface);border:1px solid var(--borda);border-radius:var(--raio);padding:26px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
 .campo label{display:flex;justify-content:space-between;font-size:14px;font-weight:600;margin-bottom:8px}
 .campo label output{color:var(--rosa);font-variant-numeric:tabular-nums}
-.campo input[type=range]{width:100%;accent-color:#e8355a}
+.campo input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;margin:0;background:transparent;cursor:pointer;--p:50%}.campo input[type=range]:focus{outline:none}.campo input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:99px;border:0;background:linear-gradient(90deg,#ff8a1f,#e8355a) 0/var(--p) 100% no-repeat,var(--trilho)}.campo input[type=range]::-moz-range-track{height:6px;border-radius:99px;border:0;background:var(--trilho)}.campo input[type=range]::-moz-range-progress{height:6px;border-radius:99px;background:linear-gradient(90deg,#ff8a1f,#e8355a)}.campo input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;background:#fff;border:3px solid #e8355a;box-shadow:0 2px 6px rgba(0,0,0,.25)}.campo input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid #e8355a;box-shadow:0 2px 6px rgba(0,0,0,.25)}.campo input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px rgba(232,53,90,.3)}.campo input[type=range]:focus-visible::-moz-range-thumb{box-shadow:0 0 0 4px rgba(232,53,90,.3)}
 .res{border-radius:var(--raio);background:var(--marinho);color:#fff;padding:30px;display:flex;flex-direction:column;justify-content:center}
 .res small{color:#aab0cc;font-size:14px}
 .res .grande{font:700 clamp(40px,5vw,56px) var(--fonte-t);margin:6px 0 4px;letter-spacing:-.02em}
@@ -379,7 +379,9 @@ footer a{color:var(--texto-2)}
   var n = function (v, d) { return Number(v).toLocaleString('pt-BR', { maximumFractionDigits: d || 0 }); };
   var reais = function (v) { return 'R$ ' + n(Math.round(v)); };
   var PLANOS = ${JSON.stringify(planos.map((p) => ({ nome: p.nome, preco: p.precoCentavos / 100, envio: p.gruposEnvio })))};
+  function preencher() { document.querySelectorAll('#calc input[type=range]').forEach(function (i) { i.style.setProperty('--p', ((i.value - i.min) / (i.max - i.min)) * 100 + '%'); }); }
   function calcular() {
+    preencher();
     var m = +$('c-membros').value, of = +$('c-ofertas').value, ctr = +$('c-ctr').value / 100, conv = +$('c-conv').value / 100, tk = +$('c-ticket').value, com = +$('c-com').value / 100;
     $('o-membros').textContent = n(m); $('o-ofertas').textContent = of; $('o-ctr').textContent = n(ctr * 100, 1) + '%';
     $('o-conv').textContent = n(conv * 100, 1) + '%'; $('o-ticket').textContent = reais(tk); $('o-com').textContent = n(com * 100, 1) + '%';
