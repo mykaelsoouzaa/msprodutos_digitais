@@ -1,0 +1,48 @@
+# Evolution API (WhatsApp por QR Code) para o Ofertix, só acessível de dentro da VPS (127.0.0.1:8080).
+# Antes de subir: crie o arquivo .env nesta pasta com EVOLUTION_API_KEY e SENHA_BANCO (veja COMO-RODAR.md).
+# Confira a versão mais recente estável em https://doc.evolution-api.com antes de instalar.
+services:
+  evolution:
+    image: evoapicloud/evolution-api:v2.3.7
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      SERVER_URL: http://127.0.0.1:8080
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://evolution:${SENHA_BANCO}@postgres:5432/evolution?schema=public
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "false"
+      DATABASE_SAVE_MESSAGE_UPDATE: "false"
+      DATABASE_SAVE_DATA_CONTACTS: "false"
+      DATABASE_SAVE_DATA_CHATS: "false"
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://redis:6379/6
+      CACHE_LOCAL_ENABLED: "false"
+      CONFIG_SESSION_PHONE_CLIENT: Ofertix
+      CONFIG_SESSION_PHONE_NAME: Chrome
+      LOG_LEVEL: ERROR,WARN
+    volumes:
+      - evolution_instances:/evolution/instances
+    depends_on: [postgres, redis]
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: evolution
+      POSTGRES_PASSWORD: ${SENHA_BANCO}
+      POSTGRES_DB: evolution
+    volumes:
+      - evolution_pg:/var/lib/postgresql/data
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1"]
+    volumes:
+      - evolution_redis:/data
+volumes:
+  evolution_instances:
+  evolution_pg:
+  evolution_redis:
