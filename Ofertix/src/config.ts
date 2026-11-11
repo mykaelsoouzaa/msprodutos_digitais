@@ -14,6 +14,7 @@ export interface Config {
   evolutionUrl: string;        // http://127.0.0.1:8080
   evolutionApiKey: string;
   adminEmails: string[];
+  whatsappContato?: string;   // número do botão de WhatsApp da página de vendas (DDI + DDD + número)
 }
 
 export function lerConfig(): Config {
@@ -28,6 +29,7 @@ export function lerConfig(): Config {
     dev,
     evolutionUrl: env('EVOLUTION_URL').replace(/\/+$/, ''),
     evolutionApiKey: env('EVOLUTION_API_KEY'),
+    whatsappContato: env('WHATSAPP_CONTATO', '5531999041748').replace(/\D/g, ''),
     adminEmails: env('ADMIN_EMAILS').toLowerCase().split(',').map((s) => s.trim()).filter(Boolean),
   };
 }

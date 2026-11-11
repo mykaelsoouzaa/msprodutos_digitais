@@ -1,6 +1,7 @@
 // Página de vendas do Ofertix (ofertix.cloud). HTML gerado no servidor, sem dependências.
 // Os botões passam por /quero e /ver-demo, que contam o clique por origem (?o=) e seguem adiante.
 import { PLANOS } from './planos.ts';
+import { CENA_CSS, CENA_JS, GRUPOS_CENA, cenaHtml } from './cena.ts';
 
 const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 const reaisInt = (c: number) => (c / 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
@@ -47,32 +48,7 @@ const DUVIDAS: [string, string][] = [
   ['Como é o pagamento?', 'Os planos são mensais. Ao fim do teste, a equipe da MS Soluções fala com você para ativar o plano escolhido.'],
 ];
 
-export interface OpcoesVendas { urlPublica: string; portalUrl: string; origem: string }
-
-export function paginaVendas(o: OpcoesVendas): string {
-  const q = (extra = '') => { const p = new URLSearchParams(); if (o.origem) p.set('o', o.origem); if (extra) p.set('p', extra); const s = p.toString(); return s ? `?${s}` : ''; };
-  const teste = (plano = '') => `/quero${q(plano)}`;
-  const demo = `/ver-demo${q()}`;
-  const planos = ['inicial', 'pro', 'escala'].map((id) => PLANOS[id]!);
-  const destaque = 'pro';
-  const desc = 'Publique ofertas com o seu link de afiliado em todos os seus grupos de WhatsApp, no piloto automático e sem arriscar o seu número. Teste 7 dias grátis.';
-  return `<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ofertix · Grupos de ofertas no piloto automático</title>
-<meta name="description" content="${esc(desc)}">
-<link rel="canonical" href="${esc(o.urlPublica)}/">
-<meta property="og:type" content="website"><meta property="og:url" content="${esc(o.urlPublica)}/">
-<meta property="og:title" content="Ofertix · Grupos de ofertas no piloto automático"><meta property="og:description" content="${esc(desc)}">
-<meta property="og:image" content="${esc(o.urlPublica)}/assets/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<link rel="icon" type="image/png" href="/assets/logo-128.png"><link rel="apple-touch-icon" href="/assets/logo-256.png">
-<meta name="theme-color" content="#E8355A">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
+const CSS = `
 :root{
   --bg:#fffaf6;--bg-2:#fff1e8;--surface:#ffffff;--borda:#f1e2d8;--trilho:#efe1d6;--texto:#14182b;--texto-2:#4c5168;--mudo:#80849a;
   --laranja:#ff7a1a;--rosa:#e8355a;--grad:linear-gradient(120deg,#ff8a1f 0%,#f2554a 55%,#e8355a 100%);--marinho:#10162e;
@@ -241,7 +217,55 @@ footer a{color:var(--texto-2)}
   footer{padding-bottom:90px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
-</style>
+`;
+
+const CSS_EXTRA = `
+.bolha.enq .op i u.v1{width:72%}.bolha.enq .op i u.v2{width:55%}.bolha.enq .op i u.v3{width:30%}
+.zap-flut{position:fixed;right:20px;bottom:20px;z-index:31;width:58px;height:58px;border-radius:50%;background:#25d366;color:#fff;display:grid;place-items:center;box-shadow:0 10px 28px rgba(0,0,0,.25);text-decoration:none;transition:transform .15s}
+.zap-flut:hover{transform:scale(1.06)}
+.zap-flut .bal{position:absolute;right:68px;white-space:nowrap;background:var(--surface);color:var(--texto);border:1px solid var(--borda);padding:8px 12px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:var(--sombra);opacity:0;transform:translateX(6px);transition:opacity .2s,transform .2s;pointer-events:none}
+.zap-flut:hover .bal,.zap-flut:focus-visible .bal{opacity:1;transform:none}
+.anu .heroi h1{font-size:clamp(34px,5vw,58px)}
+.anu .topo .acoes{margin-left:auto}
+.anu .beneficios{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.anu .mais{text-align:center;margin-top:28px}.anu .mais a{color:var(--rosa);font-weight:600}
+@media (max-width:980px){.anu .beneficios{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.zap-flut{bottom:84px;right:14px;width:52px;height:52px}.zap-flut .bal{display:none}}
+`;
+
+const ICONE_ZAP = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/><path d="M9 9.5c.4 1.8 1.7 3.3 3.5 4l1.2-1.1 1.8.8-.4 1.6c-3 .2-6.2-2.9-6.2-6l1.6-.4.8 1.8z" fill="currentColor" stroke="none"/></svg>';
+
+/** Botão flutuante de WhatsApp: passa por /zap, que conta o clique pela origem e abre a conversa. */
+const botaoZap = (origem: string) => `<a class="zap-flut" href="/zap${origem ? `?o=${encodeURIComponent(origem)}` : ''}" target="_blank" rel="noopener" aria-label="Tirar dúvidas no WhatsApp">${ICONE_ZAP}<span class="bal">Tirar dúvidas no WhatsApp</span></a>`;
+
+export const TEXTO_ZAP = 'Olá! Vim pelo site do Ofertix e quero saber mais.';
+
+export interface OpcoesVendas { urlPublica: string; portalUrl: string; origem: string }
+
+export function paginaVendas(o: OpcoesVendas): string {
+  const q = (extra = '') => { const p = new URLSearchParams(); if (o.origem) p.set('o', o.origem); if (extra) p.set('p', extra); const s = p.toString(); return s ? `?${s}` : ''; };
+  const teste = (plano = '') => `/quero${q(plano)}`;
+  const demo = `/ver-demo${q()}`;
+  const planos = ['inicial', 'pro', 'escala'].map((id) => PLANOS[id]!);
+  const destaque = 'pro';
+  const desc = 'Publique ofertas com o seu link de afiliado em todos os seus grupos de WhatsApp, no piloto automático e sem arriscar o seu número. Teste 7 dias grátis.';
+  return `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ofertix · Grupos de ofertas no piloto automático</title>
+<meta name="description" content="${esc(desc)}">
+<link rel="canonical" href="${esc(o.urlPublica)}/">
+<meta property="og:type" content="website"><meta property="og:url" content="${esc(o.urlPublica)}/">
+<meta property="og:title" content="Ofertix · Grupos de ofertas no piloto automático"><meta property="og:description" content="${esc(desc)}">
+<meta property="og:image" content="${esc(o.urlPublica)}/assets/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="/assets/logo-128.png"><link rel="apple-touch-icon" href="/assets/logo-256.png">
+<meta name="theme-color" content="#E8355A">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>${CSS}${CENA_CSS}${CSS_EXTRA}</style>
 </head>
 <body>
 <header class="topo" id="topo"><div class="envolve">
@@ -259,19 +283,7 @@ footer a{color:var(--texto-2)}
     <div class="ctas"><a class="botao pri" href="${teste()}">Testar 7 dias grátis</a><a class="botao sec" href="${demo}">Ver o painel por dentro</a></div>
     <div class="miudo"><span>${ico('check', 16)}Sem cartão no teste</span><span>${ico('check', 16)}Conecta por QR Code</span><span>${ico('check', 16)}Painel em português</span></div>
   </div>
-  <div class="cena" aria-hidden="true">
-    <div class="tel"><div class="tela">
-      <div class="cab"><div class="av">%</div><div><b>Achadinhos #01</b><small>1.002 participantes</small></div></div>
-      <div class="msgs">
-        <div class="bolha"><div class="foto">🫙</div>✨ <b>Kit 6 Potes Herméticos de Vidro</b><br>Olha que achadinho!<br>De <s>R$ 89,90</s><br>Por <b>R$ 44,90</b> (50% OFF)<br>👉 <span class="lk">ofertix.cloud/r/k7Pq2xA</span><span class="h">12:00</span></div>
-        <div class="bolha enq"><b>📊 Qual achadinho vocês querem amanhã?</b><div class="op">Cozinha<i><u style="width:72%"></u></i></div><div class="op">Beleza<i><u style="width:55%"></u></i></div><div class="op">Organização<i><u style="width:30%"></u></i></div><span class="h">15:00</span></div>
-      </div>
-    </div></div>
-    <div class="flut a"><small>Enviando para os grupos</small><b>12 de 19</b><div class="barra-env"><i></i></div></div>
-    <div class="flut b"><small>Cliques hoje</small><b>1.284</b><small>3,4 por envio</small></div>
-    <div class="flut c"><small>Comissão no mês</small><b class="grad-txt">R$ 2.317</b></div>
-    <span class="ilus">Ilustração com números de exemplo</span>
-  </div>
+  ${cenaHtml()}
 </div></section>
 
 <div class="lojas"><div class="envolve"><span>Funciona com</span><span>Shopee</span><span>Mercado Livre</span><span>Amazon</span><span>Magalu</span></div></div>
@@ -370,7 +382,8 @@ footer a{color:var(--texto-2)}
   <span><a href="${esc(o.portalUrl)}/entrar">Área do cliente</a> · <a href="#duvidas">Dúvidas</a></span>
 </div></footer>
 <div class="fixo"><a class="botao pri" href="${teste()}">Testar 7 dias grátis</a></div>
-
+${botaoZap(o.origem)}
+<script>${CENA_JS}</script>
 <script>
 (function () {
   var topo = document.getElementById('topo');
@@ -394,6 +407,85 @@ footer a{color:var(--texto-2)}
   calcular();
 })();
 </script>
+</body>
+</html>`;
+}
+
+/**
+ * Página curta para quem chega pelo anúncio ("Comenta EU QUERO"): a mesma mensagem do anúncio,
+ * a animação do envio, três benefícios, três dúvidas e o botão de teste. Fica em /quero-testar.
+ */
+export function paginaAnuncio(o: OpcoesVendas): string {
+  const q = o.origem ? `?o=${encodeURIComponent(o.origem)}` : '';
+  const teste = `/quero${q}`, demo = `/ver-demo${q}`;
+  const titulo = 'Ofertix · A mesma oferta em todos os seus grupos';
+  const desc = 'Cole o link do produto uma vez e o Ofertix publica em todos os seus grupos de WhatsApp, com o seu link de afiliado. Teste 7 dias grátis.';
+  const duvidas = [DUVIDAS[2]!, DUVIDAS[0]!, DUVIDAS[5]!];
+  return `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(titulo)}</title>
+<meta name="description" content="${esc(desc)}">
+<meta name="robots" content="noindex">
+<meta property="og:type" content="website"><meta property="og:url" content="${esc(o.urlPublica)}/quero-testar">
+<meta property="og:title" content="${esc(titulo)}"><meta property="og:description" content="${esc(desc)}">
+<meta property="og:image" content="${esc(o.urlPublica)}/assets/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<link rel="icon" type="image/png" href="/assets/logo-128.png"><link rel="apple-touch-icon" href="/assets/logo-256.png">
+<meta name="theme-color" content="#E8355A">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>${CSS}${CENA_CSS}${CSS_EXTRA}</style>
+</head>
+<body class="anu">
+<header class="topo" id="topo"><div class="envolve">
+  <a class="marca" href="/${q}" aria-label="Ofertix, página inicial"><img src="/assets/logo-128.png" alt="" width="34" height="34">Ofertix</a>
+  <div class="acoes"><a class="botao pri peq" href="${teste}">Testar grátis</a></div>
+</div></header>
+
+<main>
+<section class="heroi"><div class="envolve">
+  <div>
+    <span class="selo"><i></i>Você comentou "EU QUERO"? Aqui está</span>
+    <h1>${GRUPOS_CENA.length} grupos recebendo a mesma oferta. <span class="grad-txt">Sem você copiar e colar.</span></h1>
+    <p class="lead">Cole o link do produto uma vez. O Ofertix troca pelo seu link de afiliado e publica em todos os seus grupos de WhatsApp, um de cada vez, no ritmo certo para proteger o seu número.</p>
+    <div class="ctas"><a class="botao pri" href="${teste}">Quero testar 7 dias grátis</a><a class="botao sec" href="${demo}">Ver o painel por dentro</a></div>
+    <div class="miudo"><span>${ico('check', 16)}Sem cartão no teste</span><span>${ico('check', 16)}Shopee, Mercado Livre, Amazon e Magalu</span></div>
+  </div>
+  ${cenaHtml()}
+</div></section>
+
+<section class="secao alt"><div class="envolve">
+  <div class="titulo-sec"><span class="pre">O que muda no seu dia</span><h2>Menos tempo no celular, mais oferta no grupo</h2></div>
+  <div class="beneficios">
+    <div class="passo"><div class="ic">${ico('link')}</div><h3>Seu link em cada oferta</h3><p>O Ofertix troca o link do produto pelo seu link de afiliado, busca foto e preço e monta a mensagem pronta.</p></div>
+    <div class="passo"><div class="ic">${ico('relogio')}</div><h3>Um grupo de cada vez</h3><p>Os envios saem com intervalo aleatório, dentro do horário que você escolher. Dá para deixar a vitrine trabalhando sozinha.</p></div>
+    <div class="passo"><div class="ic">${ico('dinheiro')}</div><h3>Cliques e comissões no painel</h3><p>Veja quais ofertas e grupos rendem mais e receba um resumo do dia no seu WhatsApp.</p></div>
+  </div>
+  <p class="mais"><a href="/${q}#recursos">Ver todos os recursos e planos</a></p>
+</div></section>
+
+<section class="secao" id="duvidas"><div class="envolve">
+  <div class="titulo-sec"><span class="pre">Dúvidas</span><h2>Antes de testar</h2></div>
+  <div class="duvidas">${duvidas.map(([p, r]) => `<details><summary>${esc(p)}</summary><p>${esc(r)}</p></details>`).join('')}</div>
+</div></section>
+
+<section class="final"><div class="envolve"><div class="caixa">
+  <h2>Comece hoje, de graça</h2>
+  <p>São 7 dias para explorar o painel e conectar o seu número quando estiver pronto. Ficou com dúvida? Chame a gente no WhatsApp.</p>
+  <div class="ctas"><a class="botao pri" href="${teste}">Quero testar 7 dias grátis</a><a class="botao sec" href="/zap${q}" target="_blank" rel="noopener">Falar no WhatsApp</a></div>
+</div></div></section>
+</main>
+
+<footer><div class="envolve">
+  <span>Ofertix é um produto da <a href="${esc(o.portalUrl)}" target="_blank" rel="noopener">MS Soluções Tecnológicas</a>.</span>
+  <span><a href="/${q}">Página do Ofertix</a> · <a href="${esc(o.portalUrl)}/entrar">Área do cliente</a></span>
+</div></footer>
+<div class="fixo"><a class="botao pri" href="${teste}">Quero testar grátis</a></div>
+${botaoZap(o.origem)}
+<script>(function(){var t=document.getElementById('topo');addEventListener('scroll',function(){t.classList.toggle('rolou',scrollY>8)},{passive:true})})();</script>
+<script>${CENA_JS}</script>
 </body>
 </html>`;
 }

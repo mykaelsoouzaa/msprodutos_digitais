@@ -114,6 +114,14 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.1 (animação, página do anúncio e botão de WhatsApp)
+
+- **Animação no topo** da página de vendas: a oferta saindo para 19 grupos, um de cada vez, com o horário de cada envio e os cliques subindo. Com "reduzir movimento" ligado no celular, aparece parada.
+- **Página do anúncio** em `/quero-testar`: a mesma mensagem do anúncio "EU QUERO", a animação, três benefícios, três dúvidas e o botão de teste. Não aparece no Google. Sem `?o=`, as visitas entram na Administração com a origem "anuncio".
+- **Botão de WhatsApp** flutuante nas duas páginas. Passa por `/zap`, que conta o clique por origem e abre a conversa com `WHATSAPP_CONTATO` (padrão: o WhatsApp da MS Soluções). A Administração ganhou a coluna "WhatsApp".
+
+Nada muda no banco nem no `.env` (o `WHATSAPP_CONTATO` é opcional).
+
 ## Atualizar para a v6 (página de vendas e mais automações)
 
 - **Página de vendas** em `/` (ofertix.cloud): planos, calculadora, dúvidas e os botões de teste grátis (vão para `PORTAL_URL/teste?sis=ofertix`) e de demonstração. Visitas e cliques entram na Administração, separados pela origem: use `?o=` no link de cada anúncio ou post (ex.: `https://ofertix.cloud/?o=stories`). Quem já está logado continua indo direto ao painel (para ver a página, use `/?site`).

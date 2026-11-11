@@ -186,7 +186,7 @@ test('página de vendas: conta visitas e cliques por origem e ignora robôs', as
     assert.equal(r2.headers.get('location'), '/demo');
     const rel = v6.relatorioSite(db, 30);
     assert.deepEqual([rel.visitas, rel.testes, rel.demos], [1, 1, 1]);
-    assert.deepEqual(rel.origens[0], { origem: 'instagram', visitas: 1, testes: 1, demos: 1 });
+    assert.deepEqual(rel.origens[0], { origem: 'instagram', visitas: 1, testes: 1, demos: 1, zaps: 0 });
     assert.deepEqual(rel.planos, [{ plano: 'pro', n: 1 }]);
     assert.match(await (await fetch(base + '/robots.txt')).text(), /Disallow: \/painel/);
   } finally { srv.close(); }

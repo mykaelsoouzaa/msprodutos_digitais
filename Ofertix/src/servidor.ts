@@ -13,7 +13,7 @@ import { montarMensagem, expandirVariacoes, temVariacoes } from './mensagem.ts';
 import * as s from './servico.ts';
 import * as ent from './entradas.ts';
 import * as v6 from './v6.ts';
-import { paginaVendas } from './vendas.ts';
+import { paginaVendas, paginaAnuncio, TEXTO_ZAP } from './vendas.ts';
 
 const PUBLICO = join(import.meta.dirname, '..', 'public');
 const TIPOS: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json' };
@@ -110,6 +110,20 @@ export function criarServidor(app: App) {
         const plano = url.searchParams.get('p') ?? '';
         v6.registrarSite(app.real.db, caminho === '/quero' ? 'teste' : 'demo', url.searchParams.get('o') ?? '', PLANOS[plano] ? plano : '', ua);
         return redirecionar(res, caminho === '/quero' ? `${app.cfg.portalUrl}/teste?sis=ofertix` : '/demo');
+      }
+
+      // Botão de WhatsApp da página de vendas: conta o clique pela origem e abre a conversa.
+      if (caminho === '/zap' && req.method === 'GET') {
+        v6.registrarSite(app.real.db, 'zap', url.searchParams.get('o') ?? '', '', String(req.headers['user-agent'] ?? ''));
+        res.writeHead(302, { location: `https://wa.me/${app.cfg.whatsappContato || '5531999041748'}?text=${encodeURIComponent(TEXTO_ZAP)}`, 'cache-control': 'no-store' });
+        return res.end();
+      }
+      // Página curta para quem vem do anúncio. Sem ?o=, a origem fica "anuncio".
+      if (caminho === '/quero-testar' && req.method === 'GET') {
+        const origem = v6.limparOrigemSite(url.searchParams.get('o') || 'anuncio');
+        v6.registrarSite(app.real.db, 'visita', origem, '', String(req.headers['user-agent'] ?? ''));
+        res.writeHead(200, { 'content-type': TIPOS['.html'], 'cache-control': 'no-store' });
+        return res.end(paginaAnuncio({ urlPublica: app.cfg.urlPublica, portalUrl: app.cfg.portalUrl, origem }));
       }
 
       // ---------- Webhook da Evolution API ----------
