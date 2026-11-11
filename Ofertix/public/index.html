@@ -1,0 +1,1457 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ofertix</title>
+<link rel="icon" type="image/png" href="/assets/logo-128.png"><link rel="apple-touch-icon" href="/assets/logo-256.png"><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#E8355A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f7f5;--surface:#ffffff;--surface-2:#eef3f0;--borda:#dbe4de;--texto:#0f1a14;--texto-2:#4a5a51;--mudo:#7a8a81;
+  --verde:#0c9f5f;--verde-forte:#08824d;--verde-suave:#dff6ea;--laranja:#d9601a;--laranja-suave:#fde9dc;--vermelho:#c9302c;--vermelho-suave:#fbe3e2;--amarelo:#a66a00;--amarelo-suave:#fff1d1;
+  --serie-a:#0FA968;--serie-b:#E86A1A;--sobre-verde:#ffffff;--grade:#e6ece8;--sombra:0 1px 2px rgba(15,26,20,.06),0 8px 24px rgba(15,26,20,.06);
+  --raio:14px;--fonte-titulo:'Space Grotesk',system-ui,sans-serif;--fonte:'Inter',system-ui,sans-serif;
+}
+:root[data-theme="dark"]{
+  --bg:#0b0f0d;--surface:#121815;--surface-2:#171f1b;--borda:#212c26;--texto:#e7efe9;--texto-2:#a3b3a9;--mudo:#6f8076;
+  --verde:#2ee68f;--verde-forte:#22c97a;--verde-suave:rgba(46,230,143,.12);--laranja:#ff9a55;--laranja-suave:rgba(255,138,61,.14);--vermelho:#ff6b66;--vermelho-suave:rgba(255,107,102,.13);--amarelo:#f5c04a;--amarelo-suave:rgba(245,192,74,.13);
+  --serie-a:#12A862;--serie-b:#E0641C;--sobre-verde:#062012;--grade:#1c2621;--sombra:0 1px 0 rgba(255,255,255,.02) inset,0 10px 30px rgba(0,0,0,.35);color-scheme:dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b0f0d;--surface:#121815;--surface-2:#171f1b;--borda:#212c26;--texto:#e7efe9;--texto-2:#a3b3a9;--mudo:#6f8076;
+    --verde:#2ee68f;--verde-forte:#22c97a;--verde-suave:rgba(46,230,143,.12);--laranja:#ff9a55;--laranja-suave:rgba(255,138,61,.14);--vermelho:#ff6b66;--vermelho-suave:rgba(255,107,102,.13);--amarelo:#f5c04a;--amarelo-suave:rgba(245,192,74,.13);
+    --serie-a:#12A862;--serie-b:#E0641C;--sobre-verde:#062012;--grade:#1c2621;--sombra:0 1px 0 rgba(255,255,255,.02) inset,0 10px 30px rgba(0,0,0,.35);color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--texto);font:14px/1.45 var(--fonte);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--verde)}
+h1,h2,h3{font-family:var(--fonte-titulo);letter-spacing:-.01em;margin:0}
+.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}
+/* Menu lateral */
+.lateral{background:var(--surface);border-right:1px solid var(--borda);padding:18px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow:auto}
+.marca{display:flex;align-items:center;gap:10px;padding:4px 10px 18px;font:700 22px var(--fonte-titulo);letter-spacing:-.02em}
+.marca svg{flex:none}
+.marca b{color:var(--verde)}
+.grupo-menu{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mudo);padding:14px 12px 6px}
+.item{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:10px;color:var(--texto-2);text-decoration:none;cursor:pointer;border:0;background:none;width:100%;text-align:left}
+.item:hover{background:var(--surface-2);color:var(--texto)}
+.item.ativo{background:var(--verde-suave);color:var(--verde);font-weight:600}
+.item svg{width:18px;height:18px;flex:none}
+.item .cont{margin-left:auto;font-size:11px;background:var(--surface-2);color:var(--texto-2);border-radius:99px;padding:1px 8px}
+.rodape-menu{margin-top:auto;padding:12px;border-top:1px solid var(--borda);display:flex;flex-direction:column;gap:8px}
+.plano{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--texto-2)}
+.selo{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--verde-suave);color:var(--verde)}
+/* Topo */
+.principal{min-width:0;display:flex;flex-direction:column}
+.topo{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--borda);padding:12px 28px;display:flex;align-items:center;gap:12px}
+.colar{flex:1;min-width:0;max-width:640px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--borda);border-radius:12px;padding:0 6px 0 12px;height:42px}
+.colar:focus-within{border-color:var(--verde);box-shadow:0 0 0 3px var(--verde-suave)}
+.colar input{flex:1;border:0;background:none;outline:none;min-width:0;height:100%}
+.colar svg{color:var(--mudo);flex:none}
+.icone-btn{width:40px;height:40px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--borda);background:var(--surface);cursor:pointer;color:var(--texto-2);flex:none}
+.icone-btn:hover{color:var(--texto)}
+.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--verde);color:var(--sobre-verde);font-weight:700;flex:none}
+.so-celular{display:none}
+.conteudo{padding:26px 28px 60px;max-width:1240px;width:100%}
+.aviso-demo{margin:14px 28px 0;padding:10px 14px;border-radius:12px;background:var(--amarelo-suave);color:var(--amarelo);font-size:13px;display:flex;gap:10px;align-items:center}
+/* Blocos */
+.cabeca{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.cabeca h1{font-size:26px;display:flex;align-items:center;gap:10px}
+.cabeca h1 svg{color:var(--verde)}
+.cabeca p{margin:4px 0 0;color:var(--texto-2)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--borda);background:var(--surface);border-radius:99px;padding:6px 13px;font-size:13px;cursor:pointer;color:var(--texto-2)}
+.chip:hover{color:var(--texto)}
+.chip.ativo{background:var(--verde);border-color:var(--verde);color:var(--sobre-verde);font-weight:600}
+.cartao{background:var(--surface);border:1px solid var(--borda);border-radius:var(--raio);box-shadow:var(--sombra)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.kpi{padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.kpi .ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--verde-suave);color:var(--verde)}
+.kpi .ico.l{background:var(--laranja-suave);color:var(--laranja)}
+.kpi .ico.a{background:var(--amarelo-suave);color:var(--amarelo)}
+.kpi .ico.v{background:var(--vermelho-suave);color:var(--vermelho)}
+.kpi .valor{font:700 28px/1 var(--fonte-titulo);letter-spacing:-.02em}
+.kpi .valor small{font-size:15px;color:var(--mudo);font-weight:500}
+.kpi .rot{color:var(--texto-2);font-size:13px}
+.grade-2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px}
+.bloco{padding:18px 20px}
+.bloco h2{font-size:16px;margin-bottom:2px}
+.bloco .sub{color:var(--mudo);font-size:12.5px;margin:0 0 14px}
+.botao{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;border:1px solid transparent;padding:9px 15px;font-weight:600;cursor:pointer;background:var(--verde);color:var(--sobre-verde);white-space:nowrap}
+.botao:hover{background:var(--verde-forte)}
+.botao{text-decoration:none}
+.botao.sec{background:var(--surface);border-color:var(--borda);color:var(--texto)}
+.botao.sec:hover{background:var(--surface-2)}
+.botao.perigo{background:var(--vermelho-suave);color:var(--vermelho)}
+.botao.peq{padding:6px 11px;font-size:13px}
+.botao:disabled{opacity:.55;cursor:not-allowed}
+/* Gráficos */
+.grafico{position:relative}
+.grafico svg{display:block;width:100%;height:auto;overflow:visible}
+.grafico text{fill:var(--mudo);font-size:11px;font-family:var(--fonte)}
+.dica{position:absolute;pointer-events:none;background:var(--texto);color:var(--bg);padding:8px 10px;border-radius:8px;font-size:12px;white-space:nowrap;transform:translate(-50%,-110%);opacity:0;transition:opacity .1s;z-index:3}
+.dica b{font-weight:600}
+.legenda{display:flex;gap:14px;font-size:12px;color:var(--texto-2);margin-top:8px}
+.legenda i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+/* Listas */
+.linhas{display:flex;flex-direction:column}
+.linha{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--borda)}
+.linha:first-child{border-top:0}
+.miniatura{width:46px;height:46px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-size:24px;overflow:hidden;flex:none}
+.miniatura img{width:100%;height:100%;object-fit:cover}
+.linha .meio{flex:1;min-width:0}
+.linha .tit{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.linha .det{color:var(--mudo);font-size:12.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px}
+.loja{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.02em}
+.loja.shopee{background:#ee4d2d;color:#fff}.loja.mercadolivre{background:#ffe600;color:#2d3277}.loja.amazon{background:#232f3e;color:#ff9900}.loja.magalu{background:#0086ff;color:#fff}.loja.outra{background:var(--surface-2);color:var(--texto-2)}
+.status{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.status::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.status.pendente{background:var(--amarelo-suave);color:var(--amarelo)}
+.status.enviando{background:var(--verde-suave);color:var(--verde)}
+.status.enviado,.status.conectado,.status.concluido,.status.ativo{background:var(--verde-suave);color:var(--verde)}
+.status.erro,.status.desconectado,.status.cancelado{background:var(--vermelho-suave);color:var(--vermelho)}
+.status.conectando{background:var(--amarelo-suave);color:var(--amarelo)}
+/* Ofertas */
+.grade-ofertas{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.oferta{display:flex;flex-direction:column;overflow:hidden}
+.oferta .foto{aspect-ratio:4/3;background:var(--surface-2);display:grid;place-items:center;font-size:64px;position:relative}
+.oferta .foto img{width:100%;height:100%;object-fit:cover}
+.oferta .foto .loja{position:absolute;left:10px;bottom:10px}
+.oferta .foto .off{position:absolute;right:10px;top:10px;background:var(--laranja);color:#fff;font:700 12px var(--fonte-titulo);padding:3px 8px;border-radius:6px}
+.oferta .foto .capt{position:absolute;left:10px;top:10px;background:var(--surface);color:var(--texto-2);font-size:11px;padding:3px 8px;border-radius:6px}
+.oferta .info{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.oferta .nome{font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em}
+.precos{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.precos s{color:var(--mudo);font-size:12px}
+.precos b{font:700 18px var(--fonte-titulo);color:var(--verde)}
+.comissao{font-size:12px;color:var(--texto-2)}
+.oferta .acoes{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:6px}
+.oferta .acoes .botao{flex:1}
+.vazio{padding:40px 20px;text-align:center;color:var(--mudo)}
+.vazio svg{color:var(--verde);margin-bottom:10px}
+.vazio h3{color:var(--texto);margin-bottom:6px}
+.colar-grande{display:flex;gap:8px;padding:16px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.colar-grande .campo{flex:1;min-width:220px}
+/* Tabelas */
+.tabela{width:100%;border-collapse:collapse}
+.tabela th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mudo);text-align:left;font-weight:600;padding:10px 12px;border-bottom:1px solid var(--borda)}
+.tabela td{padding:11px 12px;border-bottom:1px solid var(--borda)}
+.tabela tr:last-child td{border-bottom:0}
+.tabela .num{text-align:right;font-variant-numeric:tabular-nums}
+.rolagem{overflow-x:auto}
+/* Interruptor */
+.inter{position:relative;width:40px;height:23px;flex:none;display:inline-block}
+.inter input{opacity:0;width:0;height:0;position:absolute}
+.inter span{position:absolute;inset:0;border-radius:99px;background:var(--borda);transition:.15s;cursor:pointer}
+.inter span::after{content:"";position:absolute;left:3px;top:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.inter input:checked+span{background:var(--verde)}
+.inter input:checked+span::after{transform:translateX(17px)}
+.inter input:focus-visible+span{outline:2px solid var(--verde);outline-offset:2px}
+.inter input:disabled+span{opacity:.5;cursor:not-allowed}
+/* Formulários */
+.campo{display:flex;flex-direction:column;gap:6px}
+.campo label{font-size:12.5px;font-weight:600;color:var(--texto-2)}
+.campo input,.campo select,.campo textarea{background:var(--surface-2);border:1px solid var(--borda);border-radius:10px;padding:10px 12px;outline:none;width:100%}
+.campo input:focus,.campo select:focus,.campo textarea:focus{border-color:var(--verde);box-shadow:0 0 0 3px var(--verde-suave)}
+.campo textarea{resize:vertical;min-height:120px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+.campo .ajuda{font-size:12px;color:var(--mudo)}
+.form-grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.secao-form{padding:20px;margin-bottom:16px}
+.secao-form h2{font-size:16px;margin-bottom:4px}
+.secao-form>p{color:var(--mudo);margin:0 0 16px;font-size:13px}
+.linha-inter{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 0}
+/* WhatsApp prévia */
+.zap{background:#0b141a;border-radius:14px;padding:16px;background-image:radial-gradient(rgba(255,255,255,.03) 1px,transparent 1px);background-size:16px 16px}
+.bolha{background:#005c4b;color:#e9edef;border-radius:10px 10px 2px 10px;padding:6px 8px 18px;max-width:330px;margin-left:auto;position:relative;font-size:13.5px;white-space:pre-wrap;word-break:break-word;font-family:var(--fonte)}
+.bolha .img{max-height:210px;border-radius:8px;background:#0a3b31;display:grid;place-items:center;font-size:72px;aspect-ratio:4/3;margin-bottom:6px;overflow:hidden}
+.bolha .img img{width:100%;height:100%;object-fit:cover}
+.bolha .hora{position:absolute;right:8px;bottom:4px;font-size:10.5px;color:#9fc6bd}
+.bolha s{opacity:.75}
+/* Modal */
+.fundo{position:fixed;inset:0;background:rgba(5,10,7,.6);z-index:20;display:grid;place-items:center;padding:16px;backdrop-filter:blur(3px)}
+.modal{width:min(920px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:22px}
+.modal-cab{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px}
+.modal-cab h2{font-size:19px}
+.modal-corpo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.lista-grupos{display:flex;flex-direction:column;gap:2px;max-height:220px;overflow:auto;border:1px solid var(--borda);border-radius:10px;padding:6px}
+.lista-grupos label{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:13.5px}
+.lista-grupos label:hover{background:var(--surface-2)}
+.lista-grupos input{accent-color:var(--verde);width:16px;height:16px}
+.lista-grupos small{margin-left:auto;color:var(--mudo)}
+.segmento{display:inline-flex;background:var(--surface-2);border:1px solid var(--borda);border-radius:10px;padding:3px}
+.segmento button{border:0;background:none;padding:6px 12px;border-radius:8px;cursor:pointer;color:var(--texto-2);font-size:13px}
+.segmento button.ativo{background:var(--surface);color:var(--texto);font-weight:600;box-shadow:var(--sombra)}
+/* Números */
+.numeros{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.numero{padding:18px;display:flex;flex-direction:column;gap:12px}
+.numero .topo-n{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.qr{background:#fff;border-radius:12px;padding:10px;display:grid;place-items:center;aspect-ratio:1;max-width:240px;margin:0 auto;width:100%}
+.qr img{width:100%;height:auto}
+.dicas-ban{padding:18px 20px;margin-top:16px}
+.dicas-ban ul{margin:8px 0 0;padding-left:18px;color:var(--texto-2)}
+.dicas-ban li{margin:4px 0}
+/* Avisos */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--texto);color:var(--bg);padding:11px 16px;border-radius:10px;z-index:40;font-weight:500;box-shadow:var(--sombra);max-width:calc(100vw - 32px)}
+.toast.erro{background:var(--vermelho);color:#fff}
+.carregando{color:var(--mudo);padding:30px;text-align:center}
+.avisos{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.alerta{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;font-size:13.5px;text-decoration:none;border:1px solid transparent}
+.alerta svg{flex:none}
+.alerta.erro{background:var(--vermelho-suave);color:var(--vermelho)}
+.alerta.atencao{background:var(--amarelo-suave);color:var(--amarelo)}
+.alerta.info{background:var(--surface);border-color:var(--borda);color:var(--texto-2)}
+.alerta span{flex:1;min-width:0}
+.alerta b{font-weight:600;white-space:nowrap}
+.rank{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--borda)}
+.rank:first-child{border-top:0}
+.rank .pos{width:22px;font:700 13px var(--fonte-titulo);color:var(--mudo);text-align:center;flex:none}
+.rank .meio{flex:1;min-width:0}
+.rank .barra{height:4px;border-radius:4px;background:var(--surface-2);margin-top:6px;overflow:hidden}
+.rank .barra i{display:block;height:100%;border-radius:4px;background:var(--serie-a)}
+.rank .val{text-align:right;font-variant-numeric:tabular-nums;flex:none}
+.rank .val b{font:700 15px var(--fonte-titulo)}
+.rank .val small{display:block;color:var(--mudo);font-size:11.5px}
+.oferta .foto .esg{position:absolute;inset:0;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;font:700 14px var(--fonte-titulo);letter-spacing:.06em;text-transform:uppercase}
+.oferta .foto .vit{position:absolute;right:10px;bottom:10px;background:var(--verde);color:var(--sobre-verde);font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px}
+.metricas{display:flex;gap:10px;font-size:12px;color:var(--texto-2);flex-wrap:wrap}
+.botao.estrela.ativa{background:var(--verde-suave);color:var(--verde);border-color:transparent}
+.motivo{color:var(--texto-2);font-size:12.5px;margin-top:3px}
+.tag-origem{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--surface-2);color:var(--texto-2);text-transform:uppercase;letter-spacing:.04em}
+.lote textarea{min-height:130px}
+.resultado-lote{margin:-6px 0 16px;padding:12px 16px;font-size:13px}
+.resultado-lote li{margin:3px 0}
+.campo-mini{background:var(--surface-2);border:1px solid var(--borda);border-radius:10px;padding:7px 10px;outline:none}
+.campo-mini:focus{border-color:var(--verde)}
+.dica-var{font-size:12px;color:var(--verde);background:var(--verde-suave);border-radius:8px;padding:6px 10px}
+.oculto{display:none!important}
+.fora-nicho{opacity:.62}.fora-nicho:hover{opacity:1}
+.datas{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:10px}.data{border:1px solid var(--borda);border-radius:12px;padding:12px 14px}.data b{display:block;font:700 15px var(--fonte-titulo)}.data .dias{font:700 24px var(--fonte-titulo);color:var(--laranja)}.data .dias small{font:500 12px var(--fonte);color:var(--mudo)}.data p{margin:4px 0 0;font-size:12.5px;color:var(--texto-2)}
+.opcoes-enq{display:grid;gap:6px}.resp-teste{background:var(--surface-2);border-radius:10px;padding:10px 12px;font-size:13px;white-space:pre-wrap;margin-top:8px}
+.barras-site{display:flex;align-items:flex-end;gap:2px;height:70px;margin-top:10px}.barras-site i{flex:1;background:var(--serie-a);border-radius:3px 3px 0 0;min-height:2px}
+@media (max-width:960px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .lateral{position:fixed;left:0;top:0;bottom:0;width:260px;z-index:30;transform:translateX(-100%);transition:transform .2s;box-shadow:var(--sombra)}
+  .lateral.aberta{transform:none}
+  .so-celular{display:grid}
+  .grade-2,.modal-corpo{grid-template-columns:minmax(0,1fr)}
+  .topo{padding:10px 16px}
+  .conteudo{padding:18px 16px 60px}
+  .aviso-demo{margin:12px 16px 0}
+  .cabeca h1{font-size:22px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpi .valor{font-size:22px}
+}
+@media (max-width:420px){.colar .txt-btn{display:none}}
+@media (max-width:600px){.so-largo{display:none}}
+.sel-cat{font:inherit;font-size:13px;padding:6px 10px;border-radius:10px;border:1px solid var(--borda);background:var(--surface);color:var(--texto)}.sel-cat.mini{font-size:12px;padding:3px 6px;max-width:150px}
+.modelos{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}.modelo{padding:14px;display:grid;gap:10px;align-content:start}.modelo .zap{min-height:0}
+.pacote{background:linear-gradient(135deg,rgba(255,138,31,.12),rgba(232,53,90,.10));border-color:rgba(232,53,90,.35)}
+.pausado-btn{background:var(--vermelho)!important;color:#fff!important;border-color:var(--vermelho)!important}
+.passos{display:grid;gap:8px;margin-top:10px}.passo{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--borda);border-radius:12px;color:inherit;text-decoration:none}.passo:hover{border-color:var(--verde)}
+.passo .ck{width:22px;height:22px;border-radius:50%;border:2px solid var(--borda);display:grid;place-items:center;flex:none;font-size:13px}.passo.ok{opacity:.65}.passo.ok .ck{background:var(--verde);border-color:var(--verde);color:#fff}
+.funil{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:10px}.funil .et{padding:12px;border-radius:12px;background:var(--surface-2);text-align:center}.funil .et b{display:block;font-size:22px}.funil .et small{color:var(--mudo)}.funil .tx{font-size:12px;color:var(--verde);font-weight:600}
+.meta-barra{height:12px;border-radius:7px;background:var(--surface-2);overflow:hidden;margin:8px 0}.meta-barra i{display:block;height:100%;background:var(--verde);border-radius:7px}
+.calor{display:grid;grid-template-columns:40px repeat(24,minmax(0,1fr));gap:2px;font-size:10px;margin-top:10px}.calor span{height:18px;border-radius:3px;background:var(--surface-2)}.calor .rt{height:auto;background:none;color:var(--mudo);display:flex;align-items:center}
+.nivel-alto{color:var(--vermelho);font-weight:700}.nivel-medio{color:#c27c0e;font-weight:700}
+.aq{font-size:12.5px;color:var(--texto-2);background:var(--surface-2);padding:8px 10px;border-radius:10px}
+.dias-sem{display:flex;gap:6px;flex-wrap:wrap}.dias-sem label{display:flex;gap:4px;align-items:center;font-size:13px;border:1px solid var(--borda);padding:5px 9px;border-radius:99px;cursor:pointer}
+.parecidas{background:#fff4e0;color:#7a4a00;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+@media (max-width:700px){.funil{grid-template-columns:repeat(2,minmax(0,1fr))}.calor{grid-template-columns:28px repeat(24,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="lateral" id="lateral">
+    <div class="marca">
+      <img src="/assets/logo-128.png" alt="" width="30" height="30" style="border-radius:8px">
+      <span>Oferti<b>x</b></span>
+    </div>
+    <nav id="menu"></nav>
+    <div class="rodape-menu">
+      <div class="plano"><span id="nome-conta">—</span><span class="selo" id="selo-plano">—</span></div>
+      <a class="item" id="sair" href="/sair"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Voltar ao portal</a>
+    </div>
+  </aside>
+  <div class="principal">
+    <header class="topo">
+      <button class="icone-btn so-celular" id="abrir-menu" aria-label="Abrir menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <form class="colar" id="form-colar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
+        <input id="link-topo" placeholder="Cole o link do produto (Shopee, Mercado Livre, Amazon, Magalu)" autocomplete="off" aria-label="Link do produto">
+        <button class="botao peq" type="submit">Gerar<span class="txt-btn"> oferta</span></button>
+      </form>
+      <button class="icone-btn" id="pausa" aria-label="Pausar todos os envios" title="Pausar todos os envios"></button>
+      <button class="icone-btn" id="tema" aria-label="Trocar tema"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <div class="avatar" id="avatar">O</div>
+    </header>
+    <div class="aviso-demo oculto" id="aviso-demo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span>Você está no painel de demonstração: os dados são fictícios e o WhatsApp é simulado. Fique à vontade para testar tudo.</span>
+    </div>
+    <main class="conteudo" id="conteudo"><div class="carregando">Carregando…</div></main>
+  </div>
+</div>
+<div id="camada"></div>
+
+<script>
+'use strict';
+// ------------------------------------------------------------------ utilidades
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const reais = (c) => c == null ? '—' : 'R$ ' + (c / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const reaisCurto = (c) => 'R$ ' + (c / 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+const num = (n) => Number(n || 0).toLocaleString('pt-BR');
+const pct = (de, por) => (de && por && de > por ? Math.round((1 - por / de) * 100) : 0);
+const LOJAS = { shopee: 'Shopee', mercadolivre: 'Mercado Livre', amazon: 'Amazon', magalu: 'Magalu', outra: 'Loja' };
+const loja = (p) => `<span class="loja ${esc(p || 'outra')}">${esc(LOJAS[p] || 'Loja')}</span>`;
+const hora = (ms) => new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+const quandoTxt = (ms) => {
+  const d = new Date(ms), hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const dif = Math.floor((new Date(d).setHours(0, 0, 0, 0) - hoje) / 864e5);
+  const dia = dif === 0 ? 'hoje' : dif === 1 ? 'amanhã' : dif === -1 ? 'ontem' : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  return `${dia}, ${hora(ms)}`;
+};
+const foto = (img, cls = '') => img && /^https?:/.test(img)
+  ? `<img src="${esc(img)}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('🛍️'))">`
+  : esc(String(img || '').startsWith('emoji:') ? img.slice(6) : '🛍️');
+const STATUS = { pendente: 'Pendente', enviando: 'Enviando', enviado: 'Enviado', erro: 'Erro', cancelado: 'Cancelado', conectado: 'Conectado', conectando: 'Conectando', desconectado: 'Desconectado', concluido: 'Concluído', ativo: 'Ativo' };
+const status = (s) => `<span class="status ${esc(s)}">${esc(STATUS[s] || s)}</span>`;
+
+function aviso(msg, erro = false) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (erro ? ' erro' : '');
+  t.textContent = msg;
+  t.setAttribute('role', 'status');
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+async function api(caminho, opts = {}) {
+  const metodo = opts.method || 'GET';
+  if (window.OFERTIX_MOCK) return window.OFERTIX_MOCK(metodo, caminho, opts.body);
+  const r = await fetch('/api/' + caminho, {
+    method: metodo, credentials: 'same-origin',
+    headers: { 'content-type': 'application/json', 'x-ofertix': '1' },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) { location.href = '/'; throw new Error(j.erro); }
+  if (!r.ok) throw new Error(j.erro || 'Algo deu errado');
+  return j;
+}
+const tentar = (fn) => async (...a) => { try { await fn(...a); } catch (e) { aviso(e.message, true); } };
+// Opções da v5 ficam juntas: lê as atuais, troca só o que mudou e salva tudo.
+async function salvarExtras(parcial) { const atual = await api('extras'); return api('extras', { method: 'POST', body: { ...atual, ...parcial } }); }
+
+// ------------------------------------------------------------------ ícones
+const I = {
+  link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+  alerta: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+  clique: '<path d="m9 9 5 12 1.8-5.2L21 14Z"/><path d="M7.2 2.2 8 5.1M5.1 8l-2.9-.8M14 4.1 12 6M6 12l-1.9 2"/>',
+  estrela: '<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>',
+  baixar: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  trofeu: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>',
+  visao: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+  ofertas: '<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
+  agenda: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M12 14v3l2 1"/>',
+  grupos: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+  membros: '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>',
+  comissoes: '<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  cupons: '<path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"/><path d="M13 5v2M13 11v2M13 17v2"/>',
+  whatsapp: '<path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/>',
+  config: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  admin: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  msg: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  cel: '<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>',
+  relogio: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  ima: '<path d="M6 15V9a6 6 0 0 1 12 0v6M6 15H2v-6M18 15h4v-6M6 19h4M14 19h4"/>',
+  enviar: '<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>',
+  sync: '<path d="M21 12a9 9 0 0 1-15 6.7L3 16M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M3 21v-5h5"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  pausa: '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+  play: '<path d="M7 4v16l13-8z"/>',
+  editar: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"/>',
+  arquivo: '<rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/>',
+  raio: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+  vitrine: '<path d="M3 9 4.5 4h15L21 9M3 9v11h18V9M3 9h18M9 20v-6h6v6"/>',
+  mais: '<path d="M12 5v14M5 12h14"/>',
+  lixo: '<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>',
+  sacola: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/>',
+  pessoas: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/>',
+  sobe: '<path d="m3 17 6-6 4 4 8-8M14 7h7v7"/>',
+  porc: '<path d="M19 5 5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+  busca: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  enquete: '<path d="M3 3v18h18"/><path d="M7 16V9M12 16V5M17 16v-4"/>',
+  lista: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  repetir: '<path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',
+  calendario: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  carrinho: '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/>',
+};
+const ico = (n, t = 18) => `<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg>`;
+
+// ------------------------------------------------------------------ estado e menu
+const E = { eu: null, periodo: '7d', filtroOfertas: '', filtroCat: '', filtroStatus: '', grupoMembros: '' };
+const TELAS = [
+  ['visao', 'Visão geral', 'Painel'], ['ofertas', 'Ofertas'], ['agendamentos', 'Agendamentos', null, 'agenda'],
+  ['grupos', 'Grupos de envio', 'Grupos'], ['entradas', 'Links de entrada', null, 'link'], ['automaticas', 'Mensagens automáticas', null, 'raio'], ['membros', 'Membros'],
+  ['comissoes', 'Comissões', 'Resultados'], ['cupons', 'Cupons'],
+  ['nicho', 'Nicho e curadoria', 'Conta', 'estrela'], ['whatsapp', 'WhatsApp'], ['config', 'Configurações'],
+];
+
+function montarMenu() {
+  const atual = (location.hash.slice(1) || 'visao').split('/')[0];
+  let h = '';
+  for (const [id, nome, grupo, icn] of TELAS) {
+    if (grupo) h += `<div class="grupo-menu">${grupo}</div>`;
+    h += `<a class="item ${atual === id ? 'ativo' : ''}" href="#${id}">${ico(icn || id)}${nome}${id === 'agendamentos' && E.pendentes ? `<span class="cont">${E.pendentes}</span>` : ''}</a>`;
+  }
+  if (E.eu?.admin) h += `<div class="grupo-menu">MS Soluções</div><a class="item ${atual === 'admin' ? 'ativo' : ''}" href="#admin">${ico('admin')}Administração</a>`;
+  $('#menu').innerHTML = h;
+}
+
+const chipsPeriodo = (opcoes = ['hoje', 'ontem', '7d', '30d', 'mes', 'mes-anterior']) => {
+  const nomes = { hoje: 'Hoje', ontem: 'Ontem', '7d': 'Últimos 7 dias', '30d': 'Últimos 30 dias', mes: 'Mês atual', 'mes-anterior': 'Mês anterior' };
+  return `<div class="chips" role="group" aria-label="Período">${opcoes.map((p) => `<button class="chip ${E.periodo === p ? 'ativo' : ''}" data-periodo="${p}">${nomes[p]}</button>`).join('')}</div>`;
+};
+
+const kpi = (icone, valor, rotulo, cor = '') => `<div class="cartao kpi"><div class="ico ${cor}">${ico(icone, 17)}</div><div class="valor">${valor}</div><div class="rot">${rotulo}</div></div>`;
+const cabeca = (icone, titulo, sub, direita = '') => `<div class="cabeca"><div><h1>${ico(icone, 24)}${titulo}</h1>${sub ? `<p>${sub}</p>` : ''}</div>${direita}</div>`;
+
+// ------------------------------------------------------------------ gráficos (SVG)
+const rotuloDia = (d) => { const [, m, dd] = d.split('-'); return `${dd}/${m}`; };
+
+/** Barras de uma série (envios por dia). */
+function graficoBarras(serie, chave, nome) {
+  const L = 640, A = 220, m = { t: 12, r: 8, b: 26, l: 34 };
+  const max = Math.max(4, ...serie.map((s) => s[chave]));
+  const passo = Math.pow(10, Math.floor(Math.log10(max))) / (max / Math.pow(10, Math.floor(Math.log10(max))) > 5 ? 0.5 : 1);
+  const topo = Math.ceil(max / passo) * passo;
+  const w = (L - m.l - m.r) / serie.length, bw = Math.max(4, Math.min(28, w - 6));
+  const y = (v) => m.t + (A - m.t - m.b) * (1 - v / topo);
+  let g = '';
+  for (let v = 0; v <= topo; v += passo) g += `<line x1="${m.l}" x2="${L - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grade)"/><text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end">${num(v)}</text>`;
+  const cada = Math.ceil(serie.length / 8);
+  serie.forEach((s, i) => {
+    const x = m.l + i * w + (w - bw) / 2, h = A - m.b - y(s[chave]);
+    if (s[chave] > 0) g += `<path d="M${x},${A - m.b}V${y(s[chave]) + Math.min(4, h)}q0,-4 4,-4h${bw - 8}q4,0 4,4V${A - m.b}z" fill="var(--serie-a)"/>`;
+    g += `<rect x="${m.l + i * w}" y="${m.t}" width="${w}" height="${A - m.t - m.b}" fill="transparent" data-dica="<b>${rotuloDia(s.dia)}</b><br>${num(s[chave])} ${esc(nome)}"/>`;
+    if (i % cada === 0) g += `<text x="${m.l + i * w + w / 2}" y="${A - 8}" text-anchor="middle">${rotuloDia(s.dia)}</text>`;
+  });
+  return `<div class="grafico"><svg viewBox="0 0 ${L} ${A}" role="img" aria-label="${esc(nome)} por dia">${g}</svg><div class="dica"></div></div>`;
+}
+
+/** Linha do total de participantes. */
+function graficoLinha(serie) {
+  const L = 640, A = 220, m = { t: 14, r: 10, b: 26, l: 52 };
+  const vals = serie.map((s) => s.total);
+  let min = Math.min(...vals), max = Math.max(...vals);
+  if (max - min < 10) { min -= 5; max += 5; }
+  const folga = (max - min) * 0.15; min = Math.max(0, Math.floor(min - folga)); max = Math.ceil(max + folga);
+  const x = (i) => m.l + (serie.length < 2 ? 0 : (i * (L - m.l - m.r)) / (serie.length - 1));
+  const y = (v) => m.t + (A - m.t - m.b) * (1 - (v - min) / (max - min));
+  let g = '';
+  for (let k = 0; k <= 4; k++) { const v = Math.round(min + ((max - min) * k) / 4); g += `<line x1="${m.l}" x2="${L - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grade)"/><text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end">${num(v)}</text>`; }
+  const pts = serie.map((s, i) => `${x(i)},${y(s.total)}`).join(' ');
+  g += `<polygon points="${m.l},${A - m.b} ${pts} ${x(serie.length - 1)},${A - m.b}" fill="var(--serie-a)" opacity=".1"/>`;
+  g += `<polyline points="${pts}" fill="none" stroke="var(--serie-a)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  const cada = Math.ceil(serie.length / 8);
+  const w = (L - m.l - m.r) / Math.max(1, serie.length - 1);
+  serie.forEach((s, i) => {
+    if (i % cada === 0) g += `<text x="${x(i)}" y="${A - 8}" text-anchor="middle">${rotuloDia(s.dia)}</text>`;
+    g += `<rect x="${x(i) - w / 2}" y="${m.t}" width="${w}" height="${A - m.t - m.b}" fill="transparent" data-ponto="${x(i)},${y(s.total)}" data-dica="<b>${rotuloDia(s.dia)}</b><br>${num(s.total)} participantes<br>+${num(s.entrou)} / −${num(s.saiu)}"/>`;
+  });
+  const ult = serie[serie.length - 1];
+  g += `<circle cx="${x(serie.length - 1)}" cy="${y(ult.total)}" r="4" fill="var(--serie-a)" stroke="var(--surface)" stroke-width="2"/>`;
+  g += `<circle class="marcador" r="5" fill="var(--serie-a)" stroke="var(--surface)" stroke-width="2" style="display:none"/>`;
+  return `<div class="grafico"><svg viewBox="0 0 ${L} ${A}" role="img" aria-label="Total de participantes por dia">${g}</svg><div class="dica"></div></div>`;
+}
+
+/** Entradas para cima, saídas para baixo da linha zero. */
+function graficoEntradasSaidas(serie) {
+  const L = 420, A = 230, m = { t: 10, r: 8, b: 24, l: 34 };
+  const max = Math.max(4, ...serie.map((s) => Math.max(s.entrou, s.saiu)));
+  const zero = m.t + (A - m.t - m.b) / 2, esc2 = (A - m.t - m.b) / 2 / max;
+  const w = (L - m.l - m.r) / serie.length, bw = Math.max(3, Math.min(22, w - 6));
+  let g = `<line x1="${m.l}" x2="${L - m.r}" y1="${zero}" y2="${zero}" stroke="var(--mudo)" opacity=".5"/>`;
+  g += `<text x="${m.l - 6}" y="${m.t + 8}" text-anchor="end">+${num(max)}</text><text x="${m.l - 6}" y="${A - m.b}" text-anchor="end">−${num(max)}</text>`;
+  const cada = Math.ceil(serie.length / 6);
+  serie.forEach((s, i) => {
+    const x = m.l + i * w + (w - bw) / 2, he = s.entrou * esc2, hs = s.saiu * esc2;
+    if (he > 0) g += `<path d="M${x},${zero - 1}V${zero - he + Math.min(3, he)}q0,-3 3,-3h${bw - 6}q3,0 3,3V${zero - 1}z" fill="var(--serie-a)"/>`;
+    if (hs > 0) g += `<path d="M${x},${zero + 1}V${zero + hs - Math.min(3, hs)}q0,3 3,3h${bw - 6}q3,0 3,-3V${zero + 1}z" fill="var(--serie-b)"/>`;
+    g += `<rect x="${m.l + i * w}" y="${m.t}" width="${w}" height="${A - m.t - m.b}" fill="transparent" data-dica="<b>${rotuloDia(s.dia)}</b><br>Entraram: ${num(s.entrou)}<br>Saíram: ${num(s.saiu)}"/>`;
+    if (i % cada === 0) g += `<text x="${m.l + i * w + w / 2}" y="${A - 6}" text-anchor="middle">${rotuloDia(s.dia)}</text>`;
+  });
+  return `<div class="grafico"><svg viewBox="0 0 ${L} ${A}" role="img" aria-label="Entradas e saídas por dia">${g}</svg><div class="dica"></div></div>
+    <div class="legenda"><span><i style="background:var(--serie-a)"></i>Entraram (acima)</span><span><i style="background:var(--serie-b)"></i>Saíram (abaixo)</span></div>`;
+}
+
+function ligarDicas(raiz) {
+  raiz.querySelectorAll('.grafico').forEach((gr) => {
+    const dica = gr.querySelector('.dica'), svg = gr.querySelector('svg'), marc = svg.querySelector('.marcador');
+    gr.addEventListener('pointermove', (e) => {
+      const alvo = e.target.closest('[data-dica]');
+      if (!alvo) { dica.style.opacity = 0; if (marc) marc.style.display = 'none'; return; }
+      dica.innerHTML = alvo.dataset.dica;
+      const caixa = gr.getBoundingClientRect(), esc3 = caixa.width / svg.viewBox.baseVal.width;
+      let px = e.clientX - caixa.left, py = e.clientY - caixa.top;
+      if (alvo.dataset.ponto && marc) {
+        const [cx, cy] = alvo.dataset.ponto.split(',').map(Number);
+        marc.setAttribute('cx', cx); marc.setAttribute('cy', cy); marc.style.display = '';
+        px = cx * esc3; py = cy * esc3;
+      }
+      dica.style.left = Math.min(caixa.width - 70, Math.max(70, px)) + 'px';
+      dica.style.top = py - 6 + 'px';
+      dica.style.opacity = 1;
+    });
+    gr.addEventListener('pointerleave', () => { dica.style.opacity = 0; if (marc) marc.style.display = 'none'; });
+  });
+}
+
+// ------------------------------------------------------------------ telas
+const C = () => $('#conteudo');
+
+async function telaVisao() {
+  const [v, av, pp, res, hor, datas] = await Promise.all([api('visao?periodo=' + E.periodo), api('avisos').catch(() => []), api('primeiros-passos').catch(() => null),
+    api('resultados?periodo=' + E.periodo).catch(() => null), api('horarios').catch(() => null), api('datas').catch(() => [])]);
+  E.pendentes = v.pendentes; montarMenu();
+  const maxO = Math.max(1, ...v.topOfertas.map((x) => x.cliques)), maxG = Math.max(1, ...v.topGrupos.map((x) => x.cliques));
+  const porEnvio = (c, e) => (e ? (c / e).toFixed(1).replace('.', ',') + ' por envio' : '');
+  const rotPer = { hoje: 'hoje', ontem: 'ontem', '7d': 'nos últimos 7 dias', '30d': 'nos últimos 30 dias', mes: 'no mês', 'mes-anterior': 'no mês anterior' }[E.periodo];
+  C().innerHTML = cabeca('visao', 'Visão geral', `Olá, ${esc((E.eu.nome || '').split(' ')[0] || 'tudo certo')}! Veja como estão seus grupos ${rotPer}.`, chipsPeriodo()) + `
+    ${avisosHtml(av)}
+    ${pp && pp.feitos < pp.total ? `<section class="cartao bloco" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>Primeiros passos</h2><span class="selo">${pp.feitos} de ${pp.total}</span></div>
+      <div class="meta-barra"><i style="width:${Math.round((pp.feitos / pp.total) * 100)}%"></i></div>
+      <div class="passos">${pp.passos.map((x) => `<a class="passo ${x.feito ? 'ok' : ''}" href="${x.link}"><span class="ck">${x.feito ? '✓' : ''}</span>${esc(x.texto)}</a>`).join('')}</div></section>` : ''}
+    <div class="kpis">
+      ${kpi('msg', num(v.enviados), 'Mensagens enviadas')}
+      ${kpi('clique', num(v.cliques), v.enviados ? `Cliques · ${String(v.cliquesPorEnvio).replace('.', ',')} por mensagem` : 'Cliques nos links')}
+      ${kpi('cel', `${v.numeros.conectados}<small>/${v.numeros.limite}</small>`, 'Números conectados', v.numeros.conectados < v.numeros.total ? 'v' : '')}
+      ${kpi('relogio', num(v.pendentes), 'Agendamentos pendentes', 'a')}
+      ${kpi('ima', num(v.capturadas), 'Ofertas capturadas', 'l')}
+      ${kpi('comissoes', reaisCurto(v.comissao), 'Comissão no período')}
+    </div>
+    <div class="grade-2">
+      <section class="cartao bloco"><h2>Envio de mensagens</h2><p class="sub">Mensagens enviadas por dia para ${v.gruposEnvio} grupo(s) de envio${v.erros ? ` · <span style="color:var(--vermelho)">${v.erros} com erro</span>` : ''}</p>
+        ${v.serie.length > 1 ? graficoBarras(v.serie, 'enviados', 'mensagens enviadas') : `<div class="kpi"><div class="valor">${num(v.enviados)}</div><div class="rot">mensagens ${rotPer}</div></div>`}
+      </section>
+      <section class="cartao bloco"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>Próximos envios</h2><a href="#agendamentos" style="font-size:13px">Ver todos</a></div><p class="sub">Publicados automaticamente nos seus grupos</p>
+        <div class="linhas">${v.proximos.length ? v.proximos.map((a) => `
+          <div class="linha"><div class="miniatura">${foto(a.imagem)}</div><div class="meio"><div class="tit">${esc(a.titulo || 'Mensagem')}</div><div class="det">${a.plataforma ? loja(a.plataforma) : ''}${quandoTxt(a.quando)}</div></div>${status(a.status)}</div>`).join('')
+          : `<div class="vazio">Nada agendado.<br><a href="#ofertas">Gerar uma oferta</a></div>`}</div>
+      </section>
+    </div>
+    <div class="grade-2" style="margin-top:16px;grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+      <section class="cartao bloco"><h2>Ofertas mais clicadas</h2><p class="sub">Cliques nos links do Ofertix no período</p>
+        ${v.topOfertas.length ? v.topOfertas.map((o, i) => `<div class="rank"><span class="pos">${i + 1}</span><div class="miniatura" style="width:38px;height:38px;font-size:20px">${foto(o.imagem)}</div>
+          <div class="meio"><div class="tit" style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(o.titulo)}</div><div class="barra"><i style="width:${(o.cliques / maxO) * 100}%"></i></div></div>
+          <div class="val"><b>${num(o.cliques)}</b><small>${porEnvio(o.cliques, o.envios)}</small></div></div>`).join('')
+          : '<div class="vazio">Os cliques aparecem aqui depois dos primeiros envios.</div>'}
+      </section>
+      <section class="cartao bloco"><h2>Grupos que mais clicam</h2><p class="sub">Onde suas ofertas rendem mais</p>
+        ${v.topGrupos.length ? v.topGrupos.map((g, i) => `<div class="rank"><span class="pos">${i + 1}</span>
+          <div class="meio"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.nome)}</div><div class="barra"><i style="width:${(g.cliques / maxG) * 100}%"></i></div></div>
+          <div class="val"><b>${num(g.cliques)}</b><small>${porEnvio(g.cliques, g.envios)}</small></div></div>`).join('')
+          : '<div class="vazio">Sem cliques no período.</div>'}
+      </section>
+    </div>
+    ${res ? (() => { const f = res.funil, tx = (a, b) => (b ? (a / b * 100).toFixed(1).replace('.', ',') + '%' : '–'); return `<div class="grade-2" style="margin-top:16px">
+      <section class="cartao bloco"><h2>Do envio à comissão</h2><p class="sub">O caminho de cada oferta no período</p>
+        <div class="funil"><div class="et"><b>${num(f.envios)}</b><small>mensagens</small></div><div class="et"><b>${num(f.cliques)}</b><small>cliques</small><div class="tx">${f.envios ? (f.cliques / f.envios).toFixed(1).replace('.', ',') + ' por envio' : ''}</div></div>
+        <div class="et"><b>${num(f.pedidos)}</b><small>pedidos</small><div class="tx">${tx(f.pedidos, f.cliques)} dos cliques</div></div><div class="et"><b>${reaisCurto(f.comissao)}</b><small>comissão</small><div class="tx">${f.pedidos ? reais(Math.round(f.comissao / f.pedidos)) + ' por pedido' : ''}</div></div></div></section>
+      <section class="cartao bloco"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>Meta de comissão do mês</h2><button class="botao sec peq" id="editar-meta">${res.meta.valor ? 'Mudar meta' : 'Definir meta'}</button></div>
+        ${res.meta.valor ? `<p class="sub">${reais(res.meta.atingido)} de ${reais(res.meta.valor)}</p><div class="meta-barra"><i style="width:${Math.min(100, res.meta.pct)}%"></i></div>
+          <p style="font-size:13px;color:var(--texto-2)">${res.meta.pct >= 100 ? '🎉 Meta batida!' : `${res.meta.pct}% da meta · faltam ${reais(res.meta.valor - res.meta.atingido)}`}</p>`
+          : `<p class="sub">Defina quanto quer ganhar em comissões por mês e acompanhe aqui.</p><p style="font-size:13px;color:var(--texto-2)">Neste mês: ${reais(res.meta.atingido) || 'R$ 0,00'}</p>`}</section></div>`; })() : ''}
+    ${datas.length ? `<section class="cartao bloco" style="margin-top:16px"><h2>Próximas datas do varejo</h2><p class="sub">Prepare a vitrine e os horários com antecedência</p>
+      <div class="datas">${datas.map((d) => `<div class="data"><b>${esc(d.nome)}</b><div class="dias">${d.dias === 0 ? 'Hoje' : d.dias === 1 ? 'Amanhã' : d.dias}${d.dias > 1 ? ' <small>dias · ' + d.data.split('-').reverse().slice(0, 2).join('/') + '</small>' : ''}</div><p>${esc(d.dica)}</p></div>`).join('')}</div></section>` : ''}
+    <section class="cartao bloco" style="margin-top:16px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>Desempenho por categoria</h2><a href="#nicho" style="font-size:13px">Nicho e curadoria</a></div>
+      <p class="sub">Cliques por envio em cada categoria: mostra o que o seu público mais compra</p>
+      ${v.porCategoria.length ? (() => { const maxC = Math.max(0.01, ...v.porCategoria.map((x) => x.cliquesPorEnvio)); return v.porCategoria.map((x, i) => `<div class="rank"><span class="pos">${i + 1}</span>
+        <div class="meio"><div style="font-weight:600">${x.emoji} ${esc(x.nome)}</div><div class="barra"><i style="width:${(x.cliquesPorEnvio / maxC) * 100}%"></i></div></div>
+        <div class="val"><b>${String(x.cliquesPorEnvio).replace('.', ',')}</b><small>${num(x.cliques)} cliques · ${num(x.envios)} envios</small></div></div>`).join(''); })()
+        : '<div class="vazio">As categorias aparecem aqui depois dos primeiros envios.</div>'}
+    </section>
+    ${hor ? `<section class="cartao bloco" style="margin-top:16px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>Melhores horários</h2>
+      ${hor.sugestao.length ? `<button class="botao sec peq" id="usar-horarios" data-h="${hor.sugestao.join(',')}">Usar ${hor.sugestao.join(', ')} na vitrine</button>` : ''}</div>
+      <p class="sub">Cliques por mensagem, pelo dia e pela hora em que a oferta saiu (últimos 30 dias, ${num(hor.envios)} envios). Mais escuro = rende mais.</p>
+      ${hor.envios ? (() => { const max = Math.max(0.01, ...hor.grade.flat()); const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        return `<div class="calor" role="img" aria-label="Mapa de cliques por dia e hora"><span class="rt"></span>${Array.from({ length: 24 }, (_, h) => `<span class="rt" style="justify-content:center">${h % 3 === 0 ? h : ''}</span>`).join('')}
+          ${hor.grade.map((l, d) => `<span class="rt">${dias[d]}</span>${l.map((t, h) => `<span title="${dias[d]} ${h}h: ${String(t).replace('.', ',')} cliques por mensagem" style="background:${t ? `color-mix(in srgb,var(--verde) ${Math.round(15 + (t / max) * 85)}%,transparent)` : 'var(--surface-2)'}"></span>`).join('')}`).join('')}</div>`; })()
+        : '<div class="vazio">O mapa aparece depois dos primeiros envios com contagem de cliques.</div>'}</section>` : ''}`;
+  if ($('#usar-horarios')) $('#usar-horarios').onclick = tentar(async () => { const r = await api('horarios/usar', { method: 'POST', body: { horarios: $('#usar-horarios').dataset.h.split(',') } }); aviso('Horários automáticos: ' + r.horarios.join(', ')); });
+  if ($('#editar-meta')) $('#editar-meta').onclick = tentar(async () => {
+    const atual = res.meta.valor ? (res.meta.valor / 100).toFixed(2).replace('.', ',') : '';
+    const v2 = prompt('Meta de comissão por mês (R$)', atual); if (v2 === null) return;
+    const cent = Math.round(Number(String(v2).replace(/\./g, '').replace(',', '.')) * 100) || 0;
+    await salvarExtras({ meta_comissao: cent }); aviso(cent ? 'Meta salva' : 'Meta removida'); telaVisao();
+  });
+  ligarDicas(C());
+}
+
+function avisosHtml(lista) {
+  if (!lista?.length) return '';
+  return `<div class="avisos">${lista.map((a) => `<a class="alerta ${esc(a.nivel)}" href="${esc(a.link)}">${ico('alerta', 17)}<span>${esc(a.texto)}</span><b>Resolver →</b></a>`).join('')}</div>`;
+}
+
+const CATS = [['', 'Todas as categorias'], ['casa', '🏠 Casa'], ['cozinha', '🍳 Cozinha'], ['organizacao', '🗂️ Organização'], ['beleza', '💄 Beleza'], ['moda', '👗 Moda'], ['infantil', '🧸 Infantil'], ['eletronicos', '🎧 Eletrônicos'], ['outros', '🛍️ Outros']];
+const nomeCat = (id) => (CATS.find((c) => c[0] === (id || 'outros')) || CATS.at(-1))[1];
+async function telaOfertas() {
+  const q = new URLSearchParams(); if (E.filtroOfertas) q.set('origem', E.filtroOfertas); if (E.filtroCat) q.set('categoria', E.filtroCat); if (E.busca) q.set('q', E.busca);
+  const lista = await api('ofertas' + (q.toString() ? '?' + q : ''));
+  C().innerHTML = cabeca('ofertas', 'Ofertas', 'Cole um link e o Ofertix troca pelo seu link de afiliado, busca foto e preço e monta a mensagem.',
+    `<div class="chips">${[['', 'Todas'], ['vitrine', 'Vitrine'], ['manual', 'Que eu colei'], ['captura', 'Capturadas'], ['arquivadas', 'Arquivadas']].map(([v, n]) => `<button class="chip ${E.filtroOfertas === v ? 'ativo' : ''}" data-filtro="${v}">${n}</button>`).join('')}</div>`) + `
+    <div style="margin-bottom:10px"><div class="segmento" role="group" aria-label="Como adicionar"><button class="${!E.lote && !E.buscaShopee ? 'ativo' : ''}" data-modo="um">Um link</button><button class="${E.lote ? 'ativo' : ''}" data-modo="lote">Vários links</button><button class="${E.buscaShopee ? 'ativo' : ''}" data-modo="busca">${ico('busca', 14)} Buscar na Shopee</button></div></div>
+    ${E.buscaShopee ? htmlBuscaShopee() : E.lote ? `<form class="cartao secao-form lote" id="form-lote">
+      <div class="campo"><label for="links-lote">Links (um por linha, até 20)</label><textarea id="links-lote" placeholder="https://s.shopee.com.br/...&#10;https://www.amazon.com.br/dp/...&#10;https://produto.mercadolivre.com.br/..."></textarea></div>
+      <div class="form-grade" style="margin-top:14px">
+        <div class="campo"><label for="espaco-lote">Uma oferta a cada</label><select id="espaco-lote">${[[10, '10 minutos'], [20, '20 minutos'], [30, '30 minutos'], [45, '45 minutos'], [60, '1 hora'], [120, '2 horas']].map(([v, n]) => `<option value="${v}" ${v === 30 ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+        <div class="campo"><label for="inicio-lote">Começar</label><input id="inicio-lote" type="datetime-local"><span class="ajuda">Vazio = agora</span></div>
+        <div class="campo" style="justify-content:flex-end"><button class="botao" type="submit" style="height:42px">${ico('agenda', 16)}Gerar e agendar</button></div>
+      </div>
+      <p class="ajuda" style="margin:10px 0 0;color:var(--mudo);font-size:12px">Vai para todos os grupos com envio ligado, respeitando a janela de envio e o intervalo entre grupos.</p>
+    </form>${E.resultadoLote || ''}` : `<form class="cartao colar-grande" id="form-oferta">
+      <div class="campo"><label for="link-oferta">Link do produto</label><input id="link-oferta" placeholder="https://s.shopee.com.br/... ou https://www.mercadolivre.com.br/..." autocomplete="off"></div>
+      <label style="display:flex;gap:6px;align-items:center;font-size:13px;align-self:flex-end;height:42px;white-space:nowrap"><input type="checkbox" id="direto-vitrine">Direto para a vitrine</label>
+      <button class="botao" type="submit" style="align-self:flex-end;height:42px">${ico('ofertas', 16)}Gerar oferta</button>
+    </form>`}
+    <div style="margin:0 0 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><input id="busca-ofertas" type="search" class="sel-cat" style="min-width:220px;flex:1;max-width:340px" placeholder="Buscar pelo nome do produto" value="${esc(E.busca || '')}" aria-label="Buscar ofertas">
+      <label for="filtro-cat" style="font-size:13px;color:var(--texto-2);font-weight:600">Categoria</label><select id="filtro-cat" class="sel-cat">${CATS.map(([v, n]) => `<option value="${v}" ${E.filtroCat === v ? 'selected' : ''}>${n}</option>`).join('')}</select>
+      <button class="botao sec peq" type="button" id="campeas" title="As ofertas mais clicadas dos últimos 7 dias voltam para a vitrine">${ico('trofeu', 14)}Reenviar as campeãs</button></div>
+    ${E.filtroOfertas === 'vitrine' ? `<p style="color:var(--texto-2);margin:0 0 14px">A vitrine é a fila dos horários automáticos: em cada horário, a oferta mais antiga daqui vai para os seus grupos. Configure os horários em <a href="#config">Configurações</a>.</p>` : ''}
+    ${lista.length ? `<div class="grade-ofertas">${lista.map((o) => {
+      const d = pct(o.preco_de, o.preco_por);
+      return `<article class="cartao oferta">
+        <div class="foto">${foto(o.imagem)}${loja(o.plataforma)}${d ? `<span class="off">-${d}% OFF</span>` : ''}${o.origem === 'captura' ? `<span class="capt" title="Capturada de ${esc(o.origem_grupo)}">${ico('ima', 11)} capturada</span>` : ''}${o.vitrine ? '<span class="vit">Na vitrine</span>' : ''}${o.esgotada ? '<span class="esg">Esgotado</span>' : ''}</div>
+        <div class="info"><div class="nome" title="${esc(o.titulo)}">${esc(o.titulo || 'Produto sem título')}</div>
+          <div class="precos">${d ? `<s>${reais(o.preco_de)}</s>` : ''}<b>${o.preco_por ? reais(o.preco_por) : 'Ver preço'}</b></div>
+          <div class="metricas"><select class="sel-cat mini" data-cat="${o.id}" aria-label="Categoria da oferta">${CATS.slice(1).map(([v, n]) => `<option value="${v}" ${(o.categoria || 'outros') === v ? 'selected' : ''}>${n}</option>`).join('')}</select>${o.nota ? `<span>⭐ ${String(Math.round(o.nota * 10) / 10).replace('.', ',')}</span>` : ''}${o.vendas ? `<span>${num(o.vendas)} vendidos</span>` : ''}</div>
+          <div class="metricas">${o.comissao_pct != null ? `<span>${ico('comissoes', 12)} ${String(o.comissao_pct).replace('.', ',')}%</span>` : ''}<span>${ico('clique', 12)} ${num(o.cliques)} cliques</span><span>${ico('enviar', 12)} ${num(o.envios)} envios</span></div>
+          <div class="acoes"><button class="botao peq" data-enviar="${o.id}">${ico('enviar', 14)}Enviar</button><button class="botao sec peq estrela ${o.vitrine ? 'ativa' : ''}" data-vitrine="${o.id}" data-ligada="${o.vitrine ? 0 : 1}" aria-label="${o.vitrine ? 'Tirar da vitrine' : 'Pôr na vitrine'}" title="${o.vitrine ? 'Tirar da vitrine' : 'Pôr na vitrine (horários automáticos)'}">${ico('estrela', 14)}</button><button class="botao sec peq" data-editar="${o.id}" aria-label="Editar oferta" title="Editar">${ico('editar', 14)}</button><button class="botao sec peq" data-arquivar="${o.id}" data-arq="${o.arquivada ? 0 : 1}" aria-label="${o.arquivada ? 'Desarquivar' : 'Arquivar'}" title="${o.arquivada ? 'Desarquivar' : 'Arquivar'}">${ico('arquivo', 14)}</button><button class="botao sec peq" data-apagar="${o.id}" aria-label="Apagar oferta">${ico('lixo', 14)}</button></div>
+        </div></article>`;
+    }).join('')}</div>` : `<div class="cartao vazio">${ico('sacola', 34)}<h3>Nenhuma oferta ainda</h3>Cole um link acima${E.filtroOfertas === 'captura' ? ', ou ligue o monitoramento de um grupo em Grupos de envio' : ''}.</div>`}`;
+  $('#filtro-cat').onchange = (e) => { E.filtroCat = e.target.value; telaOfertas(); };
+  let tb; $('#busca-ofertas').oninput = (e) => { clearTimeout(tb); tb = setTimeout(async () => { E.busca = e.target.value.trim(); await telaOfertas(); const i = $('#busca-ofertas'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 350); };
+  $('#campeas').onclick = tentar(async () => { const r = await api('ofertas/campeas', { method: 'POST', body: { periodo: '7d' } }); aviso(r.quantas ? `${r.quantas} campeã(s) de volta na vitrine` : 'Nenhuma oferta clicada fora da vitrine nos últimos 7 dias'); telaOfertas(); });
+  C().querySelectorAll('[data-editar]').forEach((b) => (b.onclick = tentar(async () => { const r = await api(`ofertas/${b.dataset.editar}/texto`); abrirEdicao(r.oferta); })));
+  C().querySelectorAll('[data-arquivar]').forEach((b) => (b.onclick = tentar(async () => { await api(`ofertas/${b.dataset.arquivar}/arquivar`, { method: 'POST', body: { arquivada: b.dataset.arq === '1' } }); aviso(b.dataset.arq === '1' ? 'Oferta arquivada' : 'Oferta de volta na lista'); telaOfertas(); })));
+  C().querySelectorAll('[data-cat]').forEach((sel) => { sel.onchange = tentar(async () => { await api(`ofertas/${sel.dataset.cat}/categoria`, { method: 'POST', body: { categoria: sel.value } }); aviso('Categoria alterada para ' + nomeCat(sel.value)); }); });
+  if (E.buscaShopee) ligarBuscaShopee();
+  if ($('#form-oferta')) $('#form-oferta').onsubmit = tentar(async (e) => { e.preventDefault(); await gerarOferta($('#link-oferta').value, $('#direto-vitrine').checked); });
+  if ($('#form-lote')) $('#form-lote').onsubmit = tentar(async (e) => {
+    e.preventDefault();
+    const urls = $('#links-lote').value.split(/\s+/).filter(Boolean);
+    if (!urls.length) return aviso('Cole ao menos um link', true);
+    const botao = $('#form-lote button[type=submit]'); botao.disabled = true; botao.textContent = `Gerando ${urls.length} oferta(s)…`;
+    try {
+      const ini = $('#inicio-lote').value ? new Date($('#inicio-lote').value).getTime() : Date.now();
+      const r = await api('ofertas/lote', { method: 'POST', body: { urls, espacoMin: Number($('#espaco-lote').value), inicio: ini } });
+      E.resultadoLote = `<div class="cartao resultado-lote"><b>${r.criadas.length} oferta(s) agendada(s)</b>${r.criadas.length ? `, de ${quandoTxt(r.criadas[0].quando)} a ${quandoTxt(r.criadas.at(-1).quando)}` : ''}.
+        ${r.erros.length ? `<ul style="margin:8px 0 0;padding-left:18px;color:var(--vermelho)">${r.erros.map((x) => `<li>${esc(x.url)}: ${esc(x.erro)}</li>`).join('')}</ul>` : ''} <a href="#agendamentos">Ver agendamentos</a></div>`;
+      aviso(`${r.criadas.length} oferta(s) agendada(s)`);
+      await telaOfertas();
+    } finally { botao.disabled = false; }
+  });
+}
+
+// ---------- v6: busca de produtos na Shopee
+function htmlBuscaShopee() {
+  const r = E.resBusca;
+  const card = (x, i) => {
+    const d = pct(x.precoDe, x.precoPor);
+    return `<article class="cartao oferta${x.motivo ? ' fora-nicho' : ''}">
+      <div class="foto">${foto(x.imagem)}<span class="loja shopee">Shopee</span>${d ? `<span class="off">-${d}% OFF</span>` : ''}${x.ja ? `<span class="vit">${x.ja.vitrine ? 'Na vitrine' : 'Já nas ofertas'}</span>` : ''}</div>
+      <div class="info"><div class="nome" title="${esc(x.titulo)}">${esc(x.titulo)}</div>
+        <div class="precos">${d ? `<s>${reais(x.precoDe)}</s>` : ''}<b>${reais(x.precoPor)}</b></div>
+        <div class="metricas">${x.nota ? `<span>⭐ ${String(x.nota).replace('.', ',')}</span>` : ''}${x.vendas != null ? `<span>${num(x.vendas)} vendidos</span>` : ''}${x.comissaoPct != null ? `<span>${ico('comissoes', 12)} ${String(x.comissaoPct).replace('.', ',')}%</span>` : ''}<span>${esc(nomeCat(x.categoria))}</span></div>
+        ${x.motivo ? `<div class="motivo">Fora do seu nicho: ${esc(x.motivo)}</div>` : ''}
+        <div class="acoes">${x.ja ? `<button class="botao sec peq" data-enviar="${x.ja.id}">${ico('enviar', 14)}Enviar</button>`
+          : `<button class="botao peq" data-add-busca="${i}" data-vit="1">${ico('estrela', 14)}Pôr na vitrine</button><button class="botao sec peq" data-add-busca="${i}" data-vit="0">${ico('enviar', 14)}Enviar</button>`}</div>
+      </div></article>`;
+  };
+  return `<form class="cartao colar-grande" id="form-busca">
+      <div class="campo"><label for="termo-busca">O que você procura?</label><input id="termo-busca" placeholder="Ex.: organizador de gaveta, sérum, air fryer" value="${esc(E.termoBusca || '')}" autocomplete="off"></div>
+      <div class="campo" style="min-width:150px"><label for="ordem-busca">Ordenar por</label><select id="ordem-busca" class="sel-cat" style="height:42px">${[['vendidos', 'Mais vendidos'], ['comissao', 'Maior comissão'], ['preco', 'Menor preço'], ['relevancia', 'Relevância']].map(([v, n]) => `<option value="${v}" ${(E.ordemBusca || 'vendidos') === v ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+      <button class="botao" type="submit" style="align-self:flex-end;height:42px">${ico('busca', 16)}Buscar</button>
+    </form>
+    ${r ? `<p style="color:var(--texto-2);margin:0 0 12px">${r.itens.length} produto(s) para "<b>${esc(E.termoBusca)}</b>". ${r.itens.some((x) => x.motivo) ? 'Os que não passam na sua curadoria aparecem apagados, com o motivo.' : ''}</p>
+      ${r.itens.length ? `<div class="grade-ofertas" style="margin-bottom:12px">${r.itens.map(card).join('')}</div>` : '<div class="cartao vazio">Nada encontrado. Tente outra palavra.</div>'}
+      ${r.temMais ? `<div style="text-align:center;margin-bottom:22px"><button class="botao sec" data-mais-busca>Ver mais resultados</button></div>` : ''}
+      <hr style="border:0;border-top:1px solid var(--borda);margin:10px 0 18px"><h2 style="font-size:17px;margin-bottom:12px">Suas ofertas</h2>` : `<p class="ajuda" style="color:var(--mudo);font-size:13px;margin:-4px 0 18px">Usa a API de afiliados da Shopee (AppID e Senha em Configurações). Você vê preço, nota, vendas e comissão antes de escolher.</p>`}`;
+}
+function ligarBuscaShopee() {
+  const buscar = tentar(async (pagina = 1) => {
+    const termo = $('#termo-busca').value.trim(); if (!termo) return aviso('Escreva o que você procura', true);
+    E.termoBusca = termo; E.ordemBusca = $('#ordem-busca').value;
+    const b = $('#form-busca button[type=submit]'); b.disabled = true; b.textContent = 'Buscando…';
+    try {
+      const r = await api(`shopee/busca?q=${encodeURIComponent(termo)}&ordem=${E.ordemBusca}&pagina=${pagina}`);
+      E.resBusca = pagina > 1 && E.resBusca ? { ...r, itens: [...E.resBusca.itens, ...r.itens] } : r;
+      await telaOfertas();
+    } finally { if (b.isConnected) b.disabled = false; }
+  });
+  $('#form-busca').onsubmit = (e) => { e.preventDefault(); buscar(1); };
+  if ($('[data-mais-busca]')) $('[data-mais-busca]').onclick = () => buscar((E.resBusca.pagina || 1) + 1);
+  C().querySelectorAll('[data-add-busca]').forEach((b) => (b.onclick = tentar(async () => {
+    const item = E.resBusca.itens[Number(b.dataset.addBusca)], vit = b.dataset.vit === '1';
+    b.disabled = true;
+    const r = await api('shopee/adicionar', { method: 'POST', body: { item, vitrine: vit } });
+    item.ja = { id: r.oferta.id, vitrine: vit };
+    if (vit) { aviso('Na vitrine: sai no próximo horário automático'); await telaOfertas(); }
+    else { await telaOfertas(); abrirCompositor(r.oferta, r.texto); }
+  })));
+}
+
+async function gerarOferta(url, vitrine = false) {
+  url = String(url || '').trim();
+  if (!url) return aviso('Cole o link do produto', true);
+  aviso('Gerando a oferta…');
+  const r = await api('ofertas', { method: 'POST', body: { url, vitrine } });
+  if (vitrine) {
+    aviso(r.parecidas?.length ? `Na vitrine. Atenção: parece com "${r.parecidas[0].titulo}"` : 'Oferta gerada e colocada na vitrine');
+    if ((location.hash.slice(1) || 'visao') === 'ofertas') telaOfertas().catch(() => {});
+    return;
+  }
+  abrirCompositor(r.oferta, r.texto, r.parecidas || []);
+  if ((location.hash.slice(1) || 'visao') === 'ofertas') telaOfertas().catch(() => {});
+}
+
+// {a|b|c}: variações sorteadas por grupo. A prévia mostra a primeira opção.
+const VAR_RE = /\{([^{}\n]*\|[^{}\n]*)\}/g;
+const previaVar = (t) => String(t).replace(VAR_RE, (_m, op) => op.split('|')[0]);
+const temVar = (t) => new RegExp(VAR_RE.source).test(String(t));
+// Mostra o texto no formato do WhatsApp (*negrito*, ~riscado~, _itálico_).
+const zapHtml = (t) => esc(t).replace(/\*([^*\n]+)\*/g, '<b>$1</b>').replace(/~([^~\n]+)~/g, '<s>$1</s>').replace(/(^|\s)_([^_\n]+)_/g, '$1<i>$2</i>');
+
+async function abrirCompositor(o, texto, parecidas = []) {
+  const g = await api('grupos');
+  const envio = g.lista.filter((x) => x.enviar);
+  const amanha = new Date(Date.now() + 3600_000); amanha.setMinutes(0, 0, 0);
+  const local = new Date(amanha.getTime() - amanha.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  $('#camada').innerHTML = `<div class="fundo" id="fundo"><div class="cartao modal" role="dialog" aria-modal="true" aria-labelledby="tit-modal">
+    <div class="modal-cab"><h2 id="tit-modal">Enviar oferta</h2><button class="icone-btn" id="fechar" aria-label="Fechar">${ico('x')}</button></div>
+    <div class="modal-corpo">
+      <div><div class="zap"><div class="bolha" id="previa"><div class="img">${foto(o.imagem)}</div><span id="previa-txt"></span><span class="hora">${hora(Date.now())}</span></div></div>
+        <p style="color:var(--mudo);font-size:12px;margin:8px 2px 0">Link de afiliado: <a href="${esc(o.url_afiliado)}" target="_blank" rel="noopener" style="word-break:break-all">${esc(o.url_afiliado)}</a></p></div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        ${parecidas.length ? `<div class="parecidas"><b>Parece repetida:</b> ${parecidas.map((x) => esc(x.titulo)).join(' · ')}. Confira antes de enviar para não mandar o mesmo produto duas vezes.</div>` : ''}
+        <div class="campo"><label for="txt">Texto da mensagem</label><textarea id="txt" rows="8">${esc(texto)}</textarea><span class="ajuda">*negrito* · ~riscado~ · _itálico_ · {opção 1|opção 2} sorteia uma por grupo</span><div class="dica-var oculto" id="dica-var">Este texto tem variações: cada grupo recebe uma versão sorteada. A prévia mostra a primeira.</div></div>
+        <div class="campo"><label>Grupos (${envio.length} com envio ligado)</label>
+          ${envio.length ? `<div class="lista-grupos">${envio.map((x) => `<label><input type="checkbox" value="${x.id}" checked>${esc(x.nome)}<small>${num(x.participantes)}</small></label>`).join('')}</div>`
+            : `<div class="vazio" style="padding:14px;border:1px dashed var(--borda);border-radius:10px">Nenhum grupo com envio ligado. <a href="#grupos" id="ir-grupos">Ligar grupos</a></div>`}
+        </div>
+        <div class="campo"><label>Quando</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><div class="segmento"><button class="ativo" data-q="agora">Agora</button><button data-q="depois">Agendar</button></div>
+          <input type="datetime-local" id="quando" value="${local}" class="oculto" style="flex:1;min-width:180px"></div>
+          <span class="ajuda">Os envios saem com intervalo aleatório entre os grupos, para proteger o seu número.</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="botao" id="confirmar" ${envio.length ? '' : 'disabled'} style="flex:1">${ico('enviar', 16)}Enviar para ${envio.length} grupo(s)</button>
+          <button class="botao sec" id="teste-envio" type="button" title="Manda só para o seu WhatsApp (número do resumo diário)">${ico('cel', 16)}Teste para mim</button></div>
+      </div>
+    </div></div></div>`;
+  const atualizar = () => { $('#previa-txt').innerHTML = zapHtml(previaVar($('#txt').value)); $('#dica-var').classList.toggle('oculto', !temVar($('#txt').value)); };
+  atualizar();
+  $('#txt').oninput = atualizar;
+  let depois = false;
+  const rotulo = () => { const n = $('#camada').querySelectorAll('.lista-grupos input:checked').length; $('#confirmar').innerHTML = `${ico(depois ? 'agenda' : 'enviar', 16)}${depois ? 'Agendar' : 'Enviar'} para ${n} grupo(s)`; $('#confirmar').disabled = !n; };
+  $('#camada').querySelectorAll('.lista-grupos input').forEach((i) => (i.onchange = rotulo));
+  $('#camada').querySelectorAll('[data-q]').forEach((b) => (b.onclick = () => {
+    depois = b.dataset.q === 'depois';
+    $('#camada').querySelectorAll('[data-q]').forEach((x) => x.classList.toggle('ativo', x === b));
+    $('#quando').classList.toggle('oculto', !depois); rotulo();
+  }));
+  const fechar = () => ($('#camada').innerHTML = '');
+  $('#fechar').onclick = fechar;
+  $('#fundo').onclick = (e) => { if (e.target.id === 'fundo') fechar(); };
+  if ($('#ir-grupos')) $('#ir-grupos').onclick = fechar;
+  document.addEventListener('keydown', function esc2(e) { if (e.key === 'Escape') { fechar(); document.removeEventListener('keydown', esc2); } });
+  $('#teste-envio').onclick = tentar(async () => { await api('teste-envio', { method: 'POST', body: { texto: $('#txt').value, imagem: o.imagem } }); aviso('Teste enviado para o seu WhatsApp'); });
+  $('#confirmar').onclick = tentar(async () => {
+    const grupos = [...$('#camada').querySelectorAll('.lista-grupos input:checked')].map((i) => Number(i.value));
+    const quando = depois ? new Date($('#quando').value).getTime() : Date.now();
+    await api('agendamentos', { method: 'POST', body: { ofertaId: o.id, texto: $('#txt').value, imagem: o.imagem, quando, grupos } });
+    fechar();
+    aviso(depois ? 'Oferta agendada' : 'Envio iniciado: acompanhe em Agendamentos');
+    if (location.hash === '#agendamentos') telaAgendamentos(); else location.hash = '#agendamentos';
+  });
+  $('#txt').focus();
+}
+
+async function abrirEdicao(o) {
+  const h = await api(`ofertas/${o.id}/precos`).catch(() => ({ lista: [] }));
+  const v = (c) => (c ? (c / 100).toFixed(2).replace('.', ',') : '');
+  const hist = h.lista.length > 1 ? (() => { const max = Math.max(...h.lista.map((p) => p.preco_por)), min = Math.min(...h.lista.map((p) => p.preco_por)), w = 320, alt = 60;
+    const pts = h.lista.map((p, i) => `${(i / (h.lista.length - 1)) * w},${alt - 6 - ((p.preco_por - min) / Math.max(1, max - min)) * (alt - 12)}`).join(' ');
+    return `<svg viewBox="0 0 ${w} ${alt}" width="100%" height="${alt}" role="img" aria-label="Histórico de preço"><polyline points="${pts}" fill="none" stroke="var(--verde)" stroke-width="2.5" stroke-linejoin="round"/></svg>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--mudo)"><span>Menor: ${reais(min)}</span><span>Maior: ${reais(max)}</span></div>`; })() : '';
+  $('#camada').innerHTML = `<div class="fundo" id="fundo"><div class="cartao modal" role="dialog" aria-modal="true" aria-labelledby="tit-ed" style="max-width:560px">
+    <div class="modal-cab"><h2 id="tit-ed">Editar oferta</h2><button class="icone-btn" id="fechar" aria-label="Fechar">${ico('x')}</button></div>
+    <form id="form-ed" style="display:flex;flex-direction:column;gap:12px;padding:0 20px 20px">
+      <div class="campo"><label for="ed-tit">Título</label><input id="ed-tit" maxlength="200" value="${esc(o.titulo)}"></div>
+      <div class="form-grade"><div class="campo"><label for="ed-de">Preço de (R$)</label><input id="ed-de" inputmode="decimal" value="${v(o.preco_de)}"></div>
+        <div class="campo"><label for="ed-por">Preço por (R$)</label><input id="ed-por" inputmode="decimal" value="${v(o.preco_por)}"></div>
+        <div class="campo"><label for="ed-cat">Categoria</label><select id="ed-cat">${CATS.slice(1).map(([c, n]) => `<option value="${c}" ${(o.categoria || 'outros') === c ? 'selected' : ''}>${n}</option>`).join('')}</select></div></div>
+      <div class="campo"><label for="ed-img">Foto (link https)</label><input id="ed-img" value="${esc(/^https?:/.test(o.imagem) ? o.imagem : '')}" placeholder="https://..."></div>
+      <div class="campo"><label>Histórico de preço</label>${hist || `<span class="ajuda">${h.lista.length ? 'Um preço registrado até agora: ' + reais(h.lista[0].preco_por) : 'Ainda sem histórico'}. O Ofertix anota cada mudança de preço.</span>`}</div>
+      <div style="display:flex;justify-content:flex-end;gap:8px"><button class="botao sec" type="button" id="cancelar-ed">Cancelar</button><button class="botao" type="submit">Salvar</button></div>
+    </form></div></div>`;
+  const fechar = () => ($('#camada').innerHTML = '');
+  $('#fechar').onclick = fechar; $('#cancelar-ed').onclick = fechar; $('#fundo').onclick = (e) => { if (e.target.id === 'fundo') fechar(); };
+  $('#form-ed').onsubmit = tentar(async (e) => {
+    e.preventDefault();
+    await api('ofertas/' + o.id, { method: 'PUT', body: { titulo: $('#ed-tit').value, precoDe: $('#ed-de').value.replace(/\./g, ''), precoPor: $('#ed-por').value.replace(/\./g, ''), imagem: $('#ed-img').value || (/^https?:/.test(o.imagem) ? '' : o.imagem), categoria: $('#ed-cat').value } });
+    fechar(); aviso('Oferta salva'); telaOfertas();
+  });
+}
+
+async function telaAgendamentos() {
+  const lista = await api('agendamentos' + (E.filtroStatus ? '?status=' + E.filtroStatus : ''));
+  E.pendentes = lista.filter((a) => a.status === 'pendente' || a.status === 'enviando').length; montarMenu();
+  const enviando = lista.filter((a) => a.status === 'enviando');
+  C().innerHTML = cabeca('agenda', 'Agendamentos', 'Fila de publicações. Cada oferta vai para os grupos com um intervalo aleatório entre um e outro.',
+    `<a class="botao sec" href="${window.OFERTIX_MOCK ? '#agendamentos' : '/api/exportar/envios.csv?periodo=30d'}" data-csv>${ico('baixar', 16)}Envios dos últimos 30 dias (CSV)</a>`) + `
+    <div class="chips" style="margin-bottom:14px">${[['', 'Próximos e recentes'], ['pendente', 'Pendentes'], ['enviado', 'Enviados'], ['erro', 'Com erro'], ['cancelado', 'Cancelados']].map(([v, n]) => `<button class="chip ${E.filtroStatus === v ? 'ativo' : ''}" data-status="${v}">${n}</button>`).join('')}</div>
+    <section class="cartao bloco">${lista.length ? `<div class="linhas">${lista.map((a) => {
+      const grupos = a.grupos === '"todos"' ? 'todos os grupos de envio' : `${JSON.parse(a.grupos).length} grupo(s)`;
+      return `<div class="linha"><div class="miniatura">${foto(a.foto || a.imagem)}</div>
+        <div class="meio"><div class="tit">${esc(a.titulo || a.texto.split('\n')[0].replace(/[*~_]/g, ''))}</div>
+          <div class="det">${a.plataforma ? loja(a.plataforma) : ''}${a.origem && a.origem !== 'manual' ? `<span class="tag-origem">${esc({ vitrine: 'vitrine', lote: 'lote', captura: 'capturada', enquete: 'enquete', lista: 'lista do dia', repetido: 'enviado de novo', recorrente: 'recorrente', 'boas-vindas': 'boas-vindas' }[a.origem] || a.origem)}</span>` : ''}<span>${grupos}</span><span>· ${quandoTxt(a.quando)}</span>${a.total ? `<span>· ${a.enviados}/${a.total} enviados${a.erros ? `, ${a.erros} erro(s)` : ''}</span>` : ''}${a.pulados ? `<span>· ${a.pulados} grupo(s) pulado(s) por repetição</span>` : ''}${a.cliques ? `<span>· ${ico('clique', 12)} ${num(a.cliques)} cliques</span>` : ''}</div>
+          ${a.obs ? `<div class="motivo">${esc(a.obs)}</div>` : ''}</div>
+        ${status(a.status)}${a.status === 'pendente' || a.status === 'enviando' ? `<button class="botao sec peq" data-cancelar="${a.id}">Cancelar</button>` : `<button class="botao sec peq" data-repetir="${a.id}" title="Enviar de novo">${ico('repetir', 14)}<span class="so-largo">De novo</span></button>`}</div>`;
+    }).join('')}</div>` : `<div class="vazio">${ico('agenda', 34)}<h3>Nada por aqui</h3><a href="#ofertas">Gere uma oferta</a> e envie ou agende para seus grupos.</div>`}</section>`;
+  clearTimeout(E.timerAg);
+  if (enviando.length && location.hash === '#agendamentos') E.timerAg = setTimeout(() => location.hash === '#agendamentos' && telaAgendamentos().catch(() => {}), 8000);
+}
+
+function enviarDeNovo(id) {
+  const d = new Date(Date.now() + 3600_000); d.setMinutes(0, 0, 0);
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  $('#camada').innerHTML = `<div class="fundo" id="fundo"><div class="cartao modal" role="dialog" aria-modal="true" aria-labelledby="tit-rep" style="max-width:440px">
+    <div class="modal-cab"><h2 id="tit-rep">Enviar de novo</h2><button class="icone-btn" id="fechar" aria-label="Fechar">${ico('x')}</button></div>
+    <div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:14px"><p style="margin:0;color:var(--texto-2)">Mesmo texto e mesmos grupos. A proteção contra repetição continua valendo: grupo que recebeu esta oferta há pouco é pulado.</p>
+      <div class="segmento"><button class="ativo" data-rq="agora">Agora</button><button data-rq="depois">Agendar</button></div>
+      <input type="datetime-local" id="rep-quando" value="${local}" class="oculto">
+      <button class="botao" id="rep-ok">${ico('repetir', 16)}Enviar de novo</button></div></div></div>`;
+  let depois = false;
+  const fechar = () => ($('#camada').innerHTML = '');
+  $('#fechar').onclick = fechar; $('#fundo').onclick = (e) => { if (e.target.id === 'fundo') fechar(); };
+  $('#camada').querySelectorAll('[data-rq]').forEach((b) => (b.onclick = () => { depois = b.dataset.rq === 'depois'; $('#camada').querySelectorAll('[data-rq]').forEach((x) => x.classList.toggle('ativo', x === b)); $('#rep-quando').classList.toggle('oculto', !depois); }));
+  $('#rep-ok').onclick = tentar(async () => {
+    await api(`agendamentos/${id}/repetir`, { method: 'POST', body: { quando: depois ? new Date($('#rep-quando').value).getTime() : null } });
+    fechar(); aviso(depois ? 'Agendado de novo' : 'Envio iniciado'); E.filtroStatus = ''; telaAgendamentos();
+  });
+}
+
+async function telaGrupos() {
+  const g = await api('grupos');
+  const env = g.lista.filter((x) => x.enviar).length, mon = g.lista.filter((x) => x.monitorar).length;
+  C().innerHTML = cabeca('grupos', 'Grupos de envio', 'Escolha em quais grupos o Ofertix publica e de quais grupos ele captura ofertas.',
+    `<button class="botao sec" id="sincronizar">${ico('sync', 16)}Sincronizar grupos</button>`) + `
+    <div class="kpis">
+      ${kpi('grupos', num(g.lista.length), 'Grupos encontrados')}
+      ${kpi('enviar', `${env}<small>/${g.limites.envio}</small>`, 'Grupos de envio / limite')}
+      ${kpi('ima', `${mon}<small>/${g.limites.monitorados}</small>`, g.limites.captura ? 'Monitorados / limite' : 'Captura fora do plano', 'l')}
+      ${kpi('pessoas', num(g.lista.filter((x) => x.enviar).reduce((s, x) => s + x.participantes, 0)), 'Pessoas alcançadas')}
+    </div>
+    <section class="cartao">${g.lista.length ? `<div class="rolagem"><table class="tabela"><thead><tr><th>Nome do grupo</th><th>Número</th><th class="num">Participantes</th><th>Enviar ofertas</th><th>Capturar ofertas</th></tr></thead><tbody>
+      ${g.lista.map((x) => `<tr><td style="font-weight:500">${esc(x.nome)}</td><td style="color:var(--mudo)">${esc(x.numero_nome)}</td><td class="num">${num(x.participantes)}</td>
+        <td><label class="inter"><input type="checkbox" data-grupo="${x.id}" data-campo="enviar" ${x.enviar ? 'checked' : ''} aria-label="Enviar ofertas em ${esc(x.nome)}"><span></span></label></td>
+        <td><label class="inter"><input type="checkbox" data-grupo="${x.id}" data-campo="monitorar" ${x.monitorar ? 'checked' : ''} ${g.limites.captura ? '' : 'disabled'} aria-label="Capturar ofertas de ${esc(x.nome)}"><span></span></label></td></tr>`).join('')}
+    </tbody></table></div>` : `<div class="vazio">${ico('whatsapp', 34)}<h3>Nenhum grupo ainda</h3><a href="#whatsapp">Conecte um número de WhatsApp</a> para os grupos aparecerem aqui.</div>`}</section>
+    <p style="color:var(--mudo);font-size:12.5px;margin-top:12px">Capturar: o Ofertix lê os links que chegam nesse grupo, troca pelo seu link de afiliado e guarda em Ofertas${g.limites.captura ? ' (e publica sozinho, se ligado em Configurações)' : ''}.</p>`;
+  $('#sincronizar').onclick = tentar(async () => {
+    const n = await api('numeros');
+    let total = 0;
+    for (const i of n.lista.filter((x) => x.status === 'conectado')) total += (await api(`numeros/${i.id}/sincronizar`, { method: 'POST' })).grupos;
+    aviso(n.lista.some((x) => x.status === 'conectado') ? `${total} grupo(s) sincronizados` : 'Conecte um número primeiro', !n.lista.length);
+    telaGrupos();
+  });
+  C().querySelectorAll('[data-grupo]').forEach((i) => (i.onchange = async () => {
+    try { await api('grupos/' + i.dataset.grupo, { method: 'POST', body: { [i.dataset.campo]: i.checked } }); telaGrupos(); }
+    catch (e) { i.checked = !i.checked; aviso(e.message, true); }
+  }));
+}
+
+async function telaMembros() {
+  const [m, g, cans] = await Promise.all([api(`membros?periodo=${E.periodo}${E.grupoMembros ? '&grupo=' + E.grupoMembros : ''}`), api('grupos'), api('cansados?periodo=' + E.periodo).catch(() => [])]);
+  const opcoes = g.lista.filter((x) => x.enviar || x.monitorar);
+  const ent = m.serie.reduce((s, d) => s + d.entrou, 0), sai = m.serie.reduce((s, d) => s + d.saiu, 0);
+  C().innerHTML = cabeca('membros', 'Monitoramento de membros', 'Acompanhe o crescimento e a saída de pessoas dos seus grupos.',
+    `<div class="campo" style="min-width:200px"><select id="grupo-membros" aria-label="Grupo"><option value="">Todos os grupos</option>${opcoes.map((x) => `<option value="${x.id}" ${String(x.id) === E.grupoMembros ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}</select></div>`) + `
+    <div style="margin-bottom:14px">${chipsPeriodo(['7d', '30d', 'mes', 'mes-anterior'])}</div>
+    <div class="kpis">
+      ${kpi('grupos', num(m.grupos), 'Grupos acompanhados')}
+      ${kpi('pessoas', num(m.total), 'Total de participantes')}
+      ${kpi('sobe', (m.saldoDiario >= 0 ? '+' : '') + String(m.saldoDiario).replace('.', ','), 'Saldo diário (média)')}
+      ${kpi('porc', String(m.churnDiario).replace('.', ',') + '%', 'Saída diária (churn)', 'l')}
+    </div>
+    <div class="grade-2">
+      <section class="cartao bloco"><h2>Evolução de membros</h2><p class="sub">Total de participantes no fim de cada dia</p>${m.serie.length > 1 ? graficoLinha(m.serie) : '<div class="vazio">Escolha um período maior</div>'}</section>
+      <section class="cartao bloco"><h2>Entradas e saídas</h2><p class="sub">${num(ent)} entraram · ${num(sai)} saíram no período</p>${m.serie.length > 1 ? graficoEntradasSaidas(m.serie) : ''}</section>
+    </div>
+    <section class="cartao" style="margin-top:16px"><div class="rolagem"><table class="tabela"><thead><tr><th>Grupo</th><th class="num">Participantes</th></tr></thead><tbody>
+      ${m.lista.map((x) => `<tr><td>${esc(x.nome)}</td><td class="num">${num(x.participantes)}</td></tr>`).join('') || '<tr><td colspan="2" class="vazio">Nenhum grupo com envio ou captura ligado.</td></tr>'}
+    </tbody></table></div></section>
+    <section class="cartao bloco" style="margin-top:16px"><h2>Grupos cansados</h2><p class="sub">Saídas a cada 100 mensagens enviadas no período. Acima de 2, o grupo pode estar recebendo ofertas demais; acima de 4, vale reduzir.</p>
+      <div class="rolagem"><table class="tabela"><thead><tr><th>Grupo</th><th class="num">Mensagens</th><th class="num">Saídas</th><th class="num">Saídas por 100</th><th>Situação</th></tr></thead><tbody>
+      ${cans.map((x) => `<tr><td>${esc(x.nome)}</td><td class="num">${num(x.envios)}</td><td class="num">${num(x.saidas)}</td><td class="num">${String(x.porCem).replace('.', ',')}</td>
+        <td>${x.nivel === 'alto' ? '<span class="nivel-alto">Cansado: mande menos</span>' : x.nivel === 'medio' ? '<span class="nivel-medio">Atenção</span>' : x.nivel === 'pouco' ? '<span style="color:var(--mudo)">Poucos envios</span>' : 'Saudável'}</td></tr>`).join('') || '<tr><td colspan="5" class="vazio">Nenhum grupo com envio ligado.</td></tr>'}
+      </tbody></table></div></section>`;
+  $('#grupo-membros').onchange = (e) => { E.grupoMembros = e.target.value; telaMembros(); };
+  ligarDicas(C());
+}
+
+async function telaComissoes() {
+  const c = await api(`comissoes?periodo=${E.periodo}${E.filtroStatus && ['pendente', 'concluido', 'cancelado'].includes(E.filtroStatus) ? '&status=' + E.filtroStatus : ''}`);
+  C().innerHTML = cabeca('comissoes', 'Comissões', 'Suas comissões, vendas e desempenho, puxados do relatório de afiliados da Shopee.',
+    `<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="botao sec" href="${window.OFERTIX_MOCK ? '#comissoes' : '/api/exportar/comissoes.csv?periodo=' + E.periodo}" data-csv>${ico('baixar', 16)}Baixar CSV</a><button class="botao sec" id="sinc-com">${ico('sync', 16)}Atualizar da Shopee</button></div>`) + `
+    <div style="margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between">${chipsPeriodo(['hoje', 'ontem', '7d', '30d', 'mes', 'mes-anterior'])}
+      <div class="chips">${[['', 'Todos'], ['concluido', 'Concluídos'], ['pendente', 'Pendentes'], ['cancelado', 'Cancelados']].map(([v, n]) => `<button class="chip ${(E.filtroStatus || '') === v ? 'ativo' : ''}" data-status-com="${v}">${n}</button>`).join('')}</div></div>
+    <div class="kpis">
+      ${kpi('comissoes', reais(c.comissao), 'Comissão total')}
+      ${kpi('sacola', reais(c.gmv), 'Valor vendido (GMV)')}
+      ${kpi('carrinho', num(c.pedidos), 'Pedidos válidos')}
+      ${kpi('sobe', reais(c.ticket), 'Ticket médio')}
+      ${kpi('porc', String(c.taxa).replace('.', ',') + '%', 'Taxa de realização')}
+      ${kpi('x', num(c.cancelados), 'Pedidos cancelados', 'v')}
+    </div>
+    <section class="cartao"><div class="rolagem"><table class="tabela"><thead><tr><th>Data</th><th>Loja</th><th>Produto</th><th>Pedido</th><th class="num">Valor</th><th class="num">Comissão</th><th>Status</th></tr></thead><tbody>
+      ${c.linhas.map((l) => `<tr><td style="white-space:nowrap">${new Date(l.em).toLocaleDateString('pt-BR')}</td><td>${loja(l.plataforma)}</td><td>${esc(l.produto)}</td><td style="color:var(--mudo)">${esc(l.pedido)}</td><td class="num">${reais(l.valor_centavos)}</td><td class="num" style="font-weight:600">${reais(l.comissao_centavos)}</td><td>${status(l.status)}</td></tr>`).join('')
+        || `<tr><td colspan="7"><div class="vazio">Sem comissões no período. Cadastre a Open API da Shopee em <a href="#config">Configurações</a> e clique em Atualizar.</div></td></tr>`}
+    </tbody></table></div></section>`;
+  $('#sinc-com').onclick = tentar(async () => { const r = await api('comissoes/sincronizar', { method: 'POST' }); aviso(`${r.itens} item(ns) atualizados`); telaComissoes(); });
+  C().querySelectorAll('[data-status-com]').forEach((b) => (b.onclick = () => { E.filtroStatus = b.dataset.statusCom; telaComissoes(); }));
+}
+
+async function telaCupons() {
+  const lista = await api('cupons');
+  C().innerHTML = cabeca('cupons', 'Cupons', 'O cupom ativo de cada loja entra sozinho no texto das ofertas dessa loja.') + `
+    <form class="cartao secao-form" id="form-cupom"><h2>Novo cupom</h2><p>Use o campo {cupom} no modelo da mensagem.</p>
+      <div class="form-grade">
+        <div class="campo"><label for="c-cod">Código</label><input id="c-cod" placeholder="PIPOCA10" required maxlength="40" style="text-transform:uppercase"></div>
+        <div class="campo"><label for="c-pl">Loja</label><select id="c-pl">${Object.entries(LOJAS).filter(([k]) => k !== 'outra').map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}</select></div>
+        <div class="campo"><label for="c-desc">Desconto</label><input id="c-desc" placeholder="10% até R$ 30" maxlength="120"></div>
+        <div class="campo" style="justify-content:flex-end"><button class="botao" type="submit" style="height:42px">${ico('mais', 16)}Cadastrar</button></div>
+      </div></form>
+    <section class="cartao"><div class="rolagem"><table class="tabela"><thead><tr><th>Código</th><th>Loja</th><th>Desconto</th><th>Ativo</th><th></th></tr></thead><tbody>
+      ${lista.map((c) => `<tr><td style="font:600 13px ui-monospace,Menlo,monospace">${esc(c.codigo)}</td><td>${loja(c.plataforma)}</td><td style="color:var(--texto-2)">${esc(c.descricao)}</td>
+        <td><label class="inter"><input type="checkbox" data-cupom="${c.id}" ${c.ativo ? 'checked' : ''} aria-label="Cupom ${esc(c.codigo)} ativo"><span></span></label></td>
+        <td class="num"><button class="botao sec peq" data-apagar-cupom="${c.id}" aria-label="Apagar cupom">${ico('lixo', 14)}</button></td></tr>`).join('') || '<tr><td colspan="5"><div class="vazio">Nenhum cupom cadastrado.</div></td></tr>'}
+    </tbody></table></div></section>`;
+  $('#form-cupom').onsubmit = tentar(async (e) => {
+    e.preventDefault();
+    await api('cupons', { method: 'POST', body: { codigo: $('#c-cod').value, plataforma: $('#c-pl').value, descricao: $('#c-desc').value } });
+    aviso('Cupom cadastrado'); telaCupons();
+  });
+  C().querySelectorAll('[data-cupom]').forEach((i) => (i.onchange = tentar(async () => { await api('cupons/' + i.dataset.cupom, { method: 'POST', body: { ativo: i.checked } }); })));
+  C().querySelectorAll('[data-apagar-cupom]').forEach((b) => (b.onclick = tentar(async () => { await api('cupons/' + b.dataset.apagarCupom, { method: 'DELETE' }); telaCupons(); })));
+}
+
+async function telaWhatsapp() {
+  const n = await api('numeros');
+  C().innerHTML = cabeca('whatsapp', 'WhatsApp', `Números conectados ao Ofertix (${n.lista.length}/${n.limite} no seu plano).`,
+    `<button class="botao" id="novo-num" ${n.lista.length >= n.limite ? 'disabled title="Limite do plano"' : ''}>${ico('mais', 16)}Conectar número</button>`) + `
+    ${n.lista.length ? `<div class="numeros">${n.lista.map((i) => `<article class="cartao numero">
+      <div class="topo-n"><div><h3 style="font-size:16px">${esc(i.nome)}</h3><div style="color:var(--mudo);font-size:13px">${i.numero ? '+' + esc(i.numero) : 'Aguardando conexão'}</div></div>${status(i.status)}</div>
+      ${i.status === 'conectado' ? `<div class="aq">${i.aquecendo ? `🔥 Aquecimento, dia ${i.dia}: até <b>${i.limite}</b> envios hoje (já foram ${i.hoje}). O limite sobe a cada semana até o do plano.` : `Hoje: <b>${i.hoje}</b> de ${i.limite} envios.`}</div>` : ''}
+      <div id="qr-${i.id}"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${i.status !== 'conectado' ? `<button class="botao peq" data-qr="${i.id}">Mostrar QR Code</button>` : `<button class="botao sec peq" data-sinc="${i.id}">${ico('sync', 14)}Sincronizar grupos</button>`}
+        <button class="botao perigo peq" data-remover="${i.id}">Desconectar</button></div>
+    </article>`).join('')}</div>` : `<div class="cartao vazio">${ico('whatsapp', 34)}<h3>Nenhum número conectado</h3>Clique em “Conectar número” e leia o QR Code no WhatsApp do celular, em Aparelhos conectados.</div>`}
+    <section class="cartao dicas-ban"><h2 style="font-size:15px">Para proteger seu número</h2><ul>
+      <li>Use um número só para os grupos de ofertas, de preferência com alguns dias de uso normal antes. Número novo entra em aquecimento: 40 envios por dia na 1ª semana, 100 na 2ª e 200 na 3ª.</li>
+      <li>Mantenha o intervalo entre envios (Configurações) e não ultrapasse o limite diário do plano.</li>
+      <li>Envie para grupos em que você é administrador e onde as pessoas entraram por vontade própria.</li>
+      <li>Tenha um segundo número de reserva conectado se o seu plano permitir.</li>
+    </ul></section>`;
+  if ($('#novo-num')) $('#novo-num').onclick = tentar(async () => {
+    const nome = prompt('Nome para este número (ex.: Principal)', 'Principal');
+    if (nome === null) return;
+    const r = await api('numeros', { method: 'POST', body: { nome } });
+    await telaWhatsapp(); mostrarQr(r.id);
+  });
+  C().querySelectorAll('[data-qr]').forEach((b) => (b.onclick = () => mostrarQr(b.dataset.qr)));
+  C().querySelectorAll('[data-sinc]').forEach((b) => (b.onclick = tentar(async () => { const r = await api(`numeros/${b.dataset.sinc}/sincronizar`, { method: 'POST' }); aviso(`${r.grupos} grupo(s) encontrados`); })));
+  C().querySelectorAll('[data-remover]').forEach((b) => (b.onclick = tentar(async () => { if (!confirm('Desconectar este número? Os envios pendentes dele vão falhar.')) return; await api('numeros/' + b.dataset.remover, { method: 'DELETE' }); telaWhatsapp(); })));
+}
+
+async function mostrarQr(id) {
+  const caixa = $('#qr-' + id);
+  if (!caixa) return;
+  clearTimeout(E.timerQr);
+  try {
+    const r = await api(`numeros/${id}/qr`);
+    if (r.estado === 'conectado') { aviso('WhatsApp conectado!'); return telaWhatsapp(); }
+    caixa.innerHTML = r.qr ? `<div class="qr"><img src="${esc(r.qr)}" alt="QR Code para conectar o WhatsApp"></div><p style="text-align:center;color:var(--mudo);font-size:12.5px;margin:8px 0 0">WhatsApp &gt; Aparelhos conectados &gt; Conectar aparelho</p>`
+      : '<p style="color:var(--mudo)">Gerando QR Code…</p>';
+    if (location.hash === '#whatsapp') E.timerQr = setTimeout(() => mostrarQr(id), 5000);
+  } catch (e) { aviso(e.message, true); }
+}
+
+const opHoras = (sel) => Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${Number(sel) === h ? 'selected' : ''}>${String(h).padStart(2, '0')}:00</option>`).join('');
+
+async function telaConfig() {
+  const c = await api('config');
+  C().innerHTML = cabeca('config', 'Configurações', 'Seus links de afiliado, o modelo da mensagem e o ritmo dos envios.') + `
+    <form id="form-config">
+    <section class="cartao secao-form"><h2>Shopee</h2><p>No painel de afiliados da Shopee, abra Open API e copie o AppID e a Senha. Com isso o Ofertix gera seus links curtos, busca preço e comissão e puxa o relatório de vendas.</p>
+      <div class="form-grade"><div class="campo"><label for="sh-id">AppID</label><input id="sh-id" value="${esc(c.shopee_app_id)}" autocomplete="off"></div>
+      <div class="campo"><label for="sh-seg">Senha (Secret)</label><input id="sh-seg" type="password" value="${esc(c.shopee_segredo)}" autocomplete="new-password"></div></div></section>
+    <section class="cartao secao-form"><h2>Amazon e Mercado Livre</h2><p>Amazon: sua tag de associado entra em todo link. Mercado Livre: cole os parâmetros do seu link de afiliado (ex.: <code>matt_tool=123&amp;matt_word=nome</code>) ou um endereço com {url}.</p>
+      <div class="form-grade"><div class="campo"><label for="amz">Tag da Amazon</label><input id="amz" value="${esc(c.amazon_tag)}" placeholder="seunome-20"></div>
+      <div class="campo"><label for="ml">Mercado Livre</label><input id="ml" value="${esc(c.ml_modelo)}" placeholder="matt_tool=...&matt_word=..."></div></div></section>
+    <section class="cartao secao-form"><h2>Modelo da mensagem</h2><p>Campos: {titulo} {de} {por} {desconto} {cupom} {link} {loja}. Variações: escreva {opção 1|opção 2|opção 3} e cada grupo recebe uma, sorteada. Deixe em branco para usar o padrão, que já tem variações.</p>
+      <div class="modal-corpo"><div class="campo"><label for="modelo">Modelo</label><textarea id="modelo" rows="9" placeholder="{🔥|⚡|🚨} *{titulo}*&#10;&#10;{de}Por *{por}* {desconto}&#10;{cupom}&#10;🛒 {Compre aqui|Link da oferta}: {link}">${esc(c.modelo_mensagem)}</textarea></div>
+      <div><label style="font-size:12.5px;font-weight:600;color:var(--texto-2);display:block;margin-bottom:6px">Prévia</label><div class="zap"><div class="bolha"><div class="img">🍟</div><span id="previa-modelo"></span><span class="hora">12:00</span></div></div>
+        <button class="botao sec peq oculto" type="button" id="sortear" style="margin-top:8px">Sortear outra variação</button></div></div></section>
+    <section class="cartao secao-form"><h2>Quando enviar</h2><p>Fora da janela nada é enviado: o que estiver agendado espera a próxima abertura, mantendo o intervalo entre os grupos.</p>
+      <div class="form-grade">
+        <div class="campo"><label for="j-ini">Começar a enviar às</label><select id="j-ini">${opHoras(c.janela_inicio)}</select></div>
+        <div class="campo"><label for="j-fim">Parar de enviar às</label><select id="j-fim">${opHoras(c.janela_fim)}</select><span class="ajuda">Mesmo horário nos dois = 24 horas</span></div>
+        <div class="campo"><label for="rep">Não repetir a mesma oferta no mesmo grupo por</label><select id="rep">${[[0, 'Pode repetir'], [6, '6 horas'], [12, '12 horas'], [24, '24 horas'], [48, '2 dias'], [72, '3 dias'], [168, '7 dias']].map(([v, n]) => `<option value="${v}" ${Number(c.repeticao_horas) === v ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+      </div>
+      <div class="campo" style="margin-top:14px"><label for="horarios">Horários automáticos da vitrine</label><input id="horarios" value="${esc(c.horarios_auto)}" placeholder="09:00, 12:00, 18:00, 21:00"><span class="ajuda">Em cada horário, a oferta mais antiga da vitrine (⭐ em Ofertas) vai para todos os grupos de envio. Vazio = desligado.</span></div>
+      <div class="linha-inter"><div><b>Conferir preço e estoque antes de enviar</b><div style="color:var(--mudo);font-size:13px">Shopee: se o produto acabou ou o preço subiu mais de 5%, o envio é cancelado e você vê o motivo em Agendamentos.</div></div>
+        <label class="inter"><input type="checkbox" id="conferir" ${c.conferir_preco ? 'checked' : ''} aria-label="Conferir preço antes de enviar"><span></span></label></div>
+      <div class="linha-inter"><div><b>Contar cliques</b><div style="color:var(--mudo);font-size:13px">O link vai como ${esc(location.host || 'ofertix.mssolucoestech.com.br')}/r/… e leva direto para o seu link de afiliado. Assim você vê quais ofertas e grupos rendem mais.</div></div>
+        <label class="inter"><input type="checkbox" id="cliques" ${c.contar_cliques ? 'checked' : ''} aria-label="Contar cliques"><span></span></label></div></section>
+    <section class="cartao secao-form"><h2>Resumo diário no WhatsApp</h2><p>Todo dia, no horário escolhido, você recebe no seu WhatsApp o resumo: mensagens, cliques, capturas, comissões, membros e avisos.</p>
+      <div class="form-grade">
+        <div class="campo"><label for="r-num">Seu número (com DDI e DDD)</label><input id="r-num" inputmode="tel" value="${esc(c.resumo_numero)}" placeholder="5511988887777"><span class="ajuda">Vazio = sem resumo</span></div>
+        <div class="campo"><label for="r-hora">Horário</label><select id="r-hora">${opHoras(c.resumo_hora)}</select></div>
+        <div class="campo" style="justify-content:flex-end"><button class="botao sec" type="button" id="r-teste" style="height:42px">Enviar um agora</button></div>
+      </div></section>
+    <section class="cartao secao-form"><h2>Envio e captura</h2><p>Intervalo aleatório entre um grupo e outro, no mesmo número.</p>
+      <div class="form-grade"><div class="campo"><label for="imin">Intervalo mínimo (segundos)</label><input id="imin" type="number" min="10" max="600" value="${c.intervalo_min}"></div>
+      <div class="campo"><label for="imax">Intervalo máximo (segundos)</label><input id="imax" type="number" min="15" max="900" value="${c.intervalo_max}"></div>
+      <div class="campo"><label for="dmin">Desconto mínimo para capturar (%)</label><input id="dmin" type="number" min="0" max="90" value="${c.desconto_minimo}"><span class="ajuda">0 = captura qualquer oferta</span></div></div>
+      <div class="linha-inter"><div><b>Publicar sozinho o que for capturado</b><div style="color:var(--mudo);font-size:13px">Ofertas novas dos grupos monitorados vão direto para todos os seus grupos de envio.</div></div>
+        <label class="inter"><input type="checkbox" id="auto" ${c.auto_publicar ? 'checked' : ''} aria-label="Publicar sozinho"><span></span></label></div></section>
+    <div style="display:flex;justify-content:flex-end"><button class="botao" type="submit">Salvar configurações</button></div>
+    </form>
+    <form class="cartao secao-form" id="form-extras" style="margin-top:16px"><h2>Mais opções</h2><p>Proteção do número, organização das ofertas e resumos.</p>
+      <div class="linha-inter"><div><b>Aquecimento de número novo</b><div style="color:var(--mudo);font-size:13px">Nas 3 primeiras semanas de um número, o limite diário começa em 40 envios e sobe a cada semana. Reduz muito a chance de bloqueio.</div></div>
+        <label class="inter"><input type="checkbox" id="x-aq" aria-label="Aquecimento"><span></span></label></div>
+      <div class="linha-inter"><div><b>Resumo semanal no WhatsApp</b><div style="color:var(--mudo);font-size:13px">Domingo, no horário do resumo diário: mensagens, cliques, campeãs, melhores horários e grupos cansados.</div></div>
+        <label class="inter"><input type="checkbox" id="x-sem" aria-label="Resumo semanal"><span></span></label></div>
+      <div class="form-grade" style="margin-top:12px">
+        <div class="campo"><label for="x-arq">Arquivar ofertas paradas</label><select id="x-arq">${[[0, 'Nunca'], [15, 'Depois de 15 dias'], [30, 'Depois de 30 dias'], [60, 'Depois de 60 dias'], [90, 'Depois de 90 dias']].map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select><span class="ajuda">Fora da vitrine e sem envio no período. Ficam em Ofertas › Arquivadas</span></div>
+        <div class="campo"><label for="x-meta">Meta de comissão por mês (R$)</label><input id="x-meta" inputmode="decimal" placeholder="Sem meta"></div>
+        <div class="campo" style="justify-content:flex-end"><button class="botao" type="submit" style="height:42px">Salvar opções</button></div>
+      </div></form>`;
+  api('extras').then((x) => { $('#x-aq').checked = x.aquecimento; $('#x-sem').checked = x.resumo_semanal; $('#x-arq').value = String(x.arquivar_dias); $('#x-meta').value = x.meta_comissao ? (x.meta_comissao / 100).toFixed(2).replace('.', ',') : ''; }).catch(() => {});
+  $('#form-extras').onsubmit = tentar(async (e) => {
+    e.preventDefault();
+    await salvarExtras({ aquecimento: $('#x-aq').checked, resumo_semanal: $('#x-sem').checked, arquivar_dias: Number($('#x-arq').value), meta_comissao: Math.round(Number($('#x-meta').value.replace(/\./g, '').replace(',', '.')) * 100) || 0 });
+    aviso('Opções salvas');
+  });
+  let t;
+  let exemplos = [], ex = 0;
+  const previa = () => { clearTimeout(t); t = setTimeout(async () => { try {
+    const r = await api('previa', { method: 'POST', body: { modelo: $('#modelo').value } });
+    exemplos = [r.texto, ...(r.exemplos || [])]; ex = 0;
+    $('#previa-modelo').innerHTML = zapHtml(r.texto); $('#sortear').classList.toggle('oculto', !r.variacoes);
+  } catch {} }, 250); };
+  $('#sortear').onclick = () => { ex = (ex + 1) % exemplos.length; $('#previa-modelo').innerHTML = zapHtml(exemplos[ex]); };
+  const salvar = () => api('config', { method: 'POST', body: {
+    shopee_app_id: $('#sh-id').value, shopee_segredo: $('#sh-seg').value, amazon_tag: $('#amz').value, ml_modelo: $('#ml').value,
+    modelo_mensagem: $('#modelo').value, intervalo_min: $('#imin').value, intervalo_max: $('#imax').value, desconto_minimo: $('#dmin').value, auto_publicar: $('#auto').checked,
+    janela_inicio: Number($('#j-ini').value), janela_fim: Number($('#j-fim').value), repeticao_horas: Number($('#rep').value), horarios_auto: $('#horarios').value,
+    conferir_preco: $('#conferir').checked, contar_cliques: $('#cliques').checked, resumo_numero: $('#r-num').value, resumo_hora: Number($('#r-hora').value),
+  } });
+  $('#r-teste').onclick = tentar(async () => { await salvar(); await api('resumo/teste', { method: 'POST' }); aviso('Resumo enviado para o seu WhatsApp'); });
+  $('#modelo').oninput = previa; previa();
+  $('#form-config').onsubmit = tentar(async (e) => {
+    e.preventDefault();
+    await salvar();
+    aviso('Configurações salvas');
+    telaConfig();
+  });
+}
+
+async function telaAutomaticas() {
+  const [rec, ex, ld, rp, gr] = await Promise.all([api('recorrentes'), api('extras'), api('lista-dia'), api('respostas'), api('grupos')]);
+  const envio = gr.lista.filter((x) => x.enviar);
+  const edR = E.editResp ? rp.lista.find((r) => r.id === E.editResp) : null;
+  const curtos = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const ed = E.editRec ? rec.find((r) => r.id === E.editRec) : null;
+  C().innerHTML = cabeca('raio', 'Mensagens automáticas', 'Mensagens que saem sozinhas nos grupos de envio: regras, convites e boas-vindas. Tudo passa pela mesma fila, com intervalo e janela de envio.') + `
+    <div class="grade-2" style="align-items:start">
+    <form class="cartao secao-form" id="form-rec"><h2>${ed ? 'Editar mensagem' : 'Nova mensagem recorrente'}</h2><p>Ex.: as regras do grupo toda segunda, ou "chame uma amiga" na sexta.</p>
+      <div class="campo"><label for="rec-nome">Nome (só para você)</label><input id="rec-nome" maxlength="60" value="${esc(ed?.nome || '')}" placeholder="Regras do grupo"></div>
+      <div class="campo" style="margin-top:12px"><label for="rec-txt">Mensagem</label><textarea id="rec-txt" rows="6" placeholder="📌 *Regras do grupo*&#10;Só a administração posta. Pode sair quando quiser. Os links são de afiliado.">${esc(ed?.texto || '')}</textarea><span class="ajuda">*negrito* · _itálico_ · {opção 1|opção 2}</span></div>
+      <div class="campo" style="margin-top:12px"><label>Dias</label><div class="dias-sem">${curtos.map((d, i) => `<label><input type="checkbox" value="${i}" ${ed ? (ed.dias.includes(i) ? 'checked' : '') : i === 1 ? 'checked' : ''}>${d}</label>`).join('')}</div></div>
+      <div class="form-grade" style="margin-top:12px"><div class="campo"><label for="rec-hora">Horário</label><input id="rec-hora" type="time" value="${esc(ed?.hora || '10:00')}"></div>
+        <div class="campo" style="justify-content:flex-end;flex-direction:row;gap:8px;align-items:flex-end">${ed ? '<button class="botao sec" type="button" id="rec-cancelar">Cancelar</button>' : ''}<button class="botao" type="submit">${ed ? 'Salvar' : 'Criar'}</button></div></div>
+    </form>
+    <section class="cartao bloco"><h2>Recorrentes</h2><p class="sub">${rec.length} de 10</p>
+      <div class="linhas">${rec.length ? rec.map((r) => `<div class="linha"><div class="meio"><div class="tit">${esc(r.nome)}</div><div class="det">${r.dias.map((d) => curtos[d]).join(', ')} às ${esc(r.hora)}${r.ultimo ? ' · última: ' + esc(r.ultimo.split('-').reverse().join('/')) : ''}</div></div>
+        <label class="inter" title="Ligada"><input type="checkbox" data-rec-ativo="${r.id}" ${r.ativo ? 'checked' : ''} aria-label="Ligada"><span></span></label>
+        <button class="botao sec peq" data-rec-editar="${r.id}" aria-label="Editar">${ico('editar', 14)}</button><button class="botao sec peq" data-rec-apagar="${r.id}" aria-label="Apagar">${ico('lixo', 14)}</button></div>`).join('')
+        : '<div class="vazio">Nenhuma mensagem recorrente.</div>'}</div></section>
+    </div>
+    <form class="cartao secao-form" id="form-bv" style="margin-top:16px"><h2>Boas-vindas</h2><p>Quando alguém entra num grupo de envio, o Ofertix junta as entradas e manda uma boas-vindas por grupo, no máximo uma a cada intervalo escolhido. Use {grupo} para o nome do grupo e {novas} para quantas pessoas entraram.</p>
+      <div class="campo"><label for="bv-txt">Mensagem (vazio = desligado)</label><textarea id="bv-txt" rows="4" placeholder="💖 Boas-vindas a quem chegou no {grupo}! Aqui sai achadinho todo dia. Fique à vontade e chame as amigas.">${esc(ex.boas_vindas)}</textarea></div>
+      <div class="form-grade" style="margin-top:12px"><div class="campo"><label for="bv-min">No máximo uma a cada</label><select id="bv-min">${[[30, '30 minutos'], [60, '1 hora'], [180, '3 horas'], [360, '6 horas'], [720, '12 horas'], [1440, '1 dia']].map(([v2, n]) => `<option value="${v2}" ${Number(ex.boas_vindas_min) === v2 ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+        <div class="campo" style="justify-content:flex-end"><button class="botao" type="submit" style="height:42px">Salvar boas-vindas</button></div></div>
+    </form>
+    <div class="grade-2" style="align-items:start;margin-top:16px">
+    <form class="cartao secao-form" id="form-enq"><h2>${ico('enquete', 18)} Enquete no grupo</h2><p>Pergunte o que o grupo quer ver. Enquete engaja e mostra o que vender amanhã.</p>
+      <div class="campo"><label for="enq-p">Pergunta</label><input id="enq-p" maxlength="255" placeholder="Qual achadinho vocês querem amanhã?"></div>
+      <div class="campo" style="margin-top:12px"><label for="enq-o">Opções (uma por linha, de 2 a 12)</label><textarea id="enq-o" rows="4" placeholder="🍳 Cozinha&#10;💄 Beleza&#10;🗂️ Organização"></textarea></div>
+      <div class="linha-inter"><div><b>Pode escolher mais de uma</b></div><label class="inter"><input type="checkbox" id="enq-m" aria-label="Pode escolher mais de uma"><span></span></label></div>
+      <div class="campo" style="margin-top:6px"><label>Grupos</label>${envio.length ? `<div class="lista-grupos" style="max-height:150px">${envio.map((x) => `<label><input type="checkbox" value="${x.id}" checked>${esc(x.nome)}<small>${num(x.participantes)}</small></label>`).join('')}</div>` : '<div class="vazio" style="padding:10px">Ligue o envio em um grupo.</div>'}</div>
+      <div class="form-grade" style="margin-top:12px"><div class="campo"><label for="enq-q">Quando (vazio = agora)</label><input id="enq-q" type="datetime-local"></div>
+        <div class="campo" style="justify-content:flex-end"><button class="botao" type="submit" style="height:42px" ${envio.length ? '' : 'disabled'}>${ico('enviar', 16)}Enviar enquete</button></div></div>
+    </form>
+    <form class="cartao secao-form" id="form-lista"><h2>${ico('lista', 18)} Lista do dia</h2><p>No fim do dia, uma mensagem com as ofertas mais procuradas de hoje e o link da vitrine, para quem perdeu. Só sai se saíram pelo menos 2 ofertas.</p>
+      <div class="linha-inter"><div><b>Mandar a lista todo dia</b></div><label class="inter"><input type="checkbox" id="ld-on" ${ld.ativo ? 'checked' : ''} aria-label="Mandar a lista todo dia"><span></span></label></div>
+      <div class="form-grade" style="margin-top:12px"><div class="campo"><label for="ld-hora">Horário</label><input id="ld-hora" type="time" value="${esc(ld.hora)}"></div>
+        <div class="campo"><label for="ld-qtd">Quantas ofertas</label><input id="ld-qtd" type="number" min="3" max="10" value="${ld.quantas}"></div></div>
+      <div class="campo" style="margin-top:12px"><label for="ld-tit">Título</label><input id="ld-tit" maxlength="120" value="${esc(ld.titulo)}"></div>
+      <div class="campo" style="margin-top:12px"><label>Prévia de hoje</label>${ld.previa ? `<div class="zap"><div class="bolha"><span>${zapHtml(previaVar(ld.previa))}</span><span class="hora">${esc(ld.hora)}</span></div></div>` : '<span class="ajuda">Hoje ainda saíram menos de 2 ofertas.</span>'}</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px">${ld.previa ? '<button class="botao sec" type="button" id="ld-agora">Mandar agora</button>' : ''}<button class="botao" type="submit">Salvar</button></div>
+    </form>
+    </div>
+    <div class="grade-2" style="align-items:start;margin-top:16px">
+    <form class="cartao secao-form" id="form-resp"><h2>${ico('msg', 18)} ${edR ? 'Editar resposta' : 'Respostas no privado'}</h2><p>Quando alguém chama o número no privado com uma destas palavras, recebe a resposta na hora. Cada pessoa recebe a mesma resposta no máximo uma vez a cada 12 horas.</p>
+      <div class="campo"><label for="rp-pal">Palavras que disparam</label><input id="rp-pal" value="${esc(edR ? edR.palavras.join(', ') : '')}" placeholder="grupo, link, entrar"><span class="ajuda">Separe por vírgula. Maiúsculas e acentos não importam.</span></div>
+      <div class="campo" style="margin-top:12px"><label for="rp-txt">Resposta</label><textarea id="rp-txt" rows="4" placeholder="Oi, {nome}! Escolha o seu grupo aqui: {link_grupos}">${esc(edR?.texto || '')}</textarea><span class="ajuda">Campos: {nome} {link_grupos} {vitrine} {cupons} · {opção 1|opção 2}</span></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">${edR ? '<button class="botao sec" type="button" id="rp-cancelar">Cancelar</button>' : ''}<button class="botao" type="submit">${edR ? 'Salvar' : 'Criar resposta'}</button></div>
+      ${!edR && !rp.lista.length ? `<p class="ajuda" style="margin:14px 0 6px;font-weight:600">Sugestões para começar:</p><div style="display:flex;gap:6px;flex-wrap:wrap">${rp.sugestoes.map((x, i) => `<button type="button" class="chip" data-sug="${i}">${esc(x.palavras.split(',')[0])}</button>`).join('')}</div>` : ''}
+    </form>
+    <section class="cartao bloco"><h2>Respostas</h2><p class="sub">${rp.lista.length} de 15</p>
+      <div class="linhas">${rp.lista.length ? rp.lista.map((r) => `<div class="linha"><div class="meio"><div class="tit">${r.palavras.map(esc).join(', ')}</div><div class="det">${esc(r.texto.split('\n')[0].slice(0, 70))} · ${num(r.usos)} uso(s)</div></div>
+        <label class="inter" title="Ligada"><input type="checkbox" data-rp-ativo="${r.id}" ${r.ativo ? 'checked' : ''} aria-label="Ligada"><span></span></label>
+        <button class="botao sec peq" data-rp-editar="${r.id}" aria-label="Editar">${ico('editar', 14)}</button><button class="botao sec peq" data-rp-apagar="${r.id}" aria-label="Apagar">${ico('lixo', 14)}</button></div>`).join('') : '<div class="vazio">Nenhuma resposta ainda.</div>'}</div>
+      <div class="campo" style="margin-top:14px"><label for="rp-teste">Testar uma mensagem</label><div style="display:flex;gap:6px"><input id="rp-teste" class="campo-mini" style="flex:1" placeholder="Ex.: oi, qual o link do grupo?"><button class="botao sec peq" type="button" id="rp-testar">Testar</button></div><div id="rp-res"></div></div>
+    </section>
+    </div>`;
+  // Enquete
+  $('#form-enq').onsubmit = tentar(async (e) => {
+    e.preventDefault();
+    const grupos = [...$('#form-enq').querySelectorAll('.lista-grupos input:checked')].map((i) => Number(i.value));
+    await api('enquetes', { method: 'POST', body: { pergunta: $('#enq-p').value, opcoes: $('#enq-o').value, multipla: $('#enq-m').checked, grupos, quando: $('#enq-q').value ? new Date($('#enq-q').value).getTime() : null } });
+    aviso('Enquete na fila: acompanhe em Agendamentos'); telaAutomaticas();
+  });
+  // Lista do dia
+  const lerLd = () => ({ ativo: $('#ld-on').checked, hora: $('#ld-hora').value, quantas: Number($('#ld-qtd').value), titulo: $('#ld-tit').value });
+  $('#form-lista').onsubmit = tentar(async (e) => { e.preventDefault(); await api('lista-dia', { method: 'POST', body: lerLd() }); aviso($('#ld-on').checked ? 'Lista do dia ligada' : 'Lista do dia desligada'); telaAutomaticas(); });
+  if ($('#ld-agora')) $('#ld-agora').onclick = tentar(async () => { await api('lista-dia', { method: 'POST', body: lerLd() }); await api('lista-dia/agora', { method: 'POST' }); aviso('Lista na fila: acompanhe em Agendamentos'); });
+  // Respostas
+  const lerRp = () => ({ palavras: $('#rp-pal').value, texto: $('#rp-txt').value });
+  $('#form-resp').onsubmit = tentar(async (e) => { e.preventDefault(); if (edR) await api('respostas/' + edR.id, { method: 'PUT', body: lerRp() }); else await api('respostas', { method: 'POST', body: lerRp() }); E.editResp = null; aviso('Resposta salva'); telaAutomaticas(); });
+  if ($('#rp-cancelar')) $('#rp-cancelar').onclick = () => { E.editResp = null; telaAutomaticas(); };
+  C().querySelectorAll('[data-sug]').forEach((b) => (b.onclick = () => { const x = rp.sugestoes[Number(b.dataset.sug)]; $('#rp-pal').value = x.palavras; $('#rp-txt').value = x.texto; }));
+  C().querySelectorAll('[data-rp-ativo]').forEach((i) => (i.onchange = tentar(async () => { await api(`respostas/${i.dataset.rpAtivo}/ativo`, { method: 'POST', body: { ativo: i.checked } }); aviso(i.checked ? 'Ligada' : 'Desligada'); })));
+  C().querySelectorAll('[data-rp-editar]').forEach((b) => (b.onclick = () => { E.editResp = Number(b.dataset.rpEditar); telaAutomaticas(); }));
+  C().querySelectorAll('[data-rp-apagar]').forEach((b) => (b.onclick = tentar(async () => { if (!confirm('Apagar esta resposta?')) return; await api('respostas/' + b.dataset.rpApagar, { method: 'DELETE' }); telaAutomaticas(); })));
+  $('#rp-testar').onclick = tentar(async () => {
+    const r = await api('respostas/testar', { method: 'POST', body: { mensagem: $('#rp-teste').value } });
+    $('#rp-res').innerHTML = r.resposta ? `<div class="resp-teste">${zapHtml(r.resposta)}</div>` : '<p class="ajuda" style="margin-top:8px">Nenhuma resposta combina com essa mensagem.</p>';
+  });
+  const lerRec = () => ({ nome: $('#rec-nome').value, texto: $('#rec-txt').value, hora: $('#rec-hora').value, dias: [...C().querySelectorAll('.dias-sem input:checked')].map((i) => Number(i.value)) });
+  $('#form-rec').onsubmit = tentar(async (e) => { e.preventDefault(); if (ed) await api('recorrentes/' + ed.id, { method: 'PUT', body: lerRec() }); else await api('recorrentes', { method: 'POST', body: lerRec() }); E.editRec = null; aviso('Mensagem salva'); telaAutomaticas(); });
+  if ($('#rec-cancelar')) $('#rec-cancelar').onclick = () => { E.editRec = null; telaAutomaticas(); };
+  C().querySelectorAll('[data-rec-ativo]').forEach((i) => (i.onchange = tentar(async () => { await api(`recorrentes/${i.dataset.recAtivo}/ativo`, { method: 'POST', body: { ativo: i.checked } }); aviso(i.checked ? 'Ligada' : 'Desligada'); })));
+  C().querySelectorAll('[data-rec-editar]').forEach((b) => (b.onclick = () => { E.editRec = Number(b.dataset.recEditar); telaAutomaticas(); }));
+  C().querySelectorAll('[data-rec-apagar]').forEach((b) => (b.onclick = tentar(async () => { if (!confirm('Apagar esta mensagem recorrente?')) return; await api('recorrentes/' + b.dataset.recApagar, { method: 'DELETE' }); telaAutomaticas(); })));
+  $('#form-bv').onsubmit = tentar(async (e) => { e.preventDefault(); await salvarExtras({ boas_vindas: $('#bv-txt').value, boas_vindas_min: Number($('#bv-min').value) }); aviso($('#bv-txt').value.trim() ? 'Boas-vindas ligadas' : 'Boas-vindas desligadas'); });
+}
+
+const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+async function telaNicho() {
+  const [d, ab] = await Promise.all([api('nicho'), api('abastecer').catch(() => null)]), n = d.nicho, r = n.regras;
+  const opCat = (sel) => `<option value="">Qualquer categoria</option>` + d.categorias.filter((c) => c.id !== 'outros').map((c) => `<option value="${c.id}" ${sel === c.id ? 'selected' : ''}>${c.emoji} ${esc(c.nome)}${c.naVitrine ? ` (${c.naVitrine} na vitrine)` : ' (vitrine vazia)'}</option>`).join('');
+  C().innerHTML = cabeca('estrela', 'Nicho e curadoria', 'Escolha o que entra nos seus grupos, monte a rotina da semana e dê uma voz própria às mensagens.') + `
+    <section class="cartao secao-form pacote"><h2>✨ Pacote pronto: achadinhos femininos</h2>
+      <p>Configura tudo de uma vez para um grupo de achadinhos de casa, cozinha, organização, beleza e moda: até R$ 50, nota mínima 4,7 e 100 vendas, coleções de segunda a sábado, modelo de mensagem com tom de amiga, rodapé de afiliado e cinco horários automáticos (9h, 12h, 15h, 19h e 21h).</p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="botao" type="button" id="aplicar-pacote">${ico('estrela', 16)}Aplicar pacote</button>${n.pacote ? `<span class="selo">Em uso: ${esc(n.pacote)}</span>` : ''}<span class="ajuda" style="color:var(--mudo);font-size:12.5px">Substitui o modelo da mensagem e os horários atuais. Dá para ajustar tudo depois.</span></div></section>
+    <form id="form-nicho">
+    <section class="cartao secao-form"><h2>Curadoria</h2><p>Vale para as ofertas capturadas dos grupos monitorados. As que não passam ficam de fora sem você precisar olhar uma por uma.</p>
+      <div class="campo"><label>Categorias aceitas (nenhuma marcada = todas)</label><div class="chips" id="cats">${d.categorias.map((c) => `<button type="button" class="chip ${r.categorias.includes(c.id) ? 'ativo' : ''}" data-ncat="${c.id}">${c.emoji} ${esc(c.nome)}</button>`).join('')}</div></div>
+      <div class="form-grade" style="margin-top:14px">
+        <div class="campo"><label for="n-preco">Preço máximo (R$)</label><input id="n-preco" inputmode="decimal" value="${r.precoMax ? (r.precoMax / 100).toFixed(2).replace('.', ',') : ''}" placeholder="Sem limite"></div>
+        <div class="campo"><label for="n-nota">Nota mínima (0 a 5)</label><input id="n-nota" inputmode="decimal" value="${r.notaMin ? String(r.notaMin).replace('.', ',') : ''}" placeholder="Sem exigência"><span class="ajuda">Shopee informa a nota; nas outras lojas não é conferida</span></div>
+        <div class="campo"><label for="n-vendas">Vendas mínimas</label><input id="n-vendas" type="number" min="0" value="${r.vendasMin || ''}" placeholder="Sem exigência"></div>
+      </div>
+      <div class="form-grade" style="margin-top:14px">
+        <div class="campo"><label for="n-incluir">Precisa ter uma destas palavras</label><input id="n-incluir" value="${esc(r.incluir.join(', '))}" placeholder="ex.: feminino, kit, organizador"><span class="ajuda">Separe por vírgula. Vazio = sem exigência</span></div>
+        <div class="campo"><label for="n-excluir">Não pode ter estas palavras</label><input id="n-excluir" value="${esc(r.excluir.join(', '))}" placeholder="ex.: réplica, usado, masculino"></div>
+      </div></section>
+    <section class="cartao secao-form"><h2>Coleções da semana</h2><p>Nos horários automáticos, a vitrine publica primeiro a oferta da coleção do dia. Sem oferta dela na vitrine, vai a mais antiga, como antes.</p>
+      <div class="form-grade">${DIAS_SEMANA.map((dia, i) => `<div class="campo"><label for="col-${i}">${dia}</label><select id="col-${i}">${opCat(n.colecoes[i])}</select></div>`).join('')}</div>
+      <p class="ajuda" style="color:var(--mudo);font-size:12.5px;margin:10px 0 0">Horários automáticos atuais: ${d.horarios ? esc(d.horarios) : 'nenhum'} · <a href="#config">mudar em Configurações</a></p></section>
+    <section class="cartao secao-form"><h2>Rodapé de afiliado</h2><p>Entra no fim de cada oferta. Deixar claro que é link de afiliado passa confiança e segue a orientação do CONAR para publicidade.</p>
+      <div class="linha-inter"><div><b>Acrescentar rodapé</b></div><label class="inter"><input type="checkbox" id="n-rod-on" ${n.rodape ? 'checked' : ''} aria-label="Acrescentar rodapé"><span></span></label></div>
+      <div class="campo" style="margin-top:10px"><label for="n-rod">Texto do rodapé</label><input id="n-rod" maxlength="200" value="${esc(n.rodape || d.rodapePadrao)}"><span class="ajuda">_texto_ fica em itálico no WhatsApp</span></div></section>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px"><button class="botao" type="submit">Salvar nicho e curadoria</button></div>
+    </form>
+    ${ab ? `<form class="cartao secao-form" id="form-abastecer"><h2>Vitrine abastecida sozinha</h2><p>Todo dia, no horário escolhido, o Ofertix busca produtos na Shopee com as suas palavras e com a coleção do dia, aplica a curadoria acima e põe os melhores na vitrine. Os horários automáticos fazem o resto.</p>
+      ${ab.temShopee ? '' : '<div class="parecidas">Precisa do AppID e da Senha da Shopee em <a href="#config">Configurações</a>.</div>'}
+      <div class="linha-inter"><div><b>Abastecer a vitrine todo dia</b></div><label class="inter"><input type="checkbox" id="ab-on" ${ab.ativo ? 'checked' : ''} aria-label="Abastecer a vitrine todo dia"><span></span></label></div>
+      <div class="form-grade" style="margin-top:12px">
+        <div class="campo"><label for="ab-pal">Palavras para buscar</label><input id="ab-pal" value="${esc(ab.palavras.join(', '))}" placeholder="ex.: organizador, kit skincare, potes"><span class="ajuda">Separe por vírgula (até 10)</span></div>
+        <div class="campo"><label for="ab-qtd">Produtos por dia</label><input id="ab-qtd" type="number" min="1" max="20" value="${ab.quantidade}"></div>
+        <div class="campo"><label for="ab-hora">Horário</label><input id="ab-hora" type="time" value="${esc(ab.hora)}"></div>
+        <div class="campo"><label for="ab-ordem">Preferir</label><select id="ab-ordem">${[['vendidos', 'Mais vendidos'], ['comissao', 'Maior comissão'], ['relevancia', 'Mais relevantes']].map(([v, t]) => `<option value="${v}" ${ab.ordem === v ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+      </div>
+      <div class="linha-inter"><div><b>Usar a coleção do dia</b><div style="color:var(--mudo);font-size:13px">Acrescenta palavras da categoria do dia (ex.: terça = beleza).</div></div><label class="inter"><input type="checkbox" id="ab-col" ${ab.colecao ? 'checked' : ''} aria-label="Usar a coleção do dia"><span></span></label></div>
+      <p class="ajuda" style="color:var(--mudo);font-size:12.5px;margin:8px 0 12px">Buscas de hoje: ${ab.termosHoje.length ? ab.termosHoje.map(esc).join(', ') : 'nenhuma'}</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="botao sec" type="button" id="ab-agora">${ico('raio', 16)}Abastecer agora</button><button class="botao" type="submit">Salvar</button></div>
+    </form>` : ''}
+    <section class="cartao secao-form"><h2>Modelos de mensagem</h2><p>Escolha uma voz para as ofertas. Cada modelo já tem variações, sorteadas por grupo para as mensagens não ficarem iguais.</p>
+      <div class="modelos">${d.modelos.map((m) => `<div class="cartao modelo"><b>${esc(m.nome)}</b><div class="zap"><div class="bolha"><span data-previa="${m.id}">…</span><span class="hora">12:00</span></div></div>
+        <button class="botao sec peq" type="button" data-usar-modelo="${m.id}">Usar este modelo</button></div>`).join('')}</div></section>`;
+  for (const m of d.modelos) api('previa', { method: 'POST', body: { modelo: m.texto } }).then((x) => { const el = C().querySelector(`[data-previa="${m.id}"]`); if (el) el.innerHTML = zapHtml(x.texto); }).catch(() => {});
+  C().querySelectorAll('[data-ncat]').forEach((b) => { b.onclick = () => b.classList.toggle('ativo'); });
+  C().querySelectorAll('[data-usar-modelo]').forEach((b) => { b.onclick = tentar(async () => { await api('nicho/modelo', { method: 'POST', body: { id: b.dataset.usarModelo } }); aviso('Modelo aplicado. Veja ou ajuste em Configurações.'); }); });
+  const lerAb = () => ({ ativo: $('#ab-on').checked, palavras: $('#ab-pal').value, quantidade: Number($('#ab-qtd').value), hora: $('#ab-hora').value, ordem: $('#ab-ordem').value, colecao: $('#ab-col').checked });
+  if ($('#form-abastecer')) {
+    $('#form-abastecer').onsubmit = tentar(async (e) => { e.preventDefault(); await api('abastecer', { method: 'POST', body: lerAb() }); aviso('Vitrine automática salva'); telaNicho(); });
+    $('#ab-agora').onclick = tentar(async () => {
+      const b = $('#ab-agora'); b.disabled = true; b.textContent = 'Buscando…';
+      try { await api('abastecer', { method: 'POST', body: lerAb() }); const r = await api('abastecer/agora', { method: 'POST' }); aviso(r.adicionadas.length ? `${r.adicionadas.length} produto(s) na vitrine` : 'Nenhum produto novo passou na curadoria'); }
+      finally { telaNicho(); }
+    });
+  }
+  $('#aplicar-pacote').onclick = tentar(async () => { await api('nicho/achadinhos', { method: 'POST' }); aviso('Pacote de achadinhos aplicado'); telaNicho(); });
+  const reaisC = (v) => { const x = Number(String(v).replace(/\./g, '').replace(',', '.')); return Number.isFinite(x) && x > 0 ? Math.round(x * 100) : 0; };
+  $('#form-nicho').onsubmit = tentar(async (e) => {
+    e.preventDefault();
+    await api('nicho', { method: 'POST', body: {
+      pacote: n.pacote,
+      regras: { categorias: [...C().querySelectorAll('[data-ncat].ativo')].map((b) => b.dataset.ncat), incluir: $('#n-incluir').value, excluir: $('#n-excluir').value,
+        precoMax: reaisC($('#n-preco').value), notaMin: $('#n-nota').value, vendasMin: $('#n-vendas').value },
+      colecoes: DIAS_SEMANA.map((_, i) => $('#col-' + i).value),
+      rodape: $('#n-rod-on').checked ? $('#n-rod').value : '',
+    } });
+    aviso('Nicho e curadoria salvos'); telaNicho();
+  });
+}
+
+async function telaAdmin() {
+  if (!E.eu.admin) { location.hash = '#visao'; return; }
+  const [a, st] = await Promise.all([api('admin/contas'), api('admin/site?dias=30').catch(() => null)]);
+  const maxV = st ? Math.max(1, ...st.serie.map((x) => x.visitas)) : 1;
+  C().innerHTML = cabeca('admin', 'Administração', 'Contas do Ofertix, planos e a página de vendas.') + `
+    ${st ? `<section class="cartao bloco" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><h2>Página de vendas (últimos 30 dias)</h2><a href="${esc(location.origin)}/?site" target="_blank" rel="noopener" style="font-size:13px">Abrir a página</a></div>
+      <p class="sub">Use <code>?o=</code> no link de cada anúncio ou post (ex.: <code>ofertix.cloud/?o=stories</code>) para saber de onde vem cada visita.</p>
+      <div class="kpis" style="margin-top:12px">${kpi('pessoas', num(st.visitas), 'Visitas')}${kpi('clique', num(st.testes), `Pediram teste · ${st.visitas ? Math.round(st.testes / st.visitas * 100) : 0}%`)}${kpi('visao', num(st.demos), 'Abriram a demonstração')}${kpi('estrela', st.planos.length ? esc(st.planos[0].plano) : '–', 'Plano mais clicado')}</div>
+      <div class="barras-site" role="img" aria-label="Visitas por dia">${st.serie.map((x) => `<i style="height:${Math.round(x.visitas / maxV * 100)}%" title="${x.dia.split('-').reverse().slice(0, 2).join('/')}: ${x.visitas} visita(s), ${x.testes} teste(s)"></i>`).join('')}</div>
+      ${st.origens.length ? `<div class="rolagem" style="margin-top:14px"><table class="tabela"><thead><tr><th>Origem</th><th class="num">Visitas</th><th class="num">Pediram teste</th><th class="num">Demonstração</th></tr></thead><tbody>${st.origens.map((o) => `<tr><td>${esc(o.origem)}</td><td class="num">${num(o.visitas)}</td><td class="num">${num(o.testes)}</td><td class="num">${num(o.demos)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    </section>` : ''}
+    <section class="cartao"><div class="rolagem"><table class="tabela"><thead><tr><th>Conta</th><th>Desde</th><th class="num">Números on</th><th class="num">Grupos</th><th class="num">Envios 30d</th><th>Plano</th></tr></thead><tbody>
+    ${a.lista.map((c) => `<tr><td><b>${esc(c.nome || '—')}</b><div style="color:var(--mudo);font-size:12px">${esc(c.email)}</div></td><td>${new Date(c.criado_em).toLocaleDateString('pt-BR')}</td><td class="num">${c.conectados}</td><td class="num">${c.grupos}</td><td class="num">${num(c.envios30)}</td>
+      <td><select data-conta="${c.id}" class="campo" style="background:var(--surface-2);border:1px solid var(--borda);border-radius:8px;padding:6px">${a.planos.map((p) => `<option value="${p.id}" ${p.id === c.plano ? 'selected' : ''}>${esc(p.nome)}</option>`).join('')}</select></td></tr>`).join('') || '<tr><td colspan="6"><div class="vazio">Nenhuma conta ainda.</div></td></tr>'}
+    </tbody></table></div></section>`;
+  C().querySelectorAll('[data-conta]').forEach((s) => (s.onchange = tentar(async () => { await api('admin/contas/' + s.dataset.conta, { method: 'POST', body: { plano: s.value } }); aviso('Plano alterado'); })));
+}
+
+// ------------------------------------------------------------------ links de entrada
+const slugDe = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+async function copiar(texto) {
+  try { await navigator.clipboard.writeText(texto); aviso('Link copiado'); }
+  catch { prompt('Copie o link:', texto); }
+}
+const ORIGENS = [['bio', 'Bio'], ['stories', 'Stories'], ['reels', 'Reels'], ['whatsapp', 'WhatsApp']];
+
+async function telaEntradas() {
+  const [d, g] = await Promise.all([api('entradas?periodo=' + E.periodo), api('grupos')]);
+  E.gruposTodos = g.lista;
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+  C().innerHTML = cabeca('link', 'Links de entrada', 'Um link para a bio do Instagram: a pessoa escolhe o tema e cai no grupo que ainda tem vaga. Quando um lota, o próximo assume.',
+    d.lista.length < d.maximo ? `<button class="botao" data-nova-entrada>${ico('mais', 16)}Novo link</button>` : '') + `
+    <div style="margin-bottom:14px">${chipsPeriodo(['hoje', '7d', '30d', 'mes'])}</div>
+    ${E.novaEntrada || !d.lista.length ? `<form class="cartao secao-form" id="form-entrada"><h2>Novo link de entrada</h2><p>Esse endereço vai na bio. Dá para mudar o nome e as cores depois, mas o endereço fica fixo.</p>
+      <div class="form-grade">
+        <div class="campo"><label for="e-tit">Nome da página</label><input id="e-tit" placeholder="Achadinhos da Moça" maxlength="60" required></div>
+        <div class="campo"><label for="e-slug">Endereço</label><input id="e-slug" placeholder="achadinhos-da-moca" maxlength="40" required><span class="ajuda">${esc(d.base)}<b id="e-slug-ver">…</b></span></div>
+        <div class="campo"><label for="e-cor">Cor</label><input id="e-cor" type="color" value="#e8457c" style="height:42px;padding:4px"></div>
+      </div>
+      <div class="campo" style="margin-top:14px"><label for="e-desc">Frase da página</label><input id="e-desc" maxlength="240" placeholder="Ofertas garimpadas todo dia na Shopee, Amazon e Mercado Livre. Escolha o seu grupo:"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">${d.lista.length ? '<button class="botao sec" type="button" data-cancelar-entrada>Cancelar</button>' : ''}<button class="botao" type="submit">Criar link</button></div>
+    </form>` : ''}
+    ${d.lista.map((e) => {
+      const url = d.base + e.slug;
+      return `<section class="cartao bloco entrada" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">
+          <div style="min-width:0"><h2 style="font-size:19px;display:flex;align-items:center;gap:8px"><i style="width:12px;height:12px;border-radius:50%;background:${esc(e.cor)};display:inline-block"></i>${esc(e.titulo)} ${e.ativo ? '' : status('desconectado').replace('Desconectado', 'Desativado')}</h2>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px"><code style="font-size:13px;background:var(--surface-2);padding:5px 9px;border-radius:7px;word-break:break-all">${esc(url)}</code>
+              <button class="botao sec peq" data-copiar="${esc(url)}">Copiar</button><a class="botao sec peq" href="${esc(window.OFERTIX_MOCK ? '#entradas' : '/g/' + e.slug)}" target="_blank" rel="noopener" ${window.OFERTIX_MOCK ? 'data-ver-pagina' : ''}>Abrir página</a>
+              <a class="botao sec peq" href="${esc(window.OFERTIX_MOCK ? '#entradas' : '/v/' + e.slug)}" target="_blank" rel="noopener" title="Página com os achadinhos que saíram nos últimos 7 dias" ${window.OFERTIX_MOCK ? 'data-ver-pagina' : ''}>${ico('vitrine', 14)}Vitrine da semana</a><button class="botao sec peq" data-copiar="${esc(url.replace('/g/', '/v/'))}">Copiar vitrine</button></div></div>
+          <button class="botao sec peq" data-editar-entrada="${e.id}">${E.editando === e.id ? 'Fechar' : 'Editar página'}</button>
+        </div>
+        ${E.editando === e.id ? `<form class="form-entrada-edit" data-id="${e.id}" style="margin-top:16px;border-top:1px solid var(--borda);padding-top:16px">
+          <div class="form-grade">
+            <div class="campo"><label for="ee-tit-${e.id}">Nome da página</label><input id="ee-tit-${e.id}" name="titulo" value="${esc(e.titulo)}" maxlength="60"></div>
+            <div class="campo"><label for="ee-cor-${e.id}">Cor</label><input id="ee-cor-${e.id}" name="cor" type="color" value="${esc(e.cor)}" style="height:42px;padding:4px"></div>
+            <div class="campo"><label for="ee-foto-${e.id}">Foto (link https da imagem)</label><input id="ee-foto-${e.id}" name="foto" value="${esc(e.foto)}" placeholder="https://..."></div>
+          </div>
+          <div class="campo" style="margin-top:14px"><label for="ee-desc-${e.id}">Frase da página</label><input id="ee-desc-${e.id}" name="descricao" value="${esc(e.descricao)}" maxlength="240"></div>
+          <div class="linha-inter"><div><b>Avisar que os links são de afiliado</b><div style="color:var(--mudo);font-size:13px">Recomendado: deixa claro para o público e segue as regras de publicidade.</div></div><label class="inter"><input type="checkbox" name="aviso_afiliado" ${e.aviso_afiliado ? 'checked' : ''} aria-label="Avisar links de afiliado"><span></span></label></div>
+          <div class="linha-inter"><div><b>Página no ar</b></div><label class="inter"><input type="checkbox" name="ativo" ${e.ativo ? 'checked' : ''} aria-label="Página no ar"><span></span></label></div>
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-top:8px"><button class="botao perigo peq" type="button" data-apagar-entrada="${e.id}">Apagar link</button><button class="botao" type="submit">Salvar</button></div>
+        </form>` : ''}
+        <div class="kpis" style="margin:18px 0 6px">
+          ${kpi('pessoas', num(e.visitas), 'Visitas na página')}
+          ${kpi('clique', num(e.cliques), `Foram para um grupo · ${pct(e.cliques, e.visitas)}%`)}
+          ${kpi('sobe', num(e.entraram), 'Entraram nos grupos (todas as origens)')}
+          ${kpi('alerta', num(e.lotados), 'Acharam o tema lotado', e.lotados ? 'v' : 'a')}
+        </div>
+        <div class="grade-2" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);margin-top:14px">
+          <div><h3 style="font-size:15px;margin-bottom:8px">Temas e grupos</h3>
+            ${e.temas.map((t) => `<div class="tema-adm" style="border:1px solid var(--borda);border-radius:12px;padding:12px 14px;margin-bottom:10px">
+              <div style="display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap"><b>${esc(t.emoji || '🛍️')} ${esc(t.nome)}</b><span style="color:var(--mudo);font-size:12.5px">${num(t.cliques)} cliques no período</span></div>
+              ${t.grupos.length ? t.grupos.map((gr) => {
+                const cheio = gr.participantes >= gr.limite, p = Math.min(100, pct(gr.participantes, gr.limite));
+                return `<div style="margin-top:10px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;flex-wrap:wrap"><span>${esc(gr.nome)} ${t.ativo === gr.id ? '<span class="status ativo">recebendo agora</span>' : cheio ? '<span class="status erro">lotado</span>' : ''}</span>
+                  <span style="color:var(--mudo)">${num(gr.participantes)}/${num(gr.limite)}</span></div>
+                  <div class="rank" style="padding:4px 0 0;border:0"><div class="meio"><div class="barra"><i style="width:${p}%;background:${cheio ? 'var(--vermelho)' : p > 90 ? 'var(--amarelo)' : 'var(--serie-a)'}"></i></div></div></div>
+                  ${gr.tem_convite ? '' : `<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center"><span style="font-size:12.5px;color:var(--amarelo)">Sem link de convite</span><button class="botao sec peq" data-convite="${gr.id}">Pegar do WhatsApp</button><button class="botao sec peq" data-convite-manual="${gr.id}">Colar link</button></div>`}</div>`;
+              }).join('') : '<p style="color:var(--mudo);font-size:13px;margin-top:8px">Nenhum grupo ainda.</p>'}
+              <div style="display:flex;gap:6px;margin-top:12px"><button class="botao sec peq" data-escolher-grupos="${t.id}">Escolher grupos</button><button class="botao sec peq" data-apagar-tema="${t.id}" aria-label="Apagar tema">${ico('lixo', 14)}</button></div>
+            </div>`).join('')}
+            <form class="form-tema" data-id="${e.id}" style="display:flex;gap:6px;flex-wrap:wrap"><input name="emoji" placeholder="💄" maxlength="8" style="width:58px;text-align:center" class="campo-mini" aria-label="Emoji do tema"><input name="nome" placeholder="Novo tema (ex.: Casa e cozinha)" maxlength="40" class="campo-mini" style="flex:1;min-width:160px" aria-label="Nome do tema"><button class="botao sec peq" type="submit">${ico('mais', 14)}Adicionar tema</button></form>
+          </div>
+          <div><h3 style="font-size:15px;margin-bottom:8px">De onde vêm</h3>
+            ${e.origens.length ? `<table class="tabela"><thead><tr><th>Origem</th><th class="num">Visitas</th><th class="num">Grupo</th></tr></thead><tbody>${e.origens.map((o) => `<tr><td>${esc(o.origem)}</td><td class="num">${num(o.visitas)}</td><td class="num">${num(o.cliques)}</td></tr>`).join('')}</tbody></table>`
+              : '<p style="color:var(--mudo);font-size:13px">Ainda sem visitas no período.</p>'}
+            <h3 style="font-size:15px;margin:16px 0 6px">Um link para cada lugar</h3>
+            <p style="color:var(--mudo);font-size:12.5px;margin:0 0 8px">Use um em cada post para saber o que traz mais gente.</p>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">${ORIGENS.map(([o, n]) => `<button class="chip" data-copiar="${esc(url)}?o=${o}">${n}</button>`).join('')}</div>
+          </div>
+        </div>
+      </section>`;
+    }).join('')}`;
+  const f = $('#form-entrada');
+  if (f) {
+    let mexeu = false;
+    const ver = () => ($('#e-slug-ver').textContent = $('#e-slug').value || '…');
+    $('#e-tit').oninput = () => { if (!mexeu) $('#e-slug').value = slugDe($('#e-tit').value); ver(); };
+    $('#e-slug').oninput = () => { mexeu = true; $('#e-slug').value = slugDe($('#e-slug').value); ver(); };
+    f.onsubmit = tentar(async (ev) => {
+      ev.preventDefault();
+      await api('entradas', { method: 'POST', body: { titulo: $('#e-tit').value, slug: $('#e-slug').value, cor: $('#e-cor').value, descricao: $('#e-desc').value } });
+      E.novaEntrada = false; aviso('Link criado. Agora adicione os temas e os grupos.'); telaEntradas();
+    });
+  }
+  C().querySelectorAll('.form-tema').forEach((ft) => (ft.onsubmit = tentar(async (ev) => {
+    ev.preventDefault();
+    await api(`entradas/${ft.dataset.id}/temas`, { method: 'POST', body: { nome: ft.nome.value, emoji: ft.emoji.value } });
+    telaEntradas();
+  })));
+  C().querySelectorAll('.form-entrada-edit').forEach((fe) => (fe.onsubmit = tentar(async (ev) => {
+    ev.preventDefault();
+    await api('entradas/' + fe.dataset.id, { method: 'POST', body: { titulo: fe.titulo.value, cor: fe.cor.value, foto: fe.foto.value, descricao: fe.descricao.value, aviso_afiliado: fe.aviso_afiliado.checked, ativo: fe.ativo.checked } });
+    E.editando = null; aviso('Página salva'); telaEntradas();
+  })));
+}
+
+function escolherGrupos(temaId) {
+  const entradas = $('#conteudo');
+  const atuais = [...entradas.querySelectorAll(`[data-escolher-grupos="${temaId}"]`)][0]?.closest('.tema-adm');
+  const lista = E.gruposTodos || [];
+  $('#camada').innerHTML = `<div class="fundo" id="fundo"><div class="cartao modal" role="dialog" aria-modal="true" aria-labelledby="tit-g" style="width:min(560px,100%)">
+    <div class="modal-cab"><h2 id="tit-g">Grupos deste tema</h2><button class="icone-btn" id="fechar" aria-label="Fechar">${ico('x')}</button></div>
+    <p style="color:var(--texto-2);margin:0 0 12px">Marque na ordem em que eles devem lotar: o primeiro recebe as pessoas até encher, depois o segundo, e assim por diante. O número conectado precisa ser administrador de cada grupo.</p>
+    <div class="lista-grupos" style="max-height:340px">${lista.map((x) => `<label><input type="checkbox" value="${x.id}">${esc(x.nome)}<small>${num(x.participantes)} pessoas</small></label>`).join('') || '<p style="padding:10px;color:var(--mudo)">Nenhum grupo. Conecte um número em WhatsApp.</p>'}</div>
+    <p style="color:var(--mudo);font-size:12.5px;margin:8px 0 14px">Ordem: <span id="ordem-g">nenhum</span></p>
+    <div style="display:flex;justify-content:flex-end"><button class="botao" id="salvar-g">Salvar</button></div></div></div>`;
+  const ordem = [];
+  const nomeDe = (id) => lista.find((x) => String(x.id) === String(id))?.nome || id;
+  $('#camada').querySelectorAll('.lista-grupos input').forEach((i) => (i.onchange = () => {
+    if (i.checked) ordem.push(i.value); else ordem.splice(ordem.indexOf(i.value), 1);
+    $('#ordem-g').textContent = ordem.length ? ordem.map((o, k) => `${k + 1}º ${nomeDe(o)}`).join(' · ') : 'nenhum';
+  }));
+  const fechar = () => ($('#camada').innerHTML = '');
+  $('#fechar').onclick = fechar;
+  $('#fundo').onclick = (e) => { if (e.target.id === 'fundo') fechar(); };
+  $('#salvar-g').onclick = tentar(async () => { await api(`temas/${temaId}/grupos`, { method: 'POST', body: { grupos: ordem.map(Number) } }); fechar(); aviso('Grupos do tema salvos'); telaEntradas(); });
+}
+
+const ROTAS = { automaticas: telaAutomaticas, nicho: telaNicho, entradas: telaEntradas, visao: telaVisao, ofertas: telaOfertas, agendamentos: telaAgendamentos, grupos: telaGrupos, membros: telaMembros, comissoes: telaComissoes, cupons: telaCupons, whatsapp: telaWhatsapp, config: telaConfig, admin: telaAdmin };
+
+async function navegar() {
+  const tela = (location.hash.slice(1) || 'visao').split('/')[0];
+  if (E.telaAtual !== tela) { E.filtroStatus = ''; E.telaAtual = tela; }
+  montarMenu();
+  $('#lateral').classList.remove('aberta');
+  $('#camada').innerHTML = ''; // janela aberta não fica por cima da tela nova
+  try { await (ROTAS[tela] || telaVisao)(); window.scrollTo(0, 0); }
+  catch (e) { C().innerHTML = `<div class="cartao vazio"><h3>Não deu para carregar</h3>${esc(e.message)}</div>`; }
+}
+
+// Cliques gerais (chips de período, filtros, ações de ofertas e agendamentos).
+document.addEventListener('click', tentar(async (e) => {
+  const b = e.target.closest('button,[data-periodo]');
+  if (!b) return;
+  if (b.dataset.periodo) { E.periodo = b.dataset.periodo; return ROTAS[E.telaAtual]?.(); }
+  if (b.dataset.filtro !== undefined) { E.filtroOfertas = b.dataset.filtro; return telaOfertas(); }
+  if (b.dataset.status !== undefined) { E.filtroStatus = b.dataset.status; return telaAgendamentos(); }
+  if (b.dataset.enviar) { const r = await api(`ofertas/${b.dataset.enviar}/texto`); return abrirCompositor(r.oferta, r.texto); }
+  if (b.dataset.novaEntrada !== undefined) { E.novaEntrada = true; return telaEntradas(); }
+  if (b.dataset.cancelarEntrada !== undefined) { E.novaEntrada = false; return telaEntradas(); }
+  if (b.dataset.editarEntrada) { E.editando = E.editando === Number(b.dataset.editarEntrada) ? null : Number(b.dataset.editarEntrada); return telaEntradas(); }
+  if (b.dataset.apagarEntrada) { if (!confirm('Apagar este link? Quem estiver com ele na bio vai ver "não existe".')) return; await api('entradas/' + b.dataset.apagarEntrada, { method: 'DELETE' }); E.editando = null; return telaEntradas(); }
+  if (b.dataset.copiar) return copiar(b.dataset.copiar);
+  if (b.dataset.escolherGrupos) return escolherGrupos(b.dataset.escolherGrupos);
+  if (b.dataset.apagarTema) { await api('temas/' + b.dataset.apagarTema, { method: 'DELETE' }); return telaEntradas(); }
+  if (b.dataset.convite) { await api(`grupos/${b.dataset.convite}/convite`, { method: 'POST' }); aviso('Link de convite salvo'); return telaEntradas(); }
+  if (b.dataset.conviteManual) { const v = prompt('Cole o link de convite do grupo (https://chat.whatsapp.com/...)'); if (!v) return; await api(`grupos/${b.dataset.conviteManual}/ajustes`, { method: 'POST', body: { convite: v.trim() } }); aviso('Link de convite salvo'); return telaEntradas(); }
+  if (b.dataset.vitrine) { await api(`ofertas/${b.dataset.vitrine}/vitrine`, { method: 'POST', body: { ligada: b.dataset.ligada === '1' } }); aviso(b.dataset.ligada === '1' ? 'Oferta na vitrine' : 'Oferta fora da vitrine'); return telaOfertas(); }
+  if (b.dataset.modo) { E.lote = b.dataset.modo === 'lote'; E.buscaShopee = b.dataset.modo === 'busca'; E.resultadoLote = ''; return telaOfertas(); }
+  if (b.dataset.apagar) { await api('ofertas/' + b.dataset.apagar, { method: 'DELETE' }); return telaOfertas(); }
+  if (b.dataset.repetir) return enviarDeNovo(b.dataset.repetir);
+  if (b.dataset.cancelar) { await api(`agendamentos/${b.dataset.cancelar}/cancelar`, { method: 'POST' }); aviso('Agendamento cancelado'); return telaAgendamentos(); }
+}));
+
+// Tema
+const temaSalvo = (() => { try { return localStorage.getItem('ofx-tema'); } catch { return null; } })();
+if (temaSalvo) document.documentElement.dataset.theme = temaSalvo;
+$('#tema').onclick = () => {
+  const escuro = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  const novo = escuro ? 'light' : 'dark';
+  document.documentElement.dataset.theme = novo;
+  try { localStorage.setItem('ofx-tema', novo); } catch {}
+};
+function desenharPausa() {
+  const b = $('#pausa'), p = !!E.eu?.pausado;
+  b.innerHTML = ico(p ? 'play' : 'pausa', 18); b.classList.toggle('pausado-btn', p);
+  b.title = p ? 'Envios pausados: clique para retomar' : 'Pausar todos os envios'; b.setAttribute('aria-label', b.title);
+}
+$('#pausa').onclick = tentar(async () => {
+  const p = !E.eu?.pausado;
+  if (p && !confirm('Pausar todos os envios? Nada sai (ofertas, vitrine, recorrentes e boas-vindas) até você retomar.')) return;
+  await api('pausa', { method: 'POST', body: { pausado: p } });
+  E.eu.pausado = p; desenharPausa(); aviso(p ? 'Envios pausados' : 'Envios retomados'); navegar();
+});
+if ('serviceWorker' in navigator && !window.OFERTIX_MOCK) navigator.serviceWorker.register('/sw.js').catch(() => {});
+$('#abrir-menu').onclick = (e) => { e.stopPropagation(); $('#lateral').classList.toggle('aberta'); };
+document.addEventListener('click', (e) => { if (!e.target.closest('#lateral')) $('#lateral').classList.remove('aberta'); });
+document.addEventListener('click', (e) => { if (window.OFERTIX_MOCK && e.target.closest('[data-csv]')) { e.preventDefault(); aviso('No sistema real, este botão baixa uma planilha CSV para o Excel.'); } });
+document.addEventListener('click', (e) => { if (window.OFERTIX_MOCK && e.target.closest('[data-ver-pagina]')) { e.preventDefault(); aviso('No sistema real, abre a página pública do link (ofertix.mssolucoestech.com.br/g/...).'); } });
+$('#form-colar').onsubmit = tentar(async (e) => { e.preventDefault(); await gerarOferta($('#link-topo').value); $('#link-topo').value = ''; });
+window.addEventListener('hashchange', navegar);
+
+(async () => {
+  try {
+    E.eu = await api('eu');
+  } catch (e) { C().innerHTML = `<div class="cartao vazio"><h3>Sessão expirada</h3>Abra o Ofertix pela área do cliente.</div>`; return; }
+  $('#nome-conta').textContent = E.eu.nome || E.eu.email;
+  $('#selo-plano').textContent = E.eu.plano.nome;
+  $('#avatar').textContent = (E.eu.nome || E.eu.email || 'O').trim()[0].toUpperCase();
+  $('#sair').href = window.OFERTIX_MOCK ? '#visao' : '/sair';
+  if (E.eu.demo) $('#aviso-demo').classList.remove('oculto');
+  desenharPausa();
+  if (E.eu.leitura) $('#aviso-demo').classList.remove('oculto'), ($('#aviso-demo span').textContent = 'Seu acesso é só de leitura.');
+  navegar();
+})();
+</script>
+</body>
+</html>
