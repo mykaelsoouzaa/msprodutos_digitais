@@ -106,7 +106,7 @@ test('lista do dia: junta as ofertas de hoje, mais clicadas primeiro, com o link
   await preparar(e);
   assert.equal(v6.textoListaDia(e.ctx, e.conta), '');
   const ids = ['Kit Potes de Vidro', 'Organizador de Gaveta', 'Sérum Vitamina C'].map((t, i) => s.salvarOferta(e.ctx, e.conta, {
-    plataforma: 'amazon', urlOriginal: 'https://www.amazon.com.br/dp/' + i, urlAfiliado: 'https://www.amazon.com.br/dp/' + i + '?tag=a-20', titulo: t, imagem: '', precoDe: null, precoPor: 2990 + i * 1000, comissaoPct: null,
+    plataforma: 'mercadolivre', urlOriginal: 'https://produto.mercadolivre.com.br/MLB-' + i, urlAfiliado: 'https://produto.mercadolivre.com.br/MLB-' + i + '?matt_tool=a-20', titulo: t, imagem: '', precoDe: null, precoPor: 2990 + i * 1000, comissaoPct: null,
   }));
   for (const id of ids) { const o = s.oferta(e.db, e.conta, id); s.agendar(e.ctx, e.conta, { ofertaId: id, texto: s.textoOferta(e.db, e.conta, o) }); }
   await esvaziarFila(e);
@@ -115,11 +115,11 @@ test('lista do dia: junta as ofertas de hoje, mais clicadas primeiro, com o link
   s.registrarClique(e.ctx, cod, 'Mozilla/5.0'); s.registrarClique(e.ctx, cod, 'Mozilla/5.0');
   let txt = v6.textoListaDia(e.ctx, e.conta);
   assert.match(txt, /1\. Sérum Vitamina C · \*R\$ 49,90\*/);
-  assert.match(txt, /amazon\.com\.br\/dp\/0/, 'sem link de entrada, vai o link de cada oferta');
+  assert.match(txt, /mercadolivre\.com\.br\/MLB-0/, 'sem link de entrada, vai o link de cada oferta');
   criarEntrada(e.ctx, e.conta, { titulo: 'Achadinhos', slug: 'achadinhos-teste' });
   txt = v6.textoListaDia(e.ctx, e.conta);
   assert.match(txt, /https:\/\/ofertix\.teste\/v\/achadinhos-teste/);
-  assert.doesNotMatch(txt, /dp\/0/);
+  assert.doesNotMatch(txt, /MLB-0/);
   v6.salvarListaDia(e.db, e.conta, { ativo: true, hora: '21:30', quantas: 3 });
   e.ir('2026-11-11T21:31:00');
   assert.equal(v6.rodarListaDia(e.ctx), 1);

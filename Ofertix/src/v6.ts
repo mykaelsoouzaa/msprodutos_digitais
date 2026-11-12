@@ -6,6 +6,7 @@ import { buscarProdutosShopee, linkCurtoShopee, type ItemBusca } from './shopee.
 import { CATEGORIAS, classificar, colecaoDoDia, motivoRecusa } from './nicho.ts';
 import { pausada } from './extras.ts';
 import { expandirVariacoes, reais } from './mensagem.ts';
+import { comAvisoAmazon } from './regras.ts';
 
 const DIA = 86_400_000;
 const t = (c: Ctx) => (c.agora ?? Date.now)();
@@ -203,7 +204,7 @@ const curto = (s: string, n = 48) => (s.length > n ? s.slice(0, n - 1).trimEnd()
 /** Uma mensagem com as ofertas que saíram hoje (as mais clicadas primeiro) e o link da vitrine. Vazio se saíram menos de 2. */
 export function textoListaDia(c: Ctx, conta: number, l = lerListaDia(c.db, conta)): string {
   const ini = new Date(t(c)); ini.setHours(0, 0, 0, 0);
-  const ofertas = c.db.prepare(`SELECT o.id, o.titulo, o.preco_por, o.url_afiliado,
+  const ofertas = c.db.prepare(`SELECT o.id, o.titulo, o.preco_por, o.url_afiliado, o.plataforma,
       (SELECT COUNT(*) FROM links k JOIN cliques q ON q.codigo = k.codigo WHERE k.oferta_id = o.id AND q.em >= ?) AS cliques, MIN(a.quando) AS primeiro
     FROM ofertas o JOIN agendamentos a ON a.oferta_id = o.id
     WHERE o.conta_id = ? AND a.status IN ('enviado','enviando') AND a.quando >= ? AND o.esgotada = 0
@@ -212,11 +213,12 @@ export function textoListaDia(c: Ctx, conta: number, l = lerListaDia(c.db, conta
   const e = c.db.prepare('SELECT slug FROM entradas WHERE conta_id = ? AND ativo = 1 ORDER BY id LIMIT 1').get(conta) as any;
   const linhas = [l.titulo, '', `{Perdeu alguma?|Caso tenha perdido:|Para quem chegou agora:} ${ofertas.length === 1 ? 'a oferta' : `as ${ofertas.length} mais procuradas`} do dia 👇`, ''];
   ofertas.forEach((o, i) => {
-    linhas.push(`${i + 1}. ${curto(o.titulo)}${o.preco_por ? ` · *${reais(o.preco_por)}*` : ''}`);
+    linhas.push(`${i + 1}. ${curto(o.titulo)}${o.preco_por && o.plataforma !== 'amazon' ? ` · *${reais(o.preco_por)}*` : ''}`);
     if (!e) linhas.push(`   ${o.url_afiliado}`);
   });
   if (e) linhas.push('', `👉 Todas na vitrine: ${c.urlPublica}/v/${e.slug}`);
-  return linhas.join('\n');
+  // Amazon na lista: aviso obrigatório do Programa de Associados (src/regras.ts).
+  return ofertas.some((o) => o.plataforma === 'amazon') ? comAvisoAmazon(linhas.join('\n')) : linhas.join('\n');
 }
 
 export function rodarListaDia(c: Ctx): number {

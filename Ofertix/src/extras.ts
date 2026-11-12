@@ -5,6 +5,7 @@ import { type DB } from './db.ts';
 import { type Ctx, ErroUso, agendar, config, planoDa, periodo, novoCodigo, lerHorarios } from './servico.ts';
 import { reais } from './mensagem.ts';
 import { lerNicho } from './nicho.ts';
+import { comAvisoAmazon } from './regras.ts';
 
 const DIA = 86_400_000;
 const t = (c: Ctx) => (c.agora ?? Date.now)();
@@ -283,6 +284,8 @@ export function vitrinePublica(c: Ctx, slug: string) {
   const ofertas = c.db.prepare(`SELECT o.*, MAX(a.quando) AS ultima FROM ofertas o JOIN agendamentos a ON a.oferta_id = o.id
     WHERE o.conta_id = ? AND a.status IN ('enviado','enviando') AND a.quando >= ? AND o.esgotada = 0 GROUP BY o.id ORDER BY ultima DESC LIMIT 24`).all(e.conta_id, t(c) - 7 * DIA) as any[];
   const lista = ofertas.map((o) => {
+    // Amazon: link direto, sem preço e sem foto (regras do Programa de Associados, src/regras.ts).
+    if (o.plataforma === 'amazon') return { titulo: o.titulo, imagem: 'emoji:🛒', preco_de: null, preco_por: null, categoria: o.categoria, link: o.url_afiliado };
     let l = c.db.prepare("SELECT codigo FROM links WHERE conta_id = ? AND oferta_id = ? AND grupo_id IS NULL AND agendamento_id IS NULL AND destino = ?").get(e.conta_id, o.id, o.url_afiliado) as any;
     if (!l) {
       l = { codigo: novoCodigo() };
@@ -290,5 +293,6 @@ export function vitrinePublica(c: Ctx, slug: string) {
     }
     return { titulo: o.titulo, imagem: o.imagem, preco_de: o.preco_de, preco_por: o.preco_por, categoria: o.categoria, link: `/r/${l.codigo}` };
   });
-  return { entrada: e, ofertas: lista, rodape: nicho.rodape };
+  const temAmazon = ofertas.some((o) => o.plataforma === 'amazon');
+  return { entrada: e, ofertas: lista, rodape: temAmazon ? comAvisoAmazon(nicho.rodape).trim() : nicho.rodape };
 }

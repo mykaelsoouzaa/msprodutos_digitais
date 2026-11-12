@@ -9,6 +9,7 @@ import { ErroUso, config, planoDa, converterLink, salvarOferta, agendar } from '
 import { ID_CATEGORIAS, nomeCategoria, lerNicho, motivoRecusa, rodapeAfiliado, classificar } from './nicho.ts';
 import { plataformaDe, lojaSuportada, resolverLink, NOME_PLATAFORMA, type Plataforma } from './links.ts';
 import { reais } from './mensagem.ts';
+import { ajustarAmazon } from './regras.ts';
 
 const t = (c: Ctx) => (c.agora ?? Date.now)();
 
@@ -114,7 +115,7 @@ const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`]+/gi;
 const CONVITE = /(^|\/\/|\.)(chat\.whatsapp\.com|wa\.me|whatsapp\.com\/channel|t\.me|telegram\.me)\b/i;
 
 export interface Troca { de: string; para: string; loja: string; status: 'trocado' | 'removido' | 'erro'; motivo?: string }
-export interface Reescrita { texto: string; trocas: Troca[]; bloqueio: string; ofertas: any[] }
+export interface Reescrita { texto: string; trocas: Troca[]; bloqueio: string; ofertas: any[]; amazon: boolean }
 
 /** Link de afiliado da conta para a loja, ou erro se a conta ainda não tem como gerar um. */
 async function linkDaConta(c: Ctx, conta: number, url: string) {
@@ -178,7 +179,7 @@ export async function reescrever(c: Ctx, conta: number, original: string, remove
   }
   // Linhas que ficaram vazias depois de tirar links não viram buracos no texto.
   texto = texto.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
-  return { texto, trocas, bloqueio, ofertas };
+  return { texto, trocas, bloqueio, ofertas, amazon: ofertas.some((o) => o.plataforma === 'amazon') };
 }
 const limpar = (u: string) => u.replace(/[).,;!?*_~]+$/, '');
 
@@ -246,14 +247,16 @@ export async function espelhar(c: Ctx, inst: any, grupo: any, d: any): Promise<n
     if (motivo) { registrar(c.db, conta, e.id, 'ignorada', `Curadoria: ${motivo}`, resumo, agora); return 0; }
   }
 
+  // Amazon: a cópia sai sem preço, sem a imagem e com o aviso obrigatório (src/regras.ts).
   let imagem = '';
-  if (temImagem) {
+  if (temImagem && !rw.amazon) {
     try {
       const m = await c.wpp.midia(inst.chave, d);
       if (m?.base64) imagem = `${c.urlPublica}/m/${guardarMidia(c.db, conta, m.base64, m.mimetype, agora)}`;
     } catch { /* sem a imagem, segue só o texto */ }
   }
-  const texto = e.rodape ? rodapeAfiliado(rw.texto, nicho.rodape) : rw.texto;
+  const base = e.rodape ? rodapeAfiliado(rw.texto, nicho.rodape) : rw.texto;
+  const texto = rw.amazon ? ajustarAmazon(base) : base;
   const ofertaId = principal ? salvarOferta(c, conta, principal, 'espelho', grupo.nome) : undefined;
   if (ofertaId && imagem) c.db.prepare("UPDATE ofertas SET imagem = CASE WHEN imagem = '' THEN ? ELSE imagem END WHERE id = ?").run(imagem, ofertaId);
   let grupos: number[] | 'todos' = 'todos';
@@ -263,7 +266,7 @@ export async function espelhar(c: Ctx, inst: any, grupo: any, d: any): Promise<n
     const ag = agendar(c, conta, { ofertaId, texto: texto || resumo, imagem, quando: agora + e.atraso_min * 60_000, grupos: Array.isArray(grupos) && !grupos.length ? 'todos' : grupos, origem: 'espelho' });
     c.db.prepare('UPDATE espelhos SET copiadas = copiadas + 1 WHERE id = ?').run(e.id);
     const removidos = rw.trocas.filter((x) => x.status === 'removido').length;
-    registrar(c.db, conta, e.id, 'agendada', `${rw.ofertas.length} link(s) trocado(s)${removidos ? `, ${removidos} removido(s)` : ''}${imagem ? ', com imagem' : ''}`, resumo, agora, { agendamento: ag, hash });
+    registrar(c.db, conta, e.id, 'agendada', `${rw.ofertas.length} link(s) trocado(s)${removidos ? `, ${removidos} removido(s)` : ''}${imagem ? ', com imagem' : ''}${rw.amazon ? '; Amazon: sem preço e sem imagem, com o aviso de associado' : ''}`, resumo, agora, { agendamento: ag, hash });
     return 1;
   } catch (err) {
     registrar(c.db, conta, e.id, 'bloqueada', (err as Error).message, resumo, agora);
@@ -296,5 +299,6 @@ export async function previaEspelho(c: Ctx, conta: number, texto: string, remove
   if (String(texto ?? '').length > 4000) throw new ErroUso('Texto muito longo');
   const rw = await reescrever(c, conta, String(texto ?? ''), remover);
   const nicho = lerNicho(config(c.db, conta).nicho);
-  return { texto: rw.texto, comRodape: rodapeAfiliado(rw.texto, nicho.rodape), trocas: rw.trocas, bloqueio: rw.bloqueio, lojas: rw.ofertas.length };
+  const comRodape = rodapeAfiliado(rw.texto, nicho.rodape);
+  return { texto: rw.texto, comRodape: rw.amazon ? ajustarAmazon(comRodape) : comRodape, trocas: rw.trocas, bloqueio: rw.bloqueio, lojas: rw.ofertas.length, amazon: rw.amazon };
 }
