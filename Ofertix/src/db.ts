@@ -234,6 +234,43 @@ CREATE TABLE IF NOT EXISTS entradas_acessos (
   em INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS entradas_acessos_em ON entradas_acessos (entrada_id, em);
+
+-- v10: espelhamento de grupos
+CREATE TABLE IF NOT EXISTS espelhos (
+  id INTEGER PRIMARY KEY,
+  conta_id INTEGER NOT NULL REFERENCES contas(id) ON DELETE CASCADE,
+  origem_grupo_id INTEGER NOT NULL REFERENCES grupos(id) ON DELETE CASCADE,
+  destino TEXT NOT NULL DEFAULT 'tema',  -- tema | todos | grupos
+  grupos TEXT NOT NULL DEFAULT '[]',
+  ativo INTEGER NOT NULL DEFAULT 1,
+  so_com_link INTEGER NOT NULL DEFAULT 1,
+  curadoria INTEGER NOT NULL DEFAULT 0,
+  rodape INTEGER NOT NULL DEFAULT 1,
+  atraso_min INTEGER NOT NULL DEFAULT 0,
+  remover TEXT NOT NULL DEFAULT '',
+  copiadas INTEGER NOT NULL DEFAULT 0,
+  criado_em INTEGER NOT NULL,
+  UNIQUE (conta_id, origem_grupo_id)
+);
+CREATE TABLE IF NOT EXISTS espelho_log (
+  id INTEGER PRIMARY KEY,
+  conta_id INTEGER NOT NULL REFERENCES contas(id) ON DELETE CASCADE,
+  espelho_id INTEGER NOT NULL REFERENCES espelhos(id) ON DELETE CASCADE,
+  em INTEGER NOT NULL,
+  status TEXT NOT NULL,                  -- agendada | bloqueada | ignorada
+  motivo TEXT NOT NULL DEFAULT '',
+  resumo TEXT NOT NULL DEFAULT '',
+  agendamento_id INTEGER,
+  hash TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS espelho_log_conta ON espelho_log (conta_id, em);
+CREATE TABLE IF NOT EXISTS midias (
+  codigo TEXT PRIMARY KEY,
+  conta_id INTEGER NOT NULL,
+  tipo TEXT NOT NULL,
+  dados BLOB NOT NULL,
+  criado_em INTEGER NOT NULL
+);
 `;
 
 // Colunas acrescentadas depois da v1 (o banco de quem já usa a v1 recebe na hora de abrir).
@@ -278,6 +315,9 @@ const COLUNAS_V2: [string, string, string][] = [
   ['config_conta', 'ultimo_abastecer', "TEXT NOT NULL DEFAULT ''"],
   ['config_conta', 'lista_dia', "TEXT NOT NULL DEFAULT ''"],
   ['config_conta', 'ultima_lista', "TEXT NOT NULL DEFAULT ''"],
+  // v10: envio por tema
+  ['grupos', 'categorias', "TEXT NOT NULL DEFAULT ''"],
+  ['grupos', 'preco_max', 'INTEGER NOT NULL DEFAULT 0'],
 ];
 
 export function abrirBanco(arquivo: string): DB {

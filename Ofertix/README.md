@@ -34,6 +34,8 @@ Painel para afiliados que mantêm grupos de ofertas no WhatsApp. Faz parte dos s
 - **Lista do dia (v6):** no horário escolhido, uma mensagem com as ofertas mais clicadas do dia e o link da vitrine.
 - **Respostas no privado (v6):** palavra-chave → resposta, com `{nome}`, `{link_grupos}`, `{vitrine}` e `{cupons}`. Cada contato recebe a mesma resposta no máximo uma vez a cada 12 h, e a pausa geral também segura as respostas.
 - **Enviar de novo e próximas datas (v6):** repete um envio com o mesmo texto e grupos; a Visão geral mostra as próximas datas do varejo (11.11, Black Friday, Natal...).
+- **Envio por tema (6.3):** em Grupos de envio, cada grupo escolhe as categorias que recebe e um preço máximo (ex.: Beleza só recebe beleza; "Achados até R$ 50" recebe qualquer categoria até R$ 50). Oferta mandada para "todos" vai só para os grupos do tema; sem grupo, o envio é cancelado com o motivo. Nos horários automáticos, cada horário tenta mandar uma oferta para cada grupo, a do tema dele. Grupo sem tema recebe tudo, e escolher os grupos à mão continua valendo.
+- **Automação: espelhamento (6.3):** escolhe um grupo de origem em que o número está, e cada mensagem nova sai nos grupos de envio igualzinha (texto, imagem, cupom, chamada), trocando só os links de loja pelos links de afiliado da conta. Convites de grupo e canal saem com a linha; links que não são de loja saem do texto (encurtadores são abertos para ver se levam a uma loja); linhas com as palavras escolhidas saem (assinatura do outro grupo). Se um link de loja não puder ser trocado (Shopee sem Open API, Amazon sem tag, Mercado Livre sem modelo, Magalu), a mensagem é **bloqueada**: o Ofertix nunca manda o link de outra pessoa. Opções: mandar por tema, para todos ou para grupos escolhidos; só mensagens com link de loja; curadoria do nicho; rodapé de afiliado; esperar de 0 a 60 minutos. A imagem é baixada da Evolution API (`/chat/getBase64FromMediaMessage`), guardada por 3 dias e servida em `/m/<código>` para a Evolution mandar. Repetidas em 12 h são ignoradas. A página mostra as últimas mensagens e o que aconteceu com cada uma, e tem um teste para colar uma mensagem e ver como sai. Planos Pro e Escala; o limite de espelhamentos ligados é o de grupos monitorados.
 - **Demonstração:** `/demo` (ou o código `demo` vindo do portal) abre um painel com dados fictícios e WhatsApp simulado. Os dados ficam só na memória.
 
 ## Planos (provisórios)
@@ -45,7 +47,7 @@ Os limites ficam em `src/planos.ts`.
 | Preço/mês | grátis | R$ 47 | R$ 97 | R$ 197 |
 | Números de WhatsApp | 1 | 1 | 2 | 4 |
 | Grupos de envio | 3 | 5 | 15 | 40 |
-| Grupos monitorados (captura) | 2 | não | 10 | 30 |
+| Grupos monitorados (captura e espelhamento) | 2 | não | 10 | 30 |
 | Envios por número por dia | 100 | 300 | 800 | 1.500 |
 
 ## Tecnologia
@@ -73,6 +75,6 @@ Para colocar no ar na VPS e ligar no portal, siga o [COMO-RODAR.md](COMO-RODAR.m
 ## A confirmar no primeiro uso real
 
 - Os campos da Open API da Shopee (`generateShortLink`, `productOfferV2`, `conversionReport`) seguem a documentação de afiliados. Teste com o seu AppID antes de vender.
-- Os endpoints e eventos da Evolution API v2 (`/instance/create`, `/instance/connect`, `/group/fetchAllGroups`, `/message/sendMedia` e os eventos `MESSAGES_UPSERT`, `GROUP_PARTICIPANTS_UPDATE`, `CONNECTION_UPDATE`). Confira na versão instalada.
+- Os endpoints e eventos da Evolution API v2 (`/instance/create`, `/instance/connect`, `/group/fetchAllGroups`, `/message/sendMedia`, `/chat/getBase64FromMediaMessage` e os eventos `MESSAGES_UPSERT`, `GROUP_PARTICIPANTS_UPDATE`, `CONNECTION_UPDATE`). Confira na versão instalada.
 - Mercado Livre: o link oficial de afiliado sai do painel de afiliados do ML. O Ofertix acrescenta os parâmetros configurados, então confira se a comissão está sendo registrada.
 - WhatsApp por QR Code não é a API oficial da Meta. Existe risco de bloqueio do número se o envio for agressivo, e por isso existem os intervalos, o limite diário e as dicas na tela WhatsApp.

@@ -14,6 +14,8 @@ export interface WhatsApp {
   desconectar(chave: string): Promise<void>;
   convite(chave: string, jid: string): Promise<string>; // link chat.whatsapp.com do grupo (o número precisa ser admin)
   enquete(chave: string, jid: string, pergunta: string, opcoes: string[], multipla: boolean): Promise<void>;
+  /** Imagem de uma mensagem recebida (para o espelhamento), em base64. */
+  midia(chave: string, mensagem: any): Promise<{ base64: string; mimetype: string } | null>;
 }
 
 export class EvolutionApi implements WhatsApp {
@@ -86,6 +88,14 @@ export class EvolutionApi implements WhatsApp {
     await this.req('POST', `/message/sendPoll/${encodeURIComponent(chave)}`, { number: jid, name: pergunta, selectableCount: multipla ? opcoes.length : 1, values: opcoes });
   }
 
+  async midia(chave: string, mensagem: any) {
+    const j = await this.req('POST', `/chat/getBase64FromMediaMessage/${encodeURIComponent(chave)}`, {
+      message: { key: mensagem?.key, message: mensagem?.message }, convertToMp4: false,
+    });
+    const base64 = String(j?.base64 ?? '');
+    return base64 ? { base64, mimetype: String(j?.mimetype ?? mensagem?.message?.imageMessage?.mimetype ?? 'image/jpeg').split(';')[0] } : null;
+  }
+
   async desconectar(chave: string) {
     await this.req('DELETE', `/instance/logout/${encodeURIComponent(chave)}`).catch(() => {});
   }
@@ -125,5 +135,7 @@ export class WhatsAppSimulado implements WhatsApp {
     this.enviados.push({ chave, jid, texto: pergunta, enquete: opcoes });
   }
   async desconectar(chave: string) { this.conectados.delete(chave); }
+  // PNG de 1×1 ponto, no lugar da foto da mensagem original.
+  async midia() { return { base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', mimetype: 'image/png' }; }
   async convite(_chave: string, jid: string) { return `https://chat.whatsapp.com/DEMO${jid.replace(/\D/g, '').slice(-6)}`; }
 }

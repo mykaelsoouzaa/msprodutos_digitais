@@ -145,5 +145,20 @@ export function semearDemo(db: DB, agora = Date.now()) {
   const enq = Number(db.prepare("INSERT INTO agendamentos (conta_id, texto, imagem, quando, grupos, status, origem, criado_em, enquete) VALUES (?, ?, '', ?, '\"todos\"', 'enviado', 'enquete', ?, ?)")
     .run(c.id, '📊 Qual achadinho vocês querem amanhã?', agora - 5 * 3600_000, agora - 5 * 3600_000, JSON.stringify({ opcoes: ['🍳 Cozinha', '💄 Beleza', '🗂️ Organização'], multipla: false })).lastInsertRowid);
   for (const g of grupos.slice(0, 3)) db.prepare("INSERT INTO envios (conta_id, agendamento_id, grupo_id, instancia_id, enviar_em, enviado_em, status) SELECT ?, ?, id, instancia_id, ?, ?, 'enviado' FROM grupos WHERE id = ?").run(c.id, enq, agora - 5 * 3600_000, agora - 5 * 3600_000, g);
+
+  // v10: tema de cada grupo de envio e um espelhamento ligado, com as últimas mensagens copiadas.
+  const temasGrupo: [number, string, number][] = [[1, 'casa,cozinha,organizacao', 0], [2, 'infantil', 0], [3, 'eletronicos', 0], [4, 'moda', 0], [5, '', 5000]];
+  for (const [i, cats, max] of temasGrupo) db.prepare('UPDATE grupos SET categorias = ?, preco_max = ? WHERE id = ?').run(cats, max, grupos[i]);
+  const esp = Number(db.prepare("INSERT INTO espelhos (conta_id, origem_grupo_id, destino, grupos, ativo, so_com_link, curadoria, rodape, atraso_min, remover, copiadas, criado_em) VALUES (?, ?, 'tema', '[]', 1, 1, 0, 1, 5, ?, 23, ?)")
+    .run(c.id, grupos[7], 'Caçadores de Cupom\nSiga @cacadoresdecupom', agora - 6 * dia).lastInsertRowid);
+  const log = [
+    [12, 'agendada', '1 link(s) trocado(s), 1 removido(s), com imagem', 'Kit 10 Potes Herméticos de Vidro com Tampa'],
+    [47, 'ignorada', 'Sem link de loja', 'Bom dia, grupo! Hoje tem cupom novo às 19h'],
+    [95, 'agendada', '1 link(s) trocado(s), com imagem', 'Escova Secadora 3 em 1 Íons 1200W'],
+    [140, 'bloqueada', 'Link da Magalu sem troca: O Ofertix ainda não gera link de afiliado da Magalu', 'Liquidificador 12 Velocidades 1400W'],
+    [210, 'agendada', '2 link(s) trocado(s)', 'Tênis Feminino Casual Branco + Meia Kit 3'],
+    [260, 'ignorada', 'Repetida: a mesma mensagem já foi copiada nas últimas 12 horas', 'Escova Secadora 3 em 1 Íons 1200W'],
+  ] as const;
+  for (const [min, st, mot, res] of log) db.prepare('INSERT INTO espelho_log (conta_id, espelho_id, em, status, motivo, resumo) VALUES (?, ?, ?, ?, ?, ?)').run(c.id, esp, agora - min * 60_000, st, mot, res);
   return c.id;
 }
