@@ -13,6 +13,7 @@ import { montarMensagem, expandirVariacoes, temVariacoes } from './mensagem.ts';
 import * as s from './servico.ts';
 import * as ent from './entradas.ts';
 import * as v6 from './v6.ts';
+import * as v10 from './v10.ts';
 import { paginaVendas, paginaAnuncio, TEXTO_ZAP } from './vendas.ts';
 
 const PUBLICO = join(import.meta.dirname, '..', 'public');
@@ -101,7 +102,7 @@ export function criarServidor(app: App) {
       }
       if (caminho === '/sair') return redirecionar(res, app.cfg.portalUrl, `${COOKIE}=; Path=/; Max-Age=0`);
       if (caminho === '/saude') return json(res, 200, { ok: true });
-      if (caminho === '/robots.txt') { res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' }); return res.end(`User-agent: *\nAllow: /$\nDisallow: /painel\nDisallow: /api/\nDisallow: /r/\nDisallow: /sso\nSitemap: ${app.cfg.urlPublica}/sitemap.xml\n`); }
+      if (caminho === '/robots.txt') { res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' }); return res.end(`User-agent: *\nAllow: /$\nDisallow: /painel\nDisallow: /api/\nDisallow: /r/\nDisallow: /m/\nDisallow: /sso\nSitemap: ${app.cfg.urlPublica}/sitemap.xml\n`); }
       if (caminho === '/sitemap.xml') { res.writeHead(200, { 'content-type': 'application/xml; charset=utf-8' }); return res.end(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${app.cfg.urlPublica}/</loc></url></urlset>`); }
 
       // ---------- Página de vendas: botões contam o clique por origem e seguem adiante ----------
@@ -142,6 +143,15 @@ export function criarServidor(app: App) {
         if (!destino) return pagina(res, 404, 'Esta oferta não existe mais.', app.cfg.portalUrl);
         res.writeHead(302, { location: destino, 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' });
         return res.end();
+      }
+
+      // ---------- Imagem copiada pelo espelhamento (a Evolution API baixa daqui para mandar no grupo) ----------
+      const rm = caminho.match(/^\/m\/([A-Za-z0-9_-]{16})$/);
+      if (rm && req.method === 'GET') {
+        const m = v10.lerMidia(app.real.db, rm[1]) ?? v10.lerMidia(app.demo.db, rm[1]);
+        if (!m) { res.writeHead(404); return res.end(); }
+        res.writeHead(200, { 'content-type': m.tipo, 'cache-control': 'private, max-age=86400', 'x-robots-tag': 'noindex' });
+        return res.end(Buffer.from(m.dados));
       }
 
       // ---------- Vitrine pública: achadinhos da semana ----------
@@ -353,7 +363,25 @@ export function criarServidor(app: App) {
           const b = await lerJson(req);
           if ('enviar' in b) s.alternarGrupo(db, conta, id, 'enviar', !!b.enviar);
           if ('monitorar' in b) s.alternarGrupo(db, conta, id, 'monitorar', !!b.monitorar);
+          if ('categorias' in b || 'precoMax' in b) v10.salvarTemaGrupo(db, conta, id, b);
           return r({ ok: true });
+        }
+
+        // ---------- Automação: espelhamento de grupos ----------
+        case 'GET /api/automacao': return r(v10.painelEspelhos(db, conta, Date.now()));
+        case 'POST /api/espelhos': return r({ id: v10.salvarEspelho(db, conta, await lerJson(req)) }, 201);
+        case 'PUT /api/espelhos/:id': return r({ id: v10.salvarEspelho(db, conta, await lerJson(req), id) });
+        case 'POST /api/espelhos/:id/ativo': {
+          const b = await lerJson(req);
+          const e = v10.listarEspelhos(db, conta).find((x) => x.id === id);
+          if (!e) throw new s.ErroUso('Espelhamento não encontrado', 404);
+          v10.salvarEspelho(db, conta, { ...e, origem: e.origem_grupo_id, remover: e.remover.join('\n'), ativo: !!b.ativo }, id);
+          return r({ ok: true });
+        }
+        case 'DELETE /api/espelhos/:id': v10.apagarEspelho(db, conta, id); return r({ ok: true });
+        case 'POST /api/espelhos/previa': {
+          const b = await lerJson(req);
+          return r(await v10.previaEspelho(ctx, conta, String(b.texto ?? ''), String(b.remover ?? '').split('\n').map((x) => x.trim()).filter(Boolean)));
         }
 
         case 'GET /api/entradas': return r({ lista: ent.painelEntradas(ctx, conta, per), base: `${app.cfg.urlPublica}/g/`, maximo: ent.MAX_ENTRADAS });
@@ -555,7 +583,9 @@ export function iniciarRotinas(app: App, intervaloMs = 5000) {
   // Vitrine abastecida sozinha: confere a cada 5 minutos se chegou o horário de alguém.
   const abastecer = setInterval(() => { v6.rodarAbastecer(app.real).catch((e) => console.error('abastecer', e)); }, 5 * 60_000);
   // Arquivamento das ofertas paradas: uma vez por hora.
-  const arquivo = setInterval(() => { try { x.rodarArquivamento(app.real); } catch (e) { console.error('arquivo', e); } }, 3600_000);
+  const arquivo = setInterval(() => {
+    try { x.rodarArquivamento(app.real); v10.limparMidias(app.real.db, Date.now()); } catch (e) { console.error('arquivo', e); }
+  }, 3600_000);
   // Estado dos números a cada 5 minutos (além do aviso que a Evolution API manda quando cai).
   const estados = setInterval(async () => {
     const lista = app.real.db.prepare('SELECT id, conta_id FROM instancias').all() as any[];

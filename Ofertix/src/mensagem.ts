@@ -28,7 +28,23 @@ export interface DadosMensagem {
   titulo: string; precoDe?: number | null; precoPor?: number | null; link: string; plataforma?: string; cupom?: string;
 }
 
-export function montarMensagem(d: DadosMensagem, modelo = ''): string {
+/** Sexta-feira da Black Friday (a sexta depois da 4ª quinta de novembro), no fuso do servidor. */
+export function diaBlackFriday(ano: number) { const d = new Date(ano, 10, 1); d.setDate(1 + ((4 - d.getDay() + 7) % 7) + 21 + 1); return d; }
+
+/** Contagem para a Black Friday: "· faltam 15 dias", "· é amanhã!", "· é HOJE!", "· últimos dias" ou vazio fora da época. */
+export function contagemBlackFriday(agora = Date.now()): string {
+  const hoje = new Date(agora); hoje.setHours(0, 0, 0, 0);
+  for (const ano of [hoje.getFullYear() - 1, hoje.getFullYear()]) {
+    const dias = Math.round((diaBlackFriday(ano).getTime() - hoje.getTime()) / 86_400_000);
+    if (dias > 1 && dias <= 30) return `· faltam ${dias} dias`;
+    if (dias === 1) return '· é amanhã!';
+    if (dias === 0) return '· é HOJE!';
+    if (dias < 0 && dias >= -3) return '· últimos dias';
+  }
+  return '';
+}
+
+export function montarMensagem(d: DadosMensagem, modelo = '', agora = Date.now()): string {
   const pct = descontoPct(d.precoDe, d.precoPor);
   const campos: Record<string, string> = {
     titulo: d.titulo || 'Oferta',
@@ -38,6 +54,7 @@ export function montarMensagem(d: DadosMensagem, modelo = ''): string {
     cupom: d.cupom ? `🎟️ Cupom: *${d.cupom}*\n` : '',
     link: d.link,
     loja: d.plataforma ?? '',
+    contagem: contagemBlackFriday(agora),
   };
   const texto = (modelo.trim() || MODELO_PADRAO).replace(/\{(\w+)\}/g, (m, k) => (k in campos ? campos[k] : m));
   // Sem linhas em branco repetidas quando um campo fica vazio.

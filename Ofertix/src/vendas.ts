@@ -340,7 +340,7 @@ export function paginaVendas(o: OpcoesVendas): string {
       [true, `${p.numeros} número${p.numeros > 1 ? 's' : ''} de WhatsApp`],
       [true, `Até ${p.gruposEnvio} grupos de envio`],
       [true, `${p.enviosDia.toLocaleString('pt-BR')} mensagens por número por dia`],
-      [p.captura, p.captura ? `Captura de ofertas em até ${p.gruposMonitorados} grupos` : 'Captura de ofertas de outros grupos'],
+      [p.captura, p.captura ? `Captura e espelhamento de até ${p.gruposMonitorados} grupos` : 'Captura e espelhamento de outros grupos'],
       [true, 'Link de entrada, vitrine e enquetes'],
       [true, 'Busca na Shopee e comissões no painel'],
     ];

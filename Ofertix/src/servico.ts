@@ -13,6 +13,7 @@ import { montarMensagem, descontoPct, expandirVariacoes, reais } from './mensage
 import type { WhatsApp } from './whatsapp.ts';
 import { avisosEntradas } from './entradas.ts';
 import { responderPrivado } from './v6.ts';
+import { aceitaOferta, motivoSemGrupo, temTema, espelhar } from './v10.ts';
 
 export class ErroUso extends Error {
   status: number;
@@ -221,10 +222,18 @@ export async function despachar(c: Ctx): Promise<number> {
     }
 
     const ids = JSON.parse(a.grupos);
-    const grupos = (ids === 'todos'
-      ? c.db.prepare('SELECT g.id, g.instancia_id FROM grupos g WHERE g.conta_id = ? AND g.enviar = 1 ORDER BY g.id').all(a.conta_id)
+    let grupos = (ids === 'todos'
+      ? c.db.prepare('SELECT g.id, g.instancia_id, g.categorias, g.preco_max FROM grupos g WHERE g.conta_id = ? AND g.enviar = 1 ORDER BY g.id').all(a.conta_id)
       : c.db.prepare(`SELECT g.id, g.instancia_id FROM grupos g WHERE g.conta_id = ? AND g.enviar = 1 AND g.id IN (${ids.map(() => '?').join(',')}) ORDER BY g.id`).all(a.conta_id, ...ids)) as any[];
     if (!grupos.length) { c.db.prepare("UPDATE agendamentos SET status = 'erro', obs = 'Nenhum grupo de envio ligado' WHERE id = ?").run(a.id); continue; }
+    // Envio por tema (v10): oferta mandada para "todos" vai só para os grupos cujo tema aceita a categoria e o preço dela.
+    if (ids === 'todos' && a.oferta_id) {
+      const of = c.db.prepare('SELECT categoria, preco_por FROM ofertas WHERE id = ?').get(a.oferta_id) as any;
+      if (of) {
+        grupos = grupos.filter((g) => aceitaOferta(g, of));
+        if (!grupos.length) { cancelar(motivoSemGrupo(of)); continue; }
+      }
+    }
 
     // Proteção contra repetição: a mesma oferta não volta ao mesmo grupo dentro do prazo.
     const horas = Number(cfg.repeticao_horas) || 0;
@@ -445,7 +454,12 @@ export async function eventoWhatsApp(c: Ctx, chave: string, token: string, ev: a
     if (/@(s\.whatsapp\.net|lid)$/.test(jid)) await responderPrivado(c, i, jid, textoDaMensagem(d.message), String(d?.pushName ?? '')).catch(() => {});
     return 0;
   }
-  const g = c.db.prepare('SELECT * FROM grupos WHERE instancia_id = ? AND jid = ? AND monitorar = 1').get(i.id, jid) as any;
+  const origem = c.db.prepare('SELECT * FROM grupos WHERE instancia_id = ? AND jid = ?').get(i.id, jid) as any;
+  if (!origem) return 0;
+  // Espelhamento (v10): o grupo é origem de um espelhamento ligado? Então copia a mensagem e não faz a captura comum.
+  const espelhada = await espelhar(c, i, origem, d).catch((e) => { console.error('espelho', (e as Error).message); return 0; });
+  if (espelhada !== null) return espelhada;
+  const g = origem.monitorar ? origem : null;
   if (!g || !planoDa(c.db, i.conta_id).captura) return 0;
 
   const links = extrairLinks(textoDaMensagem(d.message)).filter(lojaSuportada).slice(0, 3);
@@ -637,14 +651,32 @@ export function rodarHorarios(c: Ctx): number {
     if (t(c) - marcado.getTime() > 15 * 60_000) continue;
     // Coleção do dia primeiro (ex.: terça = beleza); sem oferta dela, a mais antiga da vitrine.
     const col = colecaoDoDia(lerNicho(cfg.nicho), t(c));
-    const o = c.db.prepare(`SELECT * FROM ofertas WHERE conta_id = ? AND vitrine = 1 AND esgotada = 0
-      ORDER BY ${col ? 'CASE WHEN categoria = ? THEN 0 ELSE 1 END, ' : ''}vitrine_em, id LIMIT 1`).get(...(col ? [cfg.conta_id, col] : [cfg.conta_id])) as any;
-    if (!o) continue;
-    try {
-      agendar(c, cfg.conta_id, { ofertaId: o.id, texto: textoOferta(c.db, cfg.conta_id, o), imagem: o.imagem, origem: 'vitrine' });
-      c.db.prepare('UPDATE ofertas SET vitrine = 0 WHERE id = ?').run(o.id);
-      publicadas++;
-    } catch { /* sem grupos de envio: tenta no próximo horário */ }
+    const fila = c.db.prepare(`SELECT * FROM ofertas WHERE conta_id = ? AND vitrine = 1 AND esgotada = 0
+      ORDER BY ${col ? 'CASE WHEN categoria = ? THEN 0 ELSE 1 END, ' : ''}vitrine_em, id LIMIT 60`).all(...(col ? [cfg.conta_id, col] : [cfg.conta_id])) as any[];
+    if (!fila.length) continue;
+    const envio = c.db.prepare('SELECT id, categorias, preco_max FROM grupos WHERE conta_id = ? AND enviar = 1').all(cfg.conta_id) as any[];
+    if (!envio.some(temTema)) {
+      const o = fila[0];
+      try {
+        agendar(c, cfg.conta_id, { ofertaId: o.id, texto: textoOferta(c.db, cfg.conta_id, o), imagem: o.imagem, origem: 'vitrine' });
+        c.db.prepare('UPDATE ofertas SET vitrine = 0 WHERE id = ?').run(o.id);
+        publicadas++;
+      } catch { /* sem grupos de envio: tenta no próximo horário */ }
+      continue;
+    }
+    // Grupos com tema (v10): cada horário tenta mandar uma oferta para cada grupo, a que combina com o tema dele.
+    let faltam = envio.slice();
+    for (const o of fila) {
+      if (!faltam.length) break;
+      const alvo = faltam.filter((g) => aceitaOferta(g, o));
+      if (!alvo.length) continue;
+      try {
+        agendar(c, cfg.conta_id, { ofertaId: o.id, texto: textoOferta(c.db, cfg.conta_id, o), imagem: o.imagem, origem: 'vitrine', grupos: alvo.map((g) => Number(g.id)) });
+        c.db.prepare('UPDATE ofertas SET vitrine = 0 WHERE id = ?').run(o.id);
+        publicadas++;
+        faltam = faltam.filter((g) => !alvo.includes(g));
+      } catch { break; }
+    }
   }
   return publicadas;
 }
