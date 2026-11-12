@@ -114,6 +114,13 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.5 (passo a passo das lojas)
+
+- Em Configurações, a parte de lojas virou **Lojas de afiliado**, em três colunas (Shopee, Amazon e Mercado Livre), cada uma com o passo a passo, os campos e se já está configurada.
+- **Achar a tag** (Amazon) e **Achar meus parâmetros** (Mercado Livre): cole um link gerado pela sua conta e o Ofertix preenche o campo sozinho. Links curtos (`amzn.to`, `/sec/`) são abertos para chegar ao endereço final.
+
+Nada muda no banco nem no `.env`.
+
 ## Atualizar para a 6.4 (regras da Amazon e do Mercado Livre)
 
 - **Amazon:** o link sai direto (sem `/r/`, então não conta clique), sem preço e sem foto, com o aviso de associado no fim. Vale para ofertas, vitrine pública, lista do dia e espelhamento.

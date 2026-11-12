@@ -109,6 +109,15 @@ h1,h2,h3{font-family:var(--fonte-titulo);letter-spacing:-.01em;margin:0}
 .linha .tit{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .linha .det{color:var(--mudo);font-size:12.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px}
 .loja{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.02em}
+.lojas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:6px}
+@media (max-width:980px){.lojas{grid-template-columns:1fr}}
+.loja-col{border:1px solid var(--borda);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--surface)}
+.loja-cab{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.loja-cab .loja{font-size:13px;padding:4px 10px}
+.passos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px;font-size:13.5px;color:var(--texto-2);line-height:1.45}
+.passos a{color:var(--verde-forte)}
+.loja-nota{margin:0;font-size:12.5px;color:var(--mudo);line-height:1.45}
+.linha-campo{display:flex;gap:6px;flex-wrap:wrap}.linha-campo input{flex:1 1 200px;min-width:0}.linha-campo .botao{flex:1 0 auto}
 .loja.shopee{background:#ee4d2d;color:#fff}.loja.mercadolivre{background:#ffe600;color:#2d3277}.loja.amazon{background:#232f3e;color:#ff9900}.loja.magalu{background:#0086ff;color:#fff}.loja.outra{background:var(--surface-2);color:var(--texto-2)}
 .status{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .status::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
@@ -1022,14 +1031,45 @@ async function telaConfig() {
   const c = await api('config');
   C().innerHTML = cabeca('config', 'Configurações', 'Seus links de afiliado, o modelo da mensagem e o ritmo dos envios.') + `
     <form id="form-config">
-    <section class="cartao secao-form"><h2>Shopee</h2><p>No painel de afiliados da Shopee, abra Open API e copie o AppID e a Senha. Com isso o Ofertix gera seus links curtos, busca preço e comissão e puxa o relatório de vendas.</p>
-      <div class="form-grade"><div class="campo"><label for="sh-id">AppID</label><input id="sh-id" value="${esc(c.shopee_app_id)}" autocomplete="off"></div>
-      <div class="campo"><label for="sh-seg">Senha (Secret)</label><input id="sh-seg" type="password" value="${esc(c.shopee_segredo)}" autocomplete="new-password"></div></div></section>
-    <section class="cartao secao-form"><h2>Amazon e Mercado Livre</h2><p>Amazon: sua tag de associado entra em todo link. Mercado Livre: cole os parâmetros do seu link de afiliado (ex.: <code>matt_tool=123&amp;matt_word=nome</code>) ou um endereço com {url}.</p>
-      <div class="form-grade"><div class="campo"><label for="amz">Tag da Amazon</label><input id="amz" value="${esc(c.amazon_tag)}" placeholder="seunome-20">
-        <span class="ajuda">Regras do Programa de Associados: oferta da Amazon sai sem preço, sem foto, com o link direto da Amazon (não conta clique) e com o aviso "Como participante do Programa de Associados da Amazon, sou remunerado pelas compras qualificadas efetuadas". Cadastre os seus grupos de WhatsApp como canal no painel de Associados.</span></div>
-      <div class="campo"><label for="ml">Mercado Livre</label><input id="ml" value="${esc(c.ml_modelo)}" placeholder="matt_tool=...&matt_word=...">
-        <span class="ajuda">Gere um link no Gerador de links do painel de afiliados do Mercado Livre, abra no navegador e copie do endereço final os parâmetros de afiliado (ex.: matt_tool=…&matt_word=…). O Ofertix tira os parâmetros de outros afiliados antes de pôr os seus. Faça uma compra de teste para conferir que a comissão aparece.</span></div></div></section>
+    <section class="cartao secao-form"><h2>Lojas de afiliado</h2><p>Siga o passo a passo de cada loja. Só as lojas configuradas têm os links trocados pelos seus; mensagem com link de loja sem configuração não sai no espelhamento.</p>
+      <div class="lojas">
+        <div class="loja-col">
+          <div class="loja-cab"><span class="loja shopee">Shopee</span>${c.shopee_app_id ? '<span class="status ativo">Configurada</span>' : '<span class="status pendente">Falta configurar</span>'}</div>
+          <ol class="passos">
+            <li>Entre em <a href="https://affiliate.shopee.com.br" target="_blank" rel="noopener">affiliate.shopee.com.br</a> e faça o cadastro de afiliado (pede CPF).</li>
+            <li>Depois da aprovação, abra a área <b>Open API</b> no painel de afiliados e peça o acesso.</li>
+            <li>Copie o <b>AppID</b> e a <b>Senha</b> (Secret) e cole aqui.</li>
+            <li>Salve e teste em Ofertas → Buscar na Shopee.</li>
+          </ol>
+          <div class="campo"><label for="sh-id">AppID</label><input id="sh-id" value="${esc(c.shopee_app_id)}" autocomplete="off"></div>
+          <div class="campo"><label for="sh-seg">Senha (Secret)</label><input id="sh-seg" type="password" value="${esc(c.shopee_segredo)}" autocomplete="new-password"></div>
+          <p class="loja-nota">Com a Open API, o Ofertix gera os seus links curtos, busca preço, nota e comissão, confere o preço antes de enviar e puxa o relatório de vendas.</p>
+        </div>
+        <div class="loja-col">
+          <div class="loja-cab"><span class="loja amazon">Amazon</span>${c.amazon_tag ? '<span class="status ativo">Configurada</span>' : '<span class="status pendente">Falta configurar</span>'}</div>
+          <ol class="passos">
+            <li>Entre em <a href="https://associados.amazon.com.br" target="_blank" rel="noopener">associados.amazon.com.br</a> e faça o cadastro.</li>
+            <li>No perfil, cadastre os seus grupos de WhatsApp como canal de divulgação.</li>
+            <li>Copie a sua <b>tag</b> (ID de rastreamento, termina em -20) e cole aqui, ou cole um link seu da Amazon que o Ofertix acha a tag.</li>
+            <li>Ponha o aviso de associado na descrição dos grupos.</li>
+          </ol>
+          <div class="campo"><label for="amz">Tag da Amazon</label><input id="amz" value="${esc(c.amazon_tag)}" placeholder="seunome-20"></div>
+          <div class="campo"><label for="amz-link">Ou cole um link seu da Amazon</label><div class="linha-campo"><input id="amz-link" placeholder="https://amzn.to/... ou link com ?tag="><button class="botao sec peq" type="button" data-extrair="amazon">Achar a tag</button></div></div>
+          <p class="loja-nota"><b>Regras da Amazon:</b> a oferta sai sem preço e sem foto, com o link direto da Amazon (não conta clique) e o aviso "Como participante do Programa de Associados da Amazon, sou remunerado pelas compras qualificadas efetuadas". A Amazon pede 3 vendas nos primeiros 180 dias para manter a conta.</p>
+        </div>
+        <div class="loja-col">
+          <div class="loja-cab"><span class="loja mercadolivre">Mercado Livre</span>${c.ml_modelo ? '<span class="status ativo">Configurado</span>' : '<span class="status pendente">Falta configurar</span>'}</div>
+          <ol class="passos">
+            <li>Entre em <a href="https://afiliados.mercadolivre.com.br" target="_blank" rel="noopener">afiliados.mercadolivre.com.br</a> e faça o cadastro.</li>
+            <li>Abra <b>Ferramentas → Gerador de links</b> e gere o link de qualquer produto.</li>
+            <li>Cole o link gerado aqui e toque em <b>Achar meus parâmetros</b>.</li>
+            <li>Faça uma compra de teste e confira se a comissão aparece no painel.</li>
+          </ol>
+          <div class="campo"><label for="ml-link">Link gerado no seu painel</label><div class="linha-campo"><input id="ml-link" placeholder="https://mercadolivre.com/sec/..."><button class="botao sec peq" type="button" data-extrair="mercadolivre">Achar meus parâmetros</button></div></div>
+          <div class="campo"><label for="ml">Seus parâmetros de afiliado</label><input id="ml" value="${esc(c.ml_modelo)}" placeholder="matt_tool=...&matt_word=..."></div>
+          <p class="loja-nota">O Ofertix tira os parâmetros de outros afiliados de qualquer link do Mercado Livre e põe os seus. Também aceita um endereço com {url}.</p>
+        </div>
+      </div></section>
     <section class="cartao secao-form"><h2>Modelo da mensagem</h2><p>Campos: {titulo} {de} {por} {desconto} {cupom} {link} {loja} {contagem} (contagem para a Black Friday, como "· faltam 15 dias"; fora da época fica vazio). Variações: escreva {opção 1|opção 2|opção 3} e cada grupo recebe uma, sorteada. Deixe em branco para usar o padrão, que já tem variações.</p>
       <div class="modal-corpo"><div class="campo"><label for="modelo">Modelo</label><textarea id="modelo" rows="9" placeholder="{🔥|⚡|🚨} *{titulo}*&#10;&#10;{de}Por *{por}* {desconto}&#10;{cupom}&#10;🛒 {Compre aqui|Link da oferta}: {link}">${esc(c.modelo_mensagem)}</textarea></div>
       <div><label style="font-size:12.5px;font-weight:600;color:var(--texto-2);display:block;margin-bottom:6px">Prévia</label><div class="zap"><div class="bolha"><div class="img">🍟</div><span id="previa-modelo"></span><span class="hora">12:00</span></div></div>
@@ -1091,6 +1131,12 @@ async function telaConfig() {
   } });
   $('#r-teste').onclick = tentar(async () => { await salvar(); await api('resumo/teste', { method: 'POST' }); aviso('Resumo enviado para o seu WhatsApp'); });
   $('#modelo').oninput = previa; previa();
+  C().querySelectorAll('[data-extrair]').forEach((b) => (b.onclick = tentar(async () => {
+    const loja = b.dataset.extrair, campo = loja === 'amazon' ? '#amz-link' : '#ml-link';
+    const r = await api('lojas/extrair', { method: 'POST', body: { loja, url: $(campo).value } });
+    if (loja === 'amazon') $('#amz').value = r.valor; else $('#ml').value = r.valor;
+    aviso(loja === 'amazon' ? `Tag encontrada: ${r.valor}. Salve as configurações.` : 'Parâmetros encontrados. Salve as configurações.');
+  })));
   $('#form-config').onsubmit = tentar(async (e) => {
     e.preventDefault();
     await salvar();

@@ -14,6 +14,8 @@ import * as s from './servico.ts';
 import * as ent from './entradas.ts';
 import * as v6 from './v6.ts';
 import * as v10 from './v10.ts';
+import { extrairAfiliado } from './regras.ts';
+import { resolverLink } from './links.ts';
 import { paginaVendas, paginaAnuncio, TEXTO_ZAP } from './vendas.ts';
 
 const PUBLICO = join(import.meta.dirname, '..', 'public');
@@ -425,6 +427,12 @@ export function criarServidor(app: App) {
         case 'GET /api/config': {
           const c = s.config(db, conta);
           return r({ ...c, shopee_segredo: c.shopee_segredo ? '••••••••' : '', modelo_mensagem: c.modelo_mensagem });
+        }
+        case 'POST /api/lojas/extrair': {
+          const b = await lerJson(req);
+          if (sess.demo) return r({ valor: b.loja === 'amazon' ? 'carla-20' : 'matt_tool=12345678&matt_word=carla' });
+          try { return r({ valor: await extrairAfiliado(String(b.loja ?? ''), String(b.url ?? ''), (u) => resolverLink(u, ctx.f)) }); }
+          catch (e) { throw new s.ErroUso((e as Error).message); }
         }
         case 'POST /api/config': {
           const b = await lerJson(req);
