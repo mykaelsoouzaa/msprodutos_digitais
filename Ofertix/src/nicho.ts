@@ -119,6 +119,15 @@ export const MODELOS: { id: string; nome: string; texto: string }[] = [
 {cupom}
 🛒 {link}`,
   },
+  {
+    id: 'black-friday', nome: 'Black Friday (contagem regressiva)',
+    texto: `🖤 *BLACK FRIDAY* {contagem}
+
+{🔥|⚡|😱} *{titulo}*
+{de}Por *{por}* {desconto}
+{cupom}
+{Preço de Black Friday|Corre que é por tempo limitado|Esse vale a pena}: {link}`,
+  },
 ];
 
 export const RODAPE_PADRAO = '_Link de afiliado: você paga o mesmo preço e ajuda o grupo a continuar._';

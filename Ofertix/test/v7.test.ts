@@ -57,3 +57,23 @@ test('animação do topo: lista todos os grupos, funciona sem script e não tem 
     assert.doesNotMatch(cena, / style="/);
   }
 });
+
+test('Black Friday: dia certo, contagem regressiva e modelo pronto', async () => {
+  const { diaBlackFriday, contagemBlackFriday, montarMensagem } = await import('../src/mensagem.ts');
+  const { MODELOS } = await import('../src/nicho.ts');
+  assert.equal(diaBlackFriday(2026).getDate(), 27);
+  assert.equal(diaBlackFriday(2025).getDate(), 28);
+  const em = (d: string) => new Date(`${d}T12:00:00`).getTime();
+  assert.equal(contagemBlackFriday(em('2026-11-12')), '· faltam 15 dias');
+  assert.equal(contagemBlackFriday(em('2026-11-26')), '· é amanhã!');
+  assert.equal(contagemBlackFriday(em('2026-11-27')), '· é HOJE!');
+  assert.equal(contagemBlackFriday(em('2026-11-30')), '· últimos dias');
+  assert.equal(contagemBlackFriday(em('2026-12-05')), '');
+  assert.equal(contagemBlackFriday(em('2026-09-01')), '');
+  const bf = MODELOS.find((m) => m.id === 'black-friday')!;
+  const txt = montarMensagem({ titulo: 'Kit Potes', precoDe: 8990, precoPor: 4490, link: 'https://x' }, bf.texto, em('2026-11-20'));
+  assert.match(txt, /^🖤 \*BLACK FRIDAY\* · faltam 7 dias\n/);
+  assert.match(txt, /Por \*R\$ 44,90\* \(50% OFF\)/);
+  // fora da época, a linha fica limpa
+  assert.match(montarMensagem({ titulo: 'X', link: 'https://x' }, bf.texto, em('2026-03-01')), /^🖤 \*BLACK FRIDAY\*\n/);
+});

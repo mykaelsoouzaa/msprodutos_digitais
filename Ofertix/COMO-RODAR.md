@@ -114,6 +114,13 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.2 (Black Friday)
+
+- Modelo de mensagem **Black Friday (contagem regressiva)** em Nicho e curadoria → Modelos.
+- Campo novo `{contagem}` para qualquer modelo: "· faltam 15 dias", "· é amanhã!", "· é HOJE!" e "· últimos dias" (até a segunda-feira seguinte). Fora da época, fica vazio. Usa o fuso do `TZ` do `.env`.
+
+Nada muda no banco nem no `.env`.
+
 ## Atualizar para a 6.1 (animação, página do anúncio e botão de WhatsApp)
 
 - **Animação no topo** da página de vendas: a oferta saindo para 19 grupos, um de cada vez, com o horário de cada envio e os cliques subindo. Com "reduzir movimento" ligado no celular, aparece parada.
