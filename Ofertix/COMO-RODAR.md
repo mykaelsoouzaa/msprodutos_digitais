@@ -114,6 +114,15 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.4 (regras da Amazon e do Mercado Livre)
+
+- **Amazon:** o link sai direto (sem `/r/`, então não conta clique), sem preço e sem foto, com o aviso de associado no fim. Vale para ofertas, vitrine pública, lista do dia e espelhamento.
+- **Mercado Livre:** os parâmetros de outros afiliados saem antes dos seus. Preencha o modelo em Configurações com os parâmetros do seu link (veja a ajuda na tela) e faça uma compra de teste.
+- **Automação:** o contador agora diz "Grupos copiados / limite": o limite conta os grupos de origem, não os de destino.
+- No painel de Associados da Amazon, cadastre os grupos de WhatsApp como canal de divulgação.
+
+Nada muda no banco nem no `.env`.
+
 ## Atualizar para a 6.3 (envio por tema e espelhamento)
 
 - **Envio por tema** em Grupos de envio: botão **Tema** em cada grupo de envio, com as categorias que ele recebe e o preço máximo. A vitrine, os horários automáticos, a captura e o espelhamento respeitam o tema. Grupo sem tema continua recebendo tudo.

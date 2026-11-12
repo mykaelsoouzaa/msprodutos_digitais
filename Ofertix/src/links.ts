@@ -1,4 +1,5 @@
 // Reconhece links de lojas, troca pelo link de afiliado e busca os dados do produto.
+import { limparAmazon, limparRastreioML } from './regras.ts';
 export type Plataforma = 'shopee' | 'mercadolivre' | 'amazon' | 'magalu' | 'outra';
 
 export const NOME_PLATAFORMA: Record<Plataforma, string> = {
@@ -34,9 +35,8 @@ export function idsShopee(url: string): { shopId: string; itemId: string } | nul
 /** Link da Amazon com a tag de afiliado (remove outras tags). */
 export function linkAmazon(url: string, tag: string): string {
   if (!tag) return url;
-  const u = new URL(url);
-  u.searchParams.delete('tag');
-  u.searchParams.delete('linkCode');
+  // Tira a tag e o rastreio de quem mandou o link antes de pôr a da conta.
+  const u = new URL(limparAmazon(url));
   u.searchParams.set('tag', tag);
   return u.toString();
 }
@@ -48,8 +48,10 @@ export function linkAmazon(url: string, tag: string): string {
  */
 export function linkModelo(url: string, modelo: string): string {
   if (!modelo) return url;
-  if (modelo.includes('{url}')) return modelo.replace('{url}', encodeURIComponent(url));
-  const u = new URL(url);
+  // Tira os parâmetros de afiliado de quem mandou o link antes de pôr os da conta.
+  const limpo = limparRastreioML(url);
+  if (modelo.includes('{url}')) return modelo.replace('{url}', encodeURIComponent(limpo));
+  const u = new URL(limpo);
   for (const [k, v] of new URLSearchParams(modelo.replace(/^\?/, ''))) u.searchParams.set(k, v);
   return u.toString();
 }

@@ -25,7 +25,7 @@ async function preparar(e: ReturnType<typeof ambiente>, n = 2) {
   return { inst, grupos };
 }
 const oferta = (e: ReturnType<typeof ambiente>, titulo: string, preco = 4990) => s.salvarOferta(e.ctx, e.conta, {
-  plataforma: 'amazon', urlOriginal: 'https://www.amazon.com.br/dp/' + titulo.replace(/\W/g, ''), urlAfiliado: 'https://www.amazon.com.br/dp/x?tag=ana-20', titulo, imagem: '', precoDe: 9990, precoPor: preco, comissaoPct: 5,
+  plataforma: 'mercadolivre', urlOriginal: 'https://produto.mercadolivre.com.br/MLB-' + titulo.replace(/\W/g, ''), urlAfiliado: 'https://produto.mercadolivre.com.br/MLB-x?matt_tool=ana-20', titulo, imagem: '', precoDe: 9990, precoPor: preco, comissaoPct: 5,
 });
 
 test('aquecimento: número novo começa com limite baixo e sobe por semana', async () => {
@@ -146,5 +146,5 @@ test('primeiros passos e vitrine pública', async () => {
   assert.equal(v.ofertas.length, 1);
   assert.match(v.ofertas[0]!.link, /^\/r\//);
   assert.equal(x.vitrinePublica(e.ctx, 'achadinhos-da-ana')!.ofertas[0]!.link, v.ofertas[0]!.link, 'reaproveita o mesmo link');
-  assert.equal(s.registrarClique(e.ctx, v.ofertas[0]!.link.slice(3), 'Mozilla/5.0'), 'https://www.amazon.com.br/dp/x?tag=ana-20');
+  assert.equal(s.registrarClique(e.ctx, v.ofertas[0]!.link.slice(3), 'Mozilla/5.0'), 'https://produto.mercadolivre.com.br/MLB-x?matt_tool=ana-20');
 });

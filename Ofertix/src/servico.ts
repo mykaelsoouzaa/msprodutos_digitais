@@ -14,6 +14,7 @@ import type { WhatsApp } from './whatsapp.ts';
 import { avisosEntradas } from './entradas.ts';
 import { responderPrivado } from './v6.ts';
 import { aceitaOferta, motivoSemGrupo, temTema, espelhar } from './v10.ts';
+import { comAvisoAmazon } from './regras.ts';
 
 export class ErroUso extends Error {
   status: number;
@@ -41,7 +42,9 @@ export async function converterLink(c: Ctx, conta: number, url: string): Promise
   let final = u.toString();
   if (plataformaDe(final) === 'outra') throw new ErroUso('Por enquanto o Ofertix aceita links da Shopee, Mercado Livre, Amazon e Magalu');
   // Links curtos (s.shopee, amzn.to, meli.la...) precisam ser abertos para achar o produto.
-  if (/^(s\.shopee\.com\.br|shp\.ee|amzn\.to|a\.co|meli\.la)$/i.test(u.hostname) || /\/sec\//.test(u.pathname)) final = await resolverLink(final, c.f);
+  if (/^(s\.shopee\.com\.br|shp\.ee|amzn\.to|a\.co|meli\.la)$/i.test(u.hostname) || /\/(sec|social)\//.test(u.pathname)) final = await resolverLink(final, c.f);
+  // Mercado Livre: link de vitrine de outro afiliado que não leva a um produto não tem como virar o link da conta.
+  if (plataformaDe(final) === 'mercadolivre' && /\/social\//.test(new URL(final).pathname)) throw new ErroUso('Link de vitrine de outro afiliado do Mercado Livre: abra o produto e copie o link dele');
   const plataforma = plataformaDe(final) === 'outra' ? plataformaDe(url) : plataformaDe(final);
 
   const base: NovaOferta = { plataforma, urlOriginal: final, urlAfiliado: final, titulo: '', imagem: '', precoDe: null, precoPor: null, comissaoPct: null };
@@ -101,10 +104,13 @@ export function oferta(db: DB, conta: number, id: number) {
 export function textoOferta(db: DB, conta: number, o: any): string {
   const cup = db.prepare('SELECT codigo FROM cupons WHERE conta_id = ? AND plataforma = ? AND ativo = 1 ORDER BY id DESC LIMIT 1').get(conta, o.plataforma) as any;
   const cfg = config(db, conta);
-  return rodapeAfiliado(montarMensagem({
+  const amazon = o.plataforma === 'amazon';
+  const texto = rodapeAfiliado(montarMensagem({
     titulo: o.titulo, precoDe: o.preco_de, precoPor: o.preco_por, link: o.url_afiliado,
-    plataforma: NOME_PLATAFORMA[o.plataforma as Plataforma] ?? '', cupom: cup?.codigo,
+    plataforma: NOME_PLATAFORMA[o.plataforma as Plataforma] ?? '', cupom: cup?.codigo, semPreco: amazon,
   }, cfg.modelo_mensagem), lerNicho(cfg.nicho).rodape);
+  // Amazon: sem preço e com o aviso obrigatório do Programa de Associados (src/regras.ts).
+  return amazon ? comAvisoAmazon(texto) : texto;
 }
 
 // ---------------- Agendamentos e fila ----------------
@@ -295,7 +301,7 @@ const inicioDoDia = (ms: number) => { const d = new Date(ms); d.setHours(0, 0, 0
 
 /** Manda o que está na hora. Respeita o limite diário por número do plano. */
 export async function processarFila(c: Ctx, maximo = 20): Promise<number> {
-  const fila = c.db.prepare(`SELECT e.*, i.chave, i.status AS inst_status, g.jid, a.texto, a.imagem, a.oferta_id, a.enquete, o.url_afiliado
+  const fila = c.db.prepare(`SELECT e.*, i.chave, i.status AS inst_status, g.jid, a.texto, a.imagem, a.oferta_id, a.enquete, o.url_afiliado, o.plataforma
     FROM envios e JOIN instancias i ON i.id = e.instancia_id JOIN grupos g ON g.id = e.grupo_id JOIN agendamentos a ON a.id = e.agendamento_id
     LEFT JOIN ofertas o ON o.id = a.oferta_id
     WHERE e.status = 'fila' AND e.enviar_em <= ? ORDER BY e.enviar_em LIMIT ?`).all(t(c), maximo) as any[];
@@ -340,10 +346,12 @@ export async function processarFila(c: Ctx, maximo = 20): Promise<number> {
           continue;
         }
         let texto = expandirVariacoes(e.texto);
-        if (cfg.contar_cliques && e.url_afiliado && /^https?:\/\//.test(c.urlPublica) && texto.includes(e.url_afiliado)) {
+        // Amazon: o link sai direto (sem /r/) e sem foto; regras do Programa de Associados em src/regras.ts.
+        const amazon = e.plataforma === 'amazon';
+        if (!amazon && cfg.contar_cliques && e.url_afiliado && /^https?:\/\//.test(c.urlPublica) && texto.includes(e.url_afiliado)) {
           texto = texto.split(e.url_afiliado).join(linkRastreado(c, e, e.url_afiliado));
         }
-        await c.wpp.enviar(e.chave, e.jid, texto, /^https?:\/\//.test(e.imagem) ? e.imagem : undefined);
+        await c.wpp.enviar(e.chave, e.jid, texto, !amazon && /^https?:\/\//.test(e.imagem) ? e.imagem : undefined);
         c.db.prepare("UPDATE envios SET status = 'enviado', enviado_em = ? WHERE id = ?").run(t(c), e.id);
         feitos++;
       } catch (err) {

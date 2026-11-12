@@ -21,7 +21,7 @@ function ambiente(quando = '2026-11-12T12:00:00') {
   const ctx: s.Ctx = { db, wpp, f, urlPublica: 'https://ofertix.teste', agora: () => relogio };
   const conta = contaPorEmail(db, 'ana@exemplo.com', 'Ana').id;
   db.prepare("UPDATE contas SET plano = 'pro' WHERE id = ?").run(conta);
-  db.prepare("UPDATE config_conta SET amazon_tag = 'ana-20', aquecimento = 0 WHERE conta_id = ?").run(conta);
+  db.prepare("UPDATE config_conta SET amazon_tag = 'ana-20', ml_modelo = 'matt_tool=11223344&matt_word=ana', aquecimento = 0 WHERE conta_id = ?").run(conta);
   return { db, wpp, ctx, conta, avancar: (ms: number) => { relogio += ms; } };
 }
 
@@ -103,7 +103,7 @@ test('espelhamento: copia texto, imagem e cupom, troca o link, tira convite e as
   assert.throws(() => v10.salvarEspelho(e.db, e.conta, { origem: p.envio[0] }), /não pode ser um dos seus grupos de envio/);
   const id = v10.salvarEspelho(e.db, e.conta, { origem: p.origem, destino: 'todos', remover: 'Siga @zezinho\nGrupo do Zé' });
   assert.throws(() => v10.salvarEspelho(e.db, e.conta, { origem: p.origem }), /já tem um espelhamento/);
-  const texto = ['🔥 *Fone Bluetooth com Estojo*', 'De ~R$ 199~ por *R$ 99*', '🎟️ Cupom: FONE10', '👉 https://www.amazon.com.br/dp/B0XYZ?tag=outro-20', '',
+  const texto = ['🔥 *Fone Bluetooth com Estojo*', 'De ~R$ 199~ por *R$ 99*', '🎟️ Cupom: FONE10', '👉 https://produto.mercadolivre.com.br/MLB-123-fone?matt_tool=99887766&matt_word=ze&tracking_id=abc-1', '',
     'Entre no grupo: https://chat.whatsapp.com/ABCdef123', 'Siga @zezinho no Insta', 'Mais no nosso site: https://bit.ly/insta'].join('\n');
   const n = await s.eventoWhatsApp(e.ctx, p.chave.chave, p.chave.token_webhook, evento(p.jidOrigem, { imageMessage: { caption: texto, mimetype: 'image/jpeg' } }));
   assert.equal(n, 1);
@@ -112,8 +112,8 @@ test('espelhamento: copia texto, imagem e cupom, troca o link, tira convite e as
   assert.match(ag.texto, /Fone Bluetooth com Estojo/);
   assert.match(ag.texto, /Cupom: FONE10/);
   assert.match(ag.texto, /De ~R\$ 199~ por \*R\$ 99\*/);
-  assert.match(ag.texto, /https:\/\/www\.amazon\.com\.br\/dp\/B0XYZ\?tag=ana-20/);
-  assert.doesNotMatch(ag.texto, /outro-20|chat\.whatsapp|zezinho|bit\.ly/);
+  assert.match(ag.texto, /https:\/\/produto\.mercadolivre\.com\.br\/MLB-123-fone\?matt_tool=11223344&matt_word=ana/);
+  assert.doesNotMatch(ag.texto, /99887766|matt_word=ze|tracking_id|chat\.whatsapp|zezinho|bit\.ly/, 'nada do afiliado da origem fica no link');
   assert.match(ag.texto, /Mais no nosso site:/, 'link que não é de loja sai, a frase fica');
   assert.match(ag.imagem, /^https:\/\/ofertix\.teste\/m\/[\w-]{16}$/);
   const midia = v10.lerMidia(e.db, ag.imagem.split('/m/')[1]);
@@ -134,6 +134,53 @@ test('espelhamento: copia texto, imagem e cupom, troca o link, tira convite e as
   assert.match(reg[0].motivo, /Repetida/);
   assert.equal(reg[1].status, 'agendada');
   assert.equal((e.db.prepare('SELECT copiadas FROM espelhos WHERE id = ?').get(id) as any).copiadas, 1);
+});
+
+test('regras da Amazon: link direto, sem preço, sem foto e com o aviso de associado (oferta, espelho, vitrine e lista)', async () => {
+  const e = ambiente();
+  const p = await preparar(e);
+  // Oferta comum da Amazon.
+  const id = s.salvarOferta(e.ctx, e.conta, { plataforma: 'amazon', urlOriginal: 'https://www.amazon.com.br/dp/K1', urlAfiliado: 'https://www.amazon.com.br/dp/K1?tag=ana-20', titulo: 'Kindle 16GB', imagem: 'https://m.media-amazon.com/k.jpg', precoDe: 59900, precoPor: 44900, comissaoPct: 4 });
+  const txt = s.textoOferta(e.db, e.conta, s.oferta(e.db, e.conta, id));
+  assert.doesNotMatch(txt, /R\$|OFF|preço no link/);
+  assert.match(txt, /Como participante do Programa de Associados da Amazon, sou remunerado pelas compras qualificadas efetuadas/);
+  s.agendar(e.ctx, e.conta, { ofertaId: id, texto: txt, imagem: 'https://m.media-amazon.com/k.jpg' });
+  await esvaziarFila(e);
+  const enviada = e.wpp.enviados.find((x) => x.texto.includes('Kindle'))!;
+  assert.match(enviada.texto, /https:\/\/www\.amazon\.com\.br\/dp\/K1\?tag=ana-20/, 'link direto da Amazon');
+  assert.doesNotMatch(enviada.texto, /ofertix\.teste\/r\//, 'sem link curto');
+  assert.equal(enviada.imagem, undefined, 'sem foto');
+  // Vitrine pública: link direto, sem preço, sem foto e com o aviso.
+  const { criarEntrada } = await import('../src/entradas.ts');
+  const { vitrinePublica } = await import('../src/extras.ts');
+  criarEntrada(e.ctx, e.conta, { slug: 'achados-ana', titulo: 'Achados da Ana' });
+  const v = vitrinePublica(e.ctx, 'achados-ana')!;
+  assert.deepEqual([v.ofertas[0]!.link, v.ofertas[0]!.preco_por, v.ofertas[0]!.imagem], ['https://www.amazon.com.br/dp/K1?tag=ana-20', null, 'emoji:🛒']);
+  assert.match(v.rodape, /Programa de Associados da Amazon/);
+  // Espelhamento com link da Amazon: troca a tag, tira preço e foto e põe o aviso.
+  v10.salvarEspelho(e.db, e.conta, { origem: p.origem, destino: 'todos' });
+  const msg = ['⚡ *Echo Dot 5ª geração*', 'De R$ 399 por R$ 279 (30% OFF)', 'Por R$ 279 aqui: https://www.amazon.com.br/dp/E5?tag=outro-20&linkCode=ll1&ascsubtag=zz', 'Cupom: ECHO10'].join('\n');
+  assert.equal(await s.eventoWhatsApp(e.ctx, p.chave.chave, p.chave.token_webhook, evento(p.jidOrigem, { imageMessage: { caption: msg } })), 1);
+  const ag = e.db.prepare("SELECT texto, imagem FROM agendamentos WHERE origem = 'espelho'").get() as any;
+  assert.equal(ag.imagem, '');
+  assert.match(ag.texto, /Echo Dot/);
+  assert.match(ag.texto, /Cupom: ECHO10/);
+  assert.match(ag.texto, /^https:\/\/www\.amazon\.com\.br\/dp\/E5\?tag=ana-20$/m, 'a linha com preço vira só o link');
+  assert.doesNotMatch(ag.texto, /R\$|OFF|outro-20|linkCode|ascsubtag/);
+  assert.match(ag.texto, /Programa de Associados da Amazon/);
+  // Prévia mostra o mesmo.
+  const pv = await v10.previaEspelho(e.ctx, e.conta, msg);
+  assert.equal(pv.amazon, true);
+  assert.doesNotMatch(pv.comRodape, /R\$/);
+});
+
+test('Mercado Livre: tira o rastreio de outro afiliado antes de pôr o da conta; vitrine de afiliado não é trocada', async () => {
+  const { linkModelo } = await import('../src/links.ts');
+  assert.equal(linkModelo('https://produto.mercadolivre.com.br/MLB-1-x?matt_tool=1&matt_word=ze&tracking_id=t&utm_source=y&c_id=3&cor=azul', 'matt_tool=9&matt_word=ana'),
+    'https://produto.mercadolivre.com.br/MLB-1-x?cor=azul&matt_tool=9&matt_word=ana');
+  assert.equal(linkModelo('https://produto.mercadolivre.com.br/MLB-1-x?matt_tool=1', 'https://meu.gerador/?u={url}'), 'https://meu.gerador/?u=' + encodeURIComponent('https://produto.mercadolivre.com.br/MLB-1-x'));
+  const e = ambiente();
+  await assert.rejects(s.converterLink(e.ctx, e.conta, 'https://www.mercadolivre.com.br/social/zezinho?matt_tool=1'), /vitrine de outro afiliado/);
 });
 
 test('espelhamento: nunca manda o link de outra pessoa; sem link, ignora; encurtador que leva à loja é trocado', async () => {

@@ -31,7 +31,7 @@ async function preparar(e: ReturnType<typeof ambiente>, gruposEnvio = 2) {
 
 function novaOferta(e: ReturnType<typeof ambiente>, extra: Partial<s.NovaOferta> = {}) {
   return s.salvarOferta(e.ctx, e.conta, {
-    plataforma: 'amazon', urlOriginal: 'https://www.amazon.com.br/dp/B0' + Math.random(), urlAfiliado: 'https://www.amazon.com.br/dp/B0?tag=ana-20',
+    plataforma: 'mercadolivre', urlOriginal: 'https://produto.mercadolivre.com.br/MLB-0' + Math.random(), urlAfiliado: 'https://produto.mercadolivre.com.br/MLB-0?matt_tool=ana-20',
     titulo: 'Kindle', imagem: '', precoDe: 59900, precoPor: 44900, comissaoPct: 4, ...extra,
   });
 }
@@ -52,8 +52,8 @@ test('link curto por grupo conta cliques (sem robôs) e alimenta o ranking', asy
   assert.equal(e.wpp.enviados.length, 2);
   const codigos = e.wpp.enviados.map((m) => m.texto.match(/https:\/\/ofertix\.teste\/r\/(\w+)/)?.[1]);
   assert.ok(codigos[0] && codigos[1] && codigos[0] !== codigos[1], 'um link por grupo');
-  assert.ok(!e.wpp.enviados[0].texto.includes('tag=ana-20'), 'o link de afiliado fica escondido atrás do link curto');
-  assert.equal(s.registrarClique(e.ctx, codigos[0]!, 'Mozilla/5.0 (iPhone)'), 'https://www.amazon.com.br/dp/B0?tag=ana-20');
+  assert.ok(!e.wpp.enviados[0].texto.includes('matt_tool=ana-20'), 'o link de afiliado fica escondido atrás do link curto');
+  assert.equal(s.registrarClique(e.ctx, codigos[0]!, 'Mozilla/5.0 (iPhone)'), 'https://produto.mercadolivre.com.br/MLB-0?matt_tool=ana-20');
   s.registrarClique(e.ctx, codigos[0]!, 'Mozilla/5.0 (Android)');
   s.registrarClique(e.ctx, codigos[1]!, 'WhatsApp/2.23.20 A');
   s.registrarClique(e.ctx, codigos[1]!, 'facebookexternalhit/1.1');
@@ -68,7 +68,7 @@ test('link curto por grupo conta cliques (sem robôs) e alimenta o ranking', asy
   e.db.prepare('UPDATE config_conta SET contar_cliques = 0, repeticao_horas = 0').run();
   s.agendar(e.ctx, e.conta, { ofertaId: id, texto: s.textoOferta(e.db, e.conta, o) });
   await mandarTudo(e);
-  assert.ok(e.wpp.enviados.at(-1)!.texto.includes('tag=ana-20'));
+  assert.ok(e.wpp.enviados.at(-1)!.texto.includes('matt_tool=ana-20'));
 });
 
 // 3: lote

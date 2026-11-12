@@ -26,7 +26,10 @@ export const descontoPct = (de: number | null | undefined, por: number | null | 
 
 export interface DadosMensagem {
   titulo: string; precoDe?: number | null; precoPor?: number | null; link: string; plataforma?: string; cupom?: string;
+  /** Loja que não deixa mostrar preço (Amazon): a linha de preço e o desconto saem da mensagem. */
+  semPreco?: boolean;
 }
+const SEM_PRECO = '\u0000sem-preco\u0000';
 
 /** Sexta-feira da Black Friday (a sexta depois da 4ª quinta de novembro), no fuso do servidor. */
 export function diaBlackFriday(ano: number) { const d = new Date(ano, 10, 1); d.setDate(1 + ((4 - d.getDay() + 7) % 7) + 21 + 1); return d; }
@@ -48,15 +51,16 @@ export function montarMensagem(d: DadosMensagem, modelo = '', agora = Date.now()
   const pct = descontoPct(d.precoDe, d.precoPor);
   const campos: Record<string, string> = {
     titulo: d.titulo || 'Oferta',
-    de: d.precoDe && pct > 0 ? `De ~${reais(d.precoDe)}~\n` : '',
-    por: d.precoPor ? reais(d.precoPor) : 'preço no link',
-    desconto: pct > 0 ? `(${pct}% OFF)` : '',
+    de: d.precoDe && pct > 0 && !d.semPreco ? `De ~${reais(d.precoDe)}~\n` : '',
+    por: d.semPreco ? SEM_PRECO : d.precoPor ? reais(d.precoPor) : 'preço no link',
+    desconto: pct > 0 && !d.semPreco ? `(${pct}% OFF)` : '',
     cupom: d.cupom ? `🎟️ Cupom: *${d.cupom}*\n` : '',
     link: d.link,
     loja: d.plataforma ?? '',
     contagem: contagemBlackFriday(agora),
   };
-  const texto = (modelo.trim() || MODELO_PADRAO).replace(/\{(\w+)\}/g, (m, k) => (k in campos ? campos[k] : m));
+  let texto = (modelo.trim() || MODELO_PADRAO).replace(/\{(\w+)\}/g, (m, k) => (k in campos ? campos[k] : m));
+  if (d.semPreco) texto = texto.split('\n').filter((l) => !l.includes(SEM_PRECO)).join('\n');
   // Sem linhas em branco repetidas quando um campo fica vazio.
   return texto.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
 }

@@ -755,9 +755,10 @@ async function abrirCompositor(o, texto, parecidas = []) {
   $('#camada').innerHTML = `<div class="fundo" id="fundo"><div class="cartao modal" role="dialog" aria-modal="true" aria-labelledby="tit-modal">
     <div class="modal-cab"><h2 id="tit-modal">Enviar oferta</h2><button class="icone-btn" id="fechar" aria-label="Fechar">${ico('x')}</button></div>
     <div class="modal-corpo">
-      <div><div class="zap"><div class="bolha" id="previa"><div class="img">${foto(o.imagem)}</div><span id="previa-txt"></span><span class="hora">${hora(Date.now())}</span></div></div>
+      <div><div class="zap"><div class="bolha" id="previa">${o.plataforma === 'amazon' ? '' : `<div class="img">${foto(o.imagem)}</div>`}<span id="previa-txt"></span><span class="hora">${hora(Date.now())}</span></div></div>
         <p style="color:var(--mudo);font-size:12px;margin:8px 2px 0">Link de afiliado: <a href="${esc(o.url_afiliado)}" target="_blank" rel="noopener" style="word-break:break-all">${esc(o.url_afiliado)}</a></p></div>
       <div style="display:flex;flex-direction:column;gap:14px">
+        ${o.plataforma === 'amazon' ? `<div class="aviso-faixa">${ico('alerta', 16)}<span><b>Amazon:</b> a oferta sai sem preço e sem foto, com o link direto da Amazon e o aviso de associado (regras do Programa de Associados).</span></div>` : ''}
         ${parecidas.length ? `<div class="parecidas"><b>Parece repetida:</b> ${parecidas.map((x) => esc(x.titulo)).join(' · ')}. Confira antes de enviar para não mandar o mesmo produto duas vezes.</div>` : ''}
         <div class="campo"><label for="txt">Texto da mensagem</label><textarea id="txt" rows="8">${esc(texto)}</textarea><span class="ajuda">*negrito* · ~riscado~ · _itálico_ · {opção 1|opção 2} sorteia uma por grupo</span><div class="dica-var oculto" id="dica-var">Este texto tem variações: cada grupo recebe uma versão sorteada. A prévia mostra a primeira.</div></div>
         <div class="campo"><label>Grupos (${envio.length} com envio ligado)</label>
@@ -1025,8 +1026,10 @@ async function telaConfig() {
       <div class="form-grade"><div class="campo"><label for="sh-id">AppID</label><input id="sh-id" value="${esc(c.shopee_app_id)}" autocomplete="off"></div>
       <div class="campo"><label for="sh-seg">Senha (Secret)</label><input id="sh-seg" type="password" value="${esc(c.shopee_segredo)}" autocomplete="new-password"></div></div></section>
     <section class="cartao secao-form"><h2>Amazon e Mercado Livre</h2><p>Amazon: sua tag de associado entra em todo link. Mercado Livre: cole os parâmetros do seu link de afiliado (ex.: <code>matt_tool=123&amp;matt_word=nome</code>) ou um endereço com {url}.</p>
-      <div class="form-grade"><div class="campo"><label for="amz">Tag da Amazon</label><input id="amz" value="${esc(c.amazon_tag)}" placeholder="seunome-20"></div>
-      <div class="campo"><label for="ml">Mercado Livre</label><input id="ml" value="${esc(c.ml_modelo)}" placeholder="matt_tool=...&matt_word=..."></div></div></section>
+      <div class="form-grade"><div class="campo"><label for="amz">Tag da Amazon</label><input id="amz" value="${esc(c.amazon_tag)}" placeholder="seunome-20">
+        <span class="ajuda">Regras do Programa de Associados: oferta da Amazon sai sem preço, sem foto, com o link direto da Amazon (não conta clique) e com o aviso "Como participante do Programa de Associados da Amazon, sou remunerado pelas compras qualificadas efetuadas". Cadastre os seus grupos de WhatsApp como canal no painel de Associados.</span></div>
+      <div class="campo"><label for="ml">Mercado Livre</label><input id="ml" value="${esc(c.ml_modelo)}" placeholder="matt_tool=...&matt_word=...">
+        <span class="ajuda">Gere um link no Gerador de links do painel de afiliados do Mercado Livre, abra no navegador e copie do endereço final os parâmetros de afiliado (ex.: matt_tool=…&matt_word=…). O Ofertix tira os parâmetros de outros afiliados antes de pôr os seus. Faça uma compra de teste para conferir que a comissão aparece.</span></div></div></section>
     <section class="cartao secao-form"><h2>Modelo da mensagem</h2><p>Campos: {titulo} {de} {por} {desconto} {cupom} {link} {loja} {contagem} (contagem para a Black Friday, como "· faltam 15 dias"; fora da época fica vazio). Variações: escreva {opção 1|opção 2|opção 3} e cada grupo recebe uma, sorteada. Deixe em branco para usar o padrão, que já tem variações.</p>
       <div class="modal-corpo"><div class="campo"><label for="modelo">Modelo</label><textarea id="modelo" rows="9" placeholder="{🔥|⚡|🚨} *{titulo}*&#10;&#10;{de}Por *{por}* {desconto}&#10;{cupom}&#10;🛒 {Compre aqui|Link da oferta}: {link}">${esc(c.modelo_mensagem)}</textarea></div>
       <div><label style="font-size:12.5px;font-weight:600;color:var(--texto-2);display:block;margin-bottom:6px">Prévia</label><div class="zap"><div class="bolha"><div class="img">🍟</div><span id="previa-modelo"></span><span class="hora">12:00</span></div></div>
@@ -1040,7 +1043,7 @@ async function telaConfig() {
       <div class="campo" style="margin-top:14px"><label for="horarios">Horários automáticos da vitrine</label><input id="horarios" value="${esc(c.horarios_auto)}" placeholder="09:00, 12:00, 18:00, 21:00"><span class="ajuda">Em cada horário, a oferta mais antiga da vitrine (⭐ em Ofertas) vai para todos os grupos de envio. Vazio = desligado.</span></div>
       <div class="linha-inter"><div><b>Conferir preço e estoque antes de enviar</b><div style="color:var(--mudo);font-size:13px">Shopee: se o produto acabou ou o preço subiu mais de 5%, o envio é cancelado e você vê o motivo em Agendamentos.</div></div>
         <label class="inter"><input type="checkbox" id="conferir" ${c.conferir_preco ? 'checked' : ''} aria-label="Conferir preço antes de enviar"><span></span></label></div>
-      <div class="linha-inter"><div><b>Contar cliques</b><div style="color:var(--mudo);font-size:13px">O link vai como ${esc(location.host || 'ofertix.mssolucoestech.com.br')}/r/… e leva direto para o seu link de afiliado. Assim você vê quais ofertas e grupos rendem mais.</div></div>
+      <div class="linha-inter"><div><b>Contar cliques</b><div style="color:var(--mudo);font-size:13px">O link vai como ${esc(location.host || 'ofertix.mssolucoestech.com.br')}/r/… e leva direto para o seu link de afiliado. Assim você vê quais ofertas e grupos rendem mais. Links da Amazon sempre vão diretos (regra do Programa de Associados) e não entram na contagem.</div></div>
         <label class="inter"><input type="checkbox" id="cliques" ${c.contar_cliques ? 'checked' : ''} aria-label="Contar cliques"><span></span></label></div></section>
     <section class="cartao secao-form"><h2>Resumo diário no WhatsApp</h2><p>Todo dia, no horário escolhido, você recebe no seu WhatsApp o resumo: mensagens, cliques, capturas, comissões, membros e avisos.</p>
       <div class="form-grade">
@@ -1203,13 +1206,13 @@ async function telaAutomacao() {
     ${!d.permitido ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>O espelhamento vem nos planos <b>Pro</b> e <b>Escala</b>. Fale com a MS Soluções para mudar de plano.</span></div>` : ''}
     ${d.permitido && faltaLoja ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>Cadastre a Open API da Shopee em <a href="#config">Configurações</a>. Sem ela, mensagens com link da Shopee ficam bloqueadas (o Ofertix nunca manda o link de outra pessoa).</span></div>` : ''}
     <div class="kpis">
-      ${kpi('espelho', `${ativos}<small>/${d.limite}</small>`, 'Espelhamentos ligados / limite')}
+      ${kpi('espelho', `${ativos}<small>/${d.limite}</small>`, 'Grupos copiados / limite')}
       ${kpi('enviar', num(d.hoje.agendadas), 'Copiadas hoje')}
       ${kpi('alerta', num(d.hoje.bloqueadas), 'Bloqueadas hoje (link sem troca)', 'l')}
       ${kpi('filtro', num(d.hoje.ignoradas), 'Ignoradas hoje (sem link, repetidas)')}
     </div>
     ${novo ? `<form class="cartao secao-form" id="form-esp" style="margin-bottom:16px"><h2>${ed ? 'Editar espelhamento' : 'Novo espelhamento'}</h2>
-      <p>O seu número precisa estar no grupo de origem. Ele só lê as mensagens; quem publica são os seus grupos de envio, com o intervalo e a janela de sempre.</p>
+      <p>O seu número precisa estar no grupo de origem. Ele só lê as mensagens; quem publica são os seus grupos de envio, com o intervalo e a janela de sempre. O limite do plano (${d.limite}) conta os grupos de origem copiados; os grupos para onde a cópia vai não entram na conta.</p>
       <div class="form-grade">
         <div class="campo"><label for="esp-origem">Grupo de origem (copiar de)</label><select id="esp-origem">${origens.length ? origens.map((g) => `<option value="${g.id}" ${ed?.origem_grupo_id === g.id ? 'selected' : ''}>${esc(g.nome)} (${num(g.participantes)})</option>`).join('') : '<option value="">Nenhum grupo disponível</option>'}</select>
           <span class="ajuda">Aparecem os grupos em que o seu número está e que não são de envio.</span></div>
@@ -1227,7 +1230,7 @@ async function telaAutomacao() {
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px"><button class="botao sec" type="button" id="esp-cancelar">Cancelar</button><button class="botao" type="submit" ${origens.length ? '' : 'disabled'}>${ed ? 'Salvar' : 'Ligar espelhamento'}</button></div>
     </form>` : ''}
     <div class="grade-2" style="align-items:start">
-      <section class="cartao bloco"><h2>Espelhamentos</h2><p class="sub">${d.lista.length ? `${ativos} ligado(s)` : 'Nenhum ainda'}</p>
+      <section class="cartao bloco"><h2>Grupos copiados</h2><p class="sub">${d.lista.length ? `${ativos} de ${d.limite} ligado(s). O limite conta só os grupos de origem; cada um pode mandar para todos os seus grupos de envio.` : 'Nenhum ainda'}</p>
         <div class="linhas">${d.lista.length ? d.lista.map((x) => `<div class="linha"><div class="miniatura">${ico('espelho', 18)}</div>
           <div class="meio"><div class="tit">${esc(x.origem_nome)}</div>
             <div class="det"><span>→ ${x.destino === 'grupos' ? `${x.grupos.length} grupo(s): ${x.grupos.map(nomeGrupo).map(esc).join(', ')}` : x.destino === 'todos' ? 'todos os grupos de envio' : 'grupos de envio, pelo tema'}</span>
@@ -1277,7 +1280,7 @@ async function telaAutomacao() {
     const remover = $('#esp-rem') ? $('#esp-rem').value : (d.lista[0]?.remover || []).join('\n');
     const r = await api('espelhos/previa', { method: 'POST', body: { texto: $('#esp-teste').value, remover } });
     const rot = { trocado: 'trocado', removido: 'saiu', erro: 'sem troca' };
-    $('#esp-res').innerHTML = `${r.bloqueio ? `<div class="aviso-faixa" style="margin-top:12px">${ico('alerta', 16)}<span><b>Esta mensagem ficaria bloqueada.</b> ${esc(r.bloqueio)}</span></div>` : ''}
+    $('#esp-res').innerHTML = `${r.amazon ? `<div class="aviso-faixa" style="margin-top:12px">${ico('alerta', 16)}<span><b>Link da Amazon:</b> a cópia sai sem preço e sem a imagem, com o link direto e o aviso de associado (regras do Programa de Associados da Amazon).</span></div>` : ''}${r.bloqueio ? `<div class="aviso-faixa" style="margin-top:12px">${ico('alerta', 16)}<span><b>Esta mensagem ficaria bloqueada.</b> ${esc(r.bloqueio)}</span></div>` : ''}
       <div class="zap" style="margin-top:12px"><div class="bolha"><span>${zapHtml(r.comRodape || '(nada sobrou)')}</span><span class="hora">${hora(Date.now())}</span></div></div>
       ${r.trocas.length ? `<div class="trocas">${r.trocas.map((x) => `<div class="troca ${x.status}"><span class="tag-origem">${esc(x.loja)} · ${rot[x.status]}</span><span class="de">${esc(x.de)}</span>${x.para ? `<span class="para">→ ${esc(x.para)}</span>` : ''}${x.motivo ? `<span class="mot">${esc(x.motivo)}</span>` : ''}</div>`).join('')}</div>` : '<p class="ajuda" style="margin-top:8px">Nenhum link na mensagem.</p>'}`;
   });
