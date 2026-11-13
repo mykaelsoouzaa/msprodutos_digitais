@@ -412,6 +412,10 @@ export function alternarGrupo(db: DB, conta: number, id: number, campo: 'enviar'
   const g = db.prepare('SELECT * FROM grupos WHERE id = ? AND conta_id = ?').get(id, conta) as any;
   if (!g) throw new ErroUso('Grupo não encontrado', 404);
   if (ligado) {
+    // Grupo monitorado (captura ou origem de espelhamento) não vira grupo de envio, e vice-versa (6.6).
+    const origem = db.prepare('SELECT 1 FROM espelhos WHERE origem_grupo_id = ?').get(id);
+    if (campo === 'enviar' && (g.monitorar || origem)) throw new ErroUso(`Esse grupo é de monitoramento (${origem ? 'origem de um espelhamento em Automação' : 'captura ligada'}). Desligue o monitoramento antes de enviar ofertas para ele.`);
+    if (campo === 'monitorar' && g.enviar) throw new ErroUso('Esse grupo é de envio. Desligue o envio antes de monitorar.');
     const p = planoDa(db, conta);
     if (campo === 'monitorar' && !p.captura) throw new ErroUso('A captura de ofertas não faz parte do seu plano');
     const max = campo === 'enviar' ? p.gruposEnvio : p.gruposMonitorados;
@@ -495,7 +499,7 @@ export async function eventoWhatsApp(c: Ctx, chave: string, token: string, ev: a
 
 export async function sincronizarComissoes(c: Ctx, conta: number, dias = 30): Promise<number> {
   const cfg = config(c.db, conta);
-  if (!cfg.shopee_app_id || !cfg.shopee_segredo) throw new ErroUso('Cadastre o AppID e a Senha da Open API da Shopee em Configurações');
+  if (!cfg.shopee_app_id || !cfg.shopee_segredo) throw new ErroUso('Cadastre o AppID e a Senha da Open API da Shopee em Conectar plataformas');
   const fim = Math.floor(t(c) / 1000), inicio = fim - dias * 86400;
   const itens = await comissoesShopee({ appId: cfg.shopee_app_id, segredo: cfg.shopee_segredo }, inicio, fim, c.f);
   for (const it of itens) {

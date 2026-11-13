@@ -128,9 +128,9 @@ async function linkDaConta(c: Ctx, conta: number, url: string) {
     return { plataforma: pl, urlOriginal: url.split('?')[0], urlAfiliado: para, titulo: '', imagem: '', precoDe: null, precoPor: null, comissaoPct: null };
   }
   const pl = plataformaDe(url);
-  if (pl === 'shopee' && !(cfg.shopee_app_id && cfg.shopee_segredo)) throw new ErroUso('Cadastre a Open API da Shopee em Configurações para trocar links da Shopee');
-  if (pl === 'amazon' && !cfg.amazon_tag) throw new ErroUso('Cadastre a sua tag da Amazon em Configurações');
-  if (pl === 'mercadolivre' && !cfg.ml_modelo) throw new ErroUso('Cadastre o seu modelo de link do Mercado Livre em Configurações');
+  if (pl === 'shopee' && !(cfg.shopee_app_id && cfg.shopee_segredo)) throw new ErroUso('Cadastre a Open API da Shopee em Conectar plataformas para trocar links da Shopee');
+  if (pl === 'amazon' && !cfg.amazon_tag) throw new ErroUso('Cadastre a sua tag da Amazon em Conectar plataformas');
+  if (pl === 'mercadolivre' && !cfg.ml_modelo) throw new ErroUso('Cadastre o seu modelo de link do Mercado Livre em Conectar plataformas');
   if (pl === 'magalu') throw new ErroUso('O Ofertix ainda não gera link de afiliado da Magalu');
   const o = await converterLink(c, conta, url);
   if (!o.urlAfiliado) throw new ErroUso('A loja não devolveu o seu link de afiliado');

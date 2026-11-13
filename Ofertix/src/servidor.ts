@@ -322,7 +322,8 @@ export function criarServidor(app: App) {
         case 'POST /api/agendamentos/:id/repetir': { const b = await lerJson(req); return r({ id: v6.enviarDeNovo(ctx, conta, id, b.quando ? Number(b.quando) : undefined) }, 201); }
 
         // ---------- v6 ----------
-        case 'GET /api/shopee/busca': return r(await v6.buscarShopee(ctx, conta, url.searchParams.get('q') ?? '', url.searchParams.get('ordem') ?? 'vendidos', Number(url.searchParams.get('pagina')) || 1));
+        case 'GET /api/shopee/busca': return r(await v6.buscarShopee(ctx, conta, url.searchParams.get('q') ?? '', url.searchParams.get('ordem') ?? 'vendidos', Number(url.searchParams.get('pagina')) || 1, {
+          categoria: url.searchParams.get('cat') ?? '', precoMax: Number(url.searchParams.get('max')) || 0, grupo: Number(url.searchParams.get('grupo')) || 0 }));
         case 'POST /api/shopee/adicionar': {
           const b = await lerJson(req);
           const oid = await v6.adicionarDaBusca(ctx, conta, b.item, !!b.vitrine);
@@ -358,7 +359,8 @@ export function criarServidor(app: App) {
 
         case 'GET /api/grupos': {
           const p = s.planoDa(db, conta);
-          const lista = db.prepare('SELECT g.*, i.nome AS numero_nome FROM grupos g JOIN instancias i ON i.id = g.instancia_id WHERE g.conta_id = ? ORDER BY g.enviar DESC, g.monitorar DESC, g.nome').all(conta);
+          const lista = db.prepare(`SELECT g.*, i.nome AS numero_nome, EXISTS (SELECT 1 FROM espelhos e WHERE e.origem_grupo_id = g.id) AS espelho
+            FROM grupos g JOIN instancias i ON i.id = g.instancia_id WHERE g.conta_id = ? ORDER BY g.enviar DESC, (g.monitorar OR EXISTS (SELECT 1 FROM espelhos e WHERE e.origem_grupo_id = g.id)), g.nome`).all(conta);
           return r({ lista, limites: { envio: p.gruposEnvio, monitorados: p.gruposMonitorados, captura: p.captura } });
         }
         case 'POST /api/grupos/:id': {
@@ -434,6 +436,15 @@ export function criarServidor(app: App) {
           try { return r({ valor: await extrairAfiliado(String(b.loja ?? ''), String(b.url ?? ''), (u) => resolverLink(u, ctx.f)) }); }
           catch (e) { throw new s.ErroUso((e as Error).message); }
         }
+        case 'POST /api/plataformas': {
+          const b = await lerJson(req);
+          const atual = s.config(db, conta);
+          db.prepare('UPDATE config_conta SET shopee_app_id = ?, shopee_segredo = ?, amazon_tag = ?, ml_modelo = ? WHERE conta_id = ?').run(
+            String(b.shopee_app_id ?? '').trim().slice(0, 40),
+            b.shopee_segredo && !String(b.shopee_segredo).startsWith('•') ? String(b.shopee_segredo).trim().slice(0, 100) : atual.shopee_segredo,
+            String(b.amazon_tag ?? '').trim().slice(0, 40), String(b.ml_modelo ?? '').trim().slice(0, 300), conta);
+          return r({ ok: true });
+        }
         case 'POST /api/config': {
           const b = await lerJson(req);
           const atual = s.config(db, conta);
@@ -448,9 +459,11 @@ export function criarServidor(app: App) {
               intervalo_min = ?, intervalo_max = ?, auto_publicar = ?, desconto_minimo = ?,
               janela_inicio = ?, janela_fim = ?, repeticao_horas = ?, contar_cliques = ?, conferir_preco = ?,
               horarios_auto = ?, resumo_numero = ?, resumo_hora = ? WHERE conta_id = ?`).run(
-            String(b.shopee_app_id ?? '').trim().slice(0, 40),
+            // As lojas ficam em Conectar plataformas (6.6); sem os campos, mantém o que está salvo.
+            'shopee_app_id' in b ? String(b.shopee_app_id ?? '').trim().slice(0, 40) : atual.shopee_app_id,
             b.shopee_segredo && !String(b.shopee_segredo).startsWith('•') ? String(b.shopee_segredo).trim().slice(0, 100) : atual.shopee_segredo,
-            String(b.amazon_tag ?? '').trim().slice(0, 40), String(b.ml_modelo ?? '').trim().slice(0, 300),
+            'amazon_tag' in b ? String(b.amazon_tag ?? '').trim().slice(0, 40) : atual.amazon_tag,
+            'ml_modelo' in b ? String(b.ml_modelo ?? '').trim().slice(0, 300) : atual.ml_modelo,
             String(b.modelo_mensagem ?? '').slice(0, 1500), min, Math.max(min + 5, n(b.intervalo_max, 15, 900, 70)),
             b.auto_publicar ? 1 : 0, n(b.desconto_minimo, 0, 90, 0),
             hora(b.janela_inicio, 8), hora(b.janela_fim, 22), Math.min(720, Math.max(0, Math.round(Number(b.repeticao_horas) || 0))),

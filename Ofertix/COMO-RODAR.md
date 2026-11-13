@@ -114,6 +114,15 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.6 (Conectar plataformas, busca melhor, grupos de monitoramento)
+
+- **Conectar plataformas** (menu Conta): Shopee, Amazon e Mercado Livre saíram de Configurações e ganharam página própria, com o passo a passo e um botão Salvar só delas.
+- **Busca na Shopee:** até 50 produtos por vez; filtros de categoria (sem precisar escrever nada), preço até R$ 20/30/50/100/200 e "Para o grupo", que usa o tema do grupo e já deixa só ele marcado na hora de enviar. O que já está na vitrine não aparece.
+- **Grupos de envio:** grupos de monitoramento (captura ou origem de espelhamento) aparecem em cinza, com a etiqueta "monitoramento", e não podem virar grupo de envio (nem o contrário).
+- **Automação:** botão Sincronizar grupos ao lado do grupo de origem; "Últimas mensagens" mostra há quanto tempo atualizou e lê de novo sozinha a cada 30 segundos.
+
+Nada muda no banco nem no `.env`.
+
 ## Atualizar para a 6.5 (passo a passo das lojas)
 
 - Em Configurações, a parte de lojas virou **Lojas de afiliado**, em três colunas (Shopee, Amazon e Mercado Livre), cada uma com o passo a passo, os campos e se já está configurada.
