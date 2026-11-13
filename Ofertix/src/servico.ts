@@ -4,8 +4,7 @@ import { type DB, agora } from './db.ts';
 import { plano } from './planos.ts';
 import {
   type Plataforma, NOME_PLATAFORMA, plataformaDe, extrairLinks, lojaSuportada, idsShopee,
-  linkAmazon, linkModelo, resolverLink, buscarPagina,
-} from './links.ts';
+  linkAmazon, linkModelo, resolverLink, buscarPagina, produtoDoSocialML } from './links.ts';
 import { linkCurtoShopee, produtoShopee, comissoesShopee, avaliacaoShopee } from './shopee.ts';
 import { anotarEntrada, anotarPreco, limiteDoNumero } from './extras.ts';
 import { classificar, colecaoDoDia, lerNicho, motivoRecusa, rodapeAfiliado, CATEGORIAS, nomeCategoria } from './nicho.ts';
@@ -43,8 +42,12 @@ export async function converterLink(c: Ctx, conta: number, url: string): Promise
   if (plataformaDe(final) === 'outra') throw new ErroUso('Por enquanto o Ofertix aceita links da Shopee, Mercado Livre, Amazon e Magalu');
   // Links curtos (s.shopee, amzn.to, meli.la...) precisam ser abertos para achar o produto.
   if (/^(s\.shopee\.com\.br|shp\.ee|amzn\.to|a\.co|meli\.la)$/i.test(u.hostname) || /\/(sec|social)\//.test(u.pathname)) final = await resolverLink(final, c.f);
-  // Mercado Livre: link de vitrine de outro afiliado que não leva a um produto não tem como virar o link da conta.
-  if (plataformaDe(final) === 'mercadolivre' && /\/social\//.test(new URL(final).pathname)) throw new ErroUso('Link de vitrine de outro afiliado do Mercado Livre: abra o produto e copie o link dele');
+  // Mercado Livre: link /social/ (vitrine de outro afiliado). Tenta achar o produto dela; sem produto único, não troca.
+  if (plataformaDe(final) === 'mercadolivre' && /\/social\//.test(new URL(final).pathname)) {
+    const produto = await produtoDoSocialML(final, c.f);
+    if (!produto) throw new ErroUso(`Link de vitrine de outro afiliado do Mercado Livre (${new URL(final).pathname}) sem um produto só: abra o produto e copie o link dele`);
+    final = produto;
+  }
   const plataforma = plataformaDe(final) === 'outra' ? plataformaDe(url) : plataformaDe(final);
 
   const base: NovaOferta = { plataforma, urlOriginal: final, urlAfiliado: final, titulo: '', imagem: '', precoDe: null, precoPor: null, comissaoPct: null };

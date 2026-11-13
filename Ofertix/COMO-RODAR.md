@@ -114,6 +114,13 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.6.1 (link /social/ do Mercado Livre no espelhamento)
+
+Link do Mercado Livre que outro grupo manda pela vitrine dele (`/social/...`) agora vira o link da sua conta quando
+leva a um produto só: o Ofertix acha o código do anúncio (MLB...) no endereço ou na página e põe os seus parâmetros.
+Se a vitrine mostrar vários produtos, a mensagem continua bloqueada e o motivo mostra o endereço.
+A mensagem de bloqueio passou a dizer "Link do Mercado Livre".
+
 ## Atualizar para a 6.6 (Conectar plataformas, busca melhor, grupos de monitoramento)
 
 - **Conectar plataformas** (menu Conta): Shopee, Amazon e Mercado Livre saíram de Configurações e ganharam página própria, com o passo a passo e um botão Salvar só delas.

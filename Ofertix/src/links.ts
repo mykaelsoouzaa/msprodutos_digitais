@@ -69,6 +69,31 @@ export async function resolverLink(url: string, f: typeof fetch = fetch, max = 5
   return atual;
 }
 
+/**
+ * Mercado Livre: link /social/ (a vitrine do afiliado que mandou a oferta) → o produto dela.
+ * Procura o código do anúncio (MLB…) primeiro no próprio endereço e, se não estiver lá, na página.
+ * Só aceita quando acha um produto só; com vários (vitrine inteira) devolve vazio.
+ */
+export async function produtoDoSocialML(url: string, f: typeof fetch = fetch): Promise<string> {
+  const ids = (t: string) => [...new Set([...t.matchAll(/\bMLB-?(\d{6,})/gi)].map((m) => m[1]!))];
+  let texto = url;
+  try { texto = decodeURIComponent(decodeURIComponent(url)); } catch { /* fica o original */ }
+  const noEndereco = ids(texto);
+  if (noEndereco.length === 1) return `https://produto.mercadolivre.com.br/MLB-${noEndereco[0]}`;
+  try {
+    const r = await f(url, { headers: { 'user-agent': 'Mozilla/5.0 (compatible; Ofertix/1.0)', 'accept-language': 'pt-BR' }, signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return '';
+    const html = (await r.text()).slice(0, 600_000);
+    // Link de produto completo na página (anúncio ou catálogo).
+    const links = [...new Set([...html.matchAll(/https?:\/\/(?:www\.|produto\.)?mercadoli(?:vre|bre)\.com\.br\/[^"'\s<>\\]*?(?:MLB-?\d{6,}|\/p\/MLB\d{6,})[^"'\s<>\\]*/gi)].map((m) => m[0].split('?')[0].split('#')[0]))];
+    const naPagina = ids(links.join(' '));
+    if (naPagina.length === 1) return links[0]!;
+    const soltos = ids(html);
+    if (soltos.length === 1) return `https://produto.mercadolivre.com.br/MLB-${soltos[0]}`;
+  } catch { /* sem página */ }
+  return '';
+}
+
 export interface DadosPagina { titulo: string; imagem: string; preco: number | null }
 
 const meta = (html: string, prop: string) => {

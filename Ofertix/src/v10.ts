@@ -174,13 +174,14 @@ export async function reescrever(c: Ctx, conta: number, original: string, remove
       ofertas.push(o);
     } catch (e) {
       trocas.push({ de: bruto, para: '', loja, status: 'erro', motivo: (e as Error).message });
-      bloqueio ||= `Link da ${loja} sem troca: ${(e as Error).message}`;
+      bloqueio ||= `Link ${DA[plataformaDe(alvo)] ?? 'da'} ${loja} sem troca: ${(e as Error).message}`;
     }
   }
   // Linhas que ficaram vazias depois de tirar links não viram buracos no texto.
   texto = texto.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
   return { texto, trocas, bloqueio, ofertas, amazon: ofertas.some((o) => o.plataforma === 'amazon') };
 }
+const DA: Record<string, string> = { shopee: 'da', amazon: 'da', magalu: 'da', mercadolivre: 'do' };
 const limpar = (u: string) => u.replace(/[).,;!?*_~]+$/, '');
 
 // ------------------------------------------------------------------ mídia (imagem da mensagem original)
