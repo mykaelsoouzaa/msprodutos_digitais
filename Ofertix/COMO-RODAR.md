@@ -114,6 +114,11 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.6.4 (espelho com foto em mensagem só de texto)
+
+Mensagem copiada que era só texto com a prévia do link agora sai com a foto do produto (ou a miniatura da prévia).
+A linha que era só uma chamada para um link que saiu ("Convide seus amigos para o grupo: …") sai inteira.
+
 ## Atualizar para a 6.6.3 (vitrine do Mercado Livre: produto certo)
 
 O código "MLB" do nome das fotos não conta mais como produto. O Ofertix usa o link de produto que está na página;

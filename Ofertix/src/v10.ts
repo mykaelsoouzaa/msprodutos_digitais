@@ -162,7 +162,12 @@ export async function reescrever(c: Ctx, conta: number, original: string, remove
     let alvo = url;
     if (!lojaSuportada(url) && !c.demo) alvo = await resolverLink(url, c.f).catch(() => url);
     if (!lojaSuportada(alvo)) {
-      texto = texto.split(bruto).join('');
+      // Tira o link; se a linha era só uma chamada para ele ("Convide seus amigos para o grupo: <link>"), a linha sai inteira.
+      texto = texto.split('\n').flatMap((l) => {
+        if (!l.includes(bruto)) return [l];
+        const resto = l.split(bruto).join('').trimEnd();
+        return /:\s*$/.test(resto) ? [] : [resto];
+      }).join('\n');
       trocas.push({ de: bruto, para: '', loja: 'Outro site', status: 'removido', motivo: 'Não é link de loja: saiu do texto' });
       continue;
     }
@@ -255,6 +260,16 @@ export async function espelhar(c: Ctx, inst: any, grupo: any, d: any): Promise<n
       const m = await c.wpp.midia(inst.chave, d);
       if (m?.base64) imagem = `${c.urlPublica}/m/${guardarMidia(c.db, conta, m.base64, m.mimetype, agora)}`;
     } catch { /* sem a imagem, segue só o texto */ }
+  }
+  // Mensagem só de texto com prévia do link (a foto que o WhatsApp mostra é do link da loja). O link trocado aponta
+  // para o Ofertix, que não tem essa prévia; então a cópia sai com a foto do produto, ou com a miniatura da prévia.
+  if (!imagem && !rw.amazon && rw.ofertas.length) {
+    if (/^https:\/\//.test(principal?.imagem ?? '')) imagem = principal.imagem;
+    else {
+      const mini = msg.extendedTextMessage?.jpegThumbnail;
+      const b64 = typeof mini === 'string' ? mini : mini ? Buffer.from(Object.values(mini) as number[]).toString('base64') : '';
+      if (b64) { try { imagem = `${c.urlPublica}/m/${guardarMidia(c.db, conta, b64, 'image/jpeg', agora)}`; } catch { /* sem miniatura */ } }
+    }
   }
   const base = e.rodape ? rodapeAfiliado(rw.texto, nicho.rodape) : rw.texto;
   const texto = rw.amazon ? ajustarAmazon(base) : base;
