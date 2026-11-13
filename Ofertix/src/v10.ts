@@ -186,6 +186,14 @@ export async function reescrever(c: Ctx, conta: number, original: string, remove
   texto = texto.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
   return { texto, trocas, bloqueio, ofertas, amazon: ofertas.some((o) => o.plataforma === 'amazon') };
 }
+/** Identifica o produto, seja qual for o jeito do link: código MLB do Mercado Livre, item da Shopee, ASIN da Amazon. */
+export function chaveProduto(url: string): string {
+  const u = String(url ?? '');
+  const ml = u.match(/\bMLB-?(\d+)/i); if (ml) return `ml:${ml[1]}`;
+  const sh = u.match(/(?:-i\.|\/product\/)(\d+)[./](\d+)/); if (sh) return `shopee:${sh[1]}.${sh[2]}`;
+  const az = u.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i); if (az) return `amazon:${az[1]!.toUpperCase()}`;
+  return u.split('?')[0]!.split('#')[0]!.replace(/\/+$/, '').toLowerCase();
+}
 const DA: Record<string, string> = { shopee: 'da', amazon: 'da', magalu: 'da', mercadolivre: 'do' };
 const limpar = (u: string) => u.replace(/[).,;!?*_~]+$/, '');
 
@@ -251,6 +259,17 @@ export async function espelhar(c: Ctx, inst: any, grupo: any, d: any): Promise<n
   if (e.curadoria && principal) {
     const motivo = motivoRecusa(nicho.regras, { titulo: principal.titulo, categoria: classificar(principal.titulo), precoPor: principal.precoPor, nota: principal.nota, vendas: principal.vendas });
     if (motivo) { registrar(c.db, conta, e.id, 'ignorada', `Curadoria: ${motivo}`, resumo, agora); return 0; }
+  }
+
+  // O mesmo produto vindo de outro grupo monitorado (texto diferente, mesma oferta) não sai duas vezes.
+  if (principal) {
+    const chave = chaveProduto(principal.urlOriginal);
+    const recentes = c.db.prepare(`SELECT o.url_original FROM agendamentos a JOIN ofertas o ON o.id = a.oferta_id
+      WHERE a.conta_id = ? AND a.origem = 'espelho' AND a.criado_em > ? AND a.status <> 'cancelado'`).all(conta, agora - 12 * 3600_000) as any[];
+    if (chave && recentes.some((x) => chaveProduto(x.url_original) === chave)) {
+      registrar(c.db, conta, e.id, 'ignorada', 'Repetida: o mesmo produto já foi copiado nas últimas 12 horas', resumo, agora);
+      return 0;
+    }
   }
 
   // Amazon: a cópia sai sem preço, sem a imagem e com o aviso obrigatório (src/regras.ts).

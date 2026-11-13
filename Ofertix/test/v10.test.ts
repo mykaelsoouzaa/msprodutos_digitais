@@ -142,6 +142,11 @@ test('espelhamento: copia texto, imagem e cupom, troca o link, tira convite e as
   assert.match(reg[0].motivo, /Repetida/);
   assert.equal(reg[1].status, 'agendada');
   assert.equal((e.db.prepare('SELECT copiadas FROM espelhos WHERE id = ?').get(id) as any).copiadas, 2);
+  // Outro grupo manda o mesmo produto com outro texto e outro link: não sai de novo.
+  assert.equal(await s.eventoWhatsApp(e.ctx, p.chave.chave, p.chave.token_webhook, evento(p.jidOrigem, { conversation: 'CORRE! Fone com estojo baratinho https://www.mercadolivre.com.br/fone-estojo/MLB-123?matt_word=outra' })), 0);
+  assert.match((v10.registroEspelhos(e.db, e.conta) as any[])[0].motivo, /mesmo produto/);
+  assert.equal(v10.chaveProduto('https://shopee.com.br/Serum-i.123.456?x=1'), 'shopee:123.456');
+  assert.equal(v10.chaveProduto('https://www.amazon.com.br/Kindle/dp/b0abc12345?tag=x'), 'amazon:B0ABC12345');
 });
 
 test('regras da Amazon: link direto, sem preço, sem foto e com o aviso de associado (oferta, espelho, vitrine e lista)', async () => {

@@ -114,6 +114,11 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.6.5 (mesmo produto de dois grupos monitorados)
+
+Se dois grupos de origem mandam o mesmo produto (texto e link diferentes), só a primeira cópia sai; a outra fica
+como "Ignorada: Repetida" por 12 horas. O produto é reconhecido pelo código (MLB do Mercado Livre, item da Shopee, ASIN da Amazon).
+
 ## Atualizar para a 6.6.4 (espelho com foto em mensagem só de texto)
 
 Mensagem copiada que era só texto com a prévia do link agora sai com a foto do produto (ou a miniatura da prévia).
