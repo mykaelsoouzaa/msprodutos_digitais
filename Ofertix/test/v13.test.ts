@@ -14,13 +14,25 @@ test('ML /social/: produto achado na página', async () => {
   assert.equal(await produtoDoSocialML('https://www.mercadolivre.com.br/social/viih', pagina(html)), 'https://www.mercadolivre.com.br/vestido-virgulado/p/MLB12345678');
 });
 
-test('ML /social/: vitrine com produto destacado fica com ele', async () => {
-  const html = 'MLB104793048175 x MLB104793048175 <a href="https://produto.mercadolivre.com.br/MLB-104793048175-tenis-_JM">t</a> MLB4419941603 MLB4419941603 MLB99367495130';
-  assert.equal(await produtoDoSocialML('https://www.mercadolivre.com.br/social/viihpromos', pagina(html)), 'https://produto.mercadolivre.com.br/MLB-104793048175-tenis-_JM');
+test('ML /social/: página real do Viih Promos (foto tem MLB no nome) fica com o produto do link', async () => {
+  const html = `<meta property="og:title" content="Tênis Nike Sb Malor Masculino - R$ 299,99 no Mercado Livre."/>
+<meta property="og:image" content="https://http2.mlstatic.com/D_NQ_NP_846237-MLB104793048175_012026-P.webp"/>
+<meta property="og:url" content="https://www.mercadolivre.com.br/social/viihpromos?ref=BJ"/>
+<img src="https://http2.mlstatic.com/D_Q_NP_2X_846237-MLB104793048175_012026-V-tnis-nike-sb-malor-masculino.webp"/>
+<img src="https://http2.mlstatic.com/D_NQ_NP_1-MLB104793048175_012026-P.webp"/>
+<a href="https://produto.mercadolivre.com.br/MLB-4419941603-tnis-nike-sb-malor-masculino-_JM?searchVariation=1&amp;matt_event_ts=1">x</a>
+<a href="https://produto.mercadolivre.com.br/MLB-4419941603-tnis-nike-sb-malor-masculino-_JM?searchVariation=1">y</a>
+<a href="https://produto.mercadolivre.com.br/MLB-5555555555-meia-esportiva-_JM">z</a>`;
+  assert.equal(await produtoDoSocialML('https://www.mercadolivre.com.br/social/viihpromos', pagina(html)), 'https://produto.mercadolivre.com.br/MLB-4419941603-tnis-nike-sb-malor-masculino-_JM');
+});
+
+test('ML /social/: só foto com MLB no nome e nenhum link de produto não troca', async () => {
+  const html = '<img src="https://http2.mlstatic.com/D_NQ_NP_846237-MLB104793048175_012026-P.webp"/>';
+  assert.equal(await produtoDoSocialML('https://www.mercadolivre.com.br/social/viih', pagina(html)), '');
 });
 
 test('ML /social/: vitrine sem destaque (empate) não troca', async () => {
-  const html = 'MLB-1111111111 MLB-2222222222 MLB-3333333333';
+  const html = '<a href="https://produto.mercadolivre.com.br/MLB-1111111111-a-_JM">a</a><a href="https://produto.mercadolivre.com.br/MLB-2222222222-b-_JM">b</a>';
   assert.equal(await produtoDoSocialML('https://www.mercadolivre.com.br/social/viih', pagina(html)), '');
   assert.equal(await produtoDoSocialML('https://www.mercadolivre.com.br/social/viih', pagina('', false)), '');
 });
