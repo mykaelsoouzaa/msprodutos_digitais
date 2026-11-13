@@ -114,6 +114,11 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.6.2 (vitrine do Mercado Livre com produto destacado)
+
+Quando o link /social/ abre a vitrine inteira do outro afiliado, o Ofertix fica com o produto destacado da oferta
+(o que aparece mais vezes na página) e põe os seus parâmetros nele. Se nenhum se destaca, continua bloqueado.
+
 ## Atualizar para a 6.6.1 (link /social/ do Mercado Livre no espelhamento)
 
 Link do Mercado Livre que outro grupo manda pela vitrine dele (`/social/...`) agora vira o link da sua conta quando

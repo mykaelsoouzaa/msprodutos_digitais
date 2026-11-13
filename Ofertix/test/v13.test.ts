@@ -14,7 +14,12 @@ test('ML /social/: produto achado na página', async () => {
   assert.equal(await produtoDoSocialML('https://www.mercadolivre.com.br/social/viih', pagina(html)), 'https://www.mercadolivre.com.br/vestido-virgulado/p/MLB12345678');
 });
 
-test('ML /social/: vitrine com vários produtos não troca', async () => {
+test('ML /social/: vitrine com produto destacado fica com ele', async () => {
+  const html = 'MLB104793048175 x MLB104793048175 <a href="https://produto.mercadolivre.com.br/MLB-104793048175-tenis-_JM">t</a> MLB4419941603 MLB4419941603 MLB99367495130';
+  assert.equal(await produtoDoSocialML('https://www.mercadolivre.com.br/social/viihpromos', pagina(html)), 'https://produto.mercadolivre.com.br/MLB-104793048175-tenis-_JM');
+});
+
+test('ML /social/: vitrine sem destaque (empate) não troca', async () => {
   const html = 'MLB-1111111111 MLB-2222222222 MLB-3333333333';
   assert.equal(await produtoDoSocialML('https://www.mercadolivre.com.br/social/viih', pagina(html)), '');
   assert.equal(await produtoDoSocialML('https://www.mercadolivre.com.br/social/viih', pagina('', false)), '');

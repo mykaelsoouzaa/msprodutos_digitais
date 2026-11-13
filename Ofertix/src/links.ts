@@ -72,7 +72,7 @@ export async function resolverLink(url: string, f: typeof fetch = fetch, max = 5
 /**
  * Mercado Livre: link /social/ (a vitrine do afiliado que mandou a oferta) → o produto dela.
  * Procura o código do anúncio (MLB…) primeiro no próprio endereço e, se não estiver lá, na página.
- * Só aceita quando acha um produto só; com vários (vitrine inteira) devolve vazio.
+ * Com vários produtos, fica o que aparece mais vezes (o destacado da oferta); empate devolve vazio.
  */
 export async function produtoDoSocialML(url: string, f: typeof fetch = fetch): Promise<string> {
   const ids = (t: string) => [...new Set([...t.matchAll(/\bMLB-?(\d{6,})/gi)].map((m) => m[1]!))];
@@ -84,12 +84,22 @@ export async function produtoDoSocialML(url: string, f: typeof fetch = fetch): P
     const r = await f(url, { headers: { 'user-agent': 'Mozilla/5.0 (compatible; Ofertix/1.0)', 'accept-language': 'pt-BR' }, signal: AbortSignal.timeout(8000) });
     if (!r.ok) return '';
     const html = (await r.text()).slice(0, 600_000);
-    // Link de produto completo na página (anúncio ou catálogo).
-    const links = [...new Set([...html.matchAll(/https?:\/\/(?:www\.|produto\.)?mercadoli(?:vre|bre)\.com\.br\/[^"'\s<>\\]*?(?:MLB-?\d{6,}|\/p\/MLB\d{6,})[^"'\s<>\\]*/gi)].map((m) => m[0].split('?')[0].split('#')[0]))];
-    const naPagina = ids(links.join(' '));
-    if (naPagina.length === 1) return links[0]!;
-    const soltos = ids(html);
-    if (soltos.length === 1) return `https://produto.mercadolivre.com.br/MLB-${soltos[0]}`;
+    // Links de produto completos na página (anúncio ou catálogo), por código.
+    const linkDe = new Map<string, string>();
+    for (const m of html.matchAll(/https?:\/\/(?:www\.|produto\.)?mercadoli(?:vre|bre)\.com\.br\/[^"'\s<>\\]*?(?:MLB-?\d{6,}|\/p\/MLB\d{6,})[^"'\s<>\\]*/gi)) {
+      const u = m[0].split('?')[0]!.split('#')[0]!;
+      const id = ids(u)[0];
+      if (id && !linkDe.has(id)) linkDe.set(id, u);
+    }
+    // Quantas vezes cada produto aparece. Com um produto só, é ele. Na vitrine com vários,
+    // o produto da oferta é o destacado no topo, que aparece mais vezes que qualquer outro.
+    const conta = new Map<string, number>();
+    for (const m of html.matchAll(/\bMLB-?(\d{6,})/gi)) conta.set(m[1]!, (conta.get(m[1]!) ?? 0) + 1);
+    const ordem = [...conta].sort((a, b) => b[1] - a[1]);
+    const [primeiro, segundo] = ordem;
+    if (primeiro && (!segundo || primeiro[1] > segundo[1])) {
+      return linkDe.get(primeiro[0]) ?? `https://produto.mercadolivre.com.br/MLB-${primeiro[0]}`;
+    }
   } catch { /* sem página */ }
   return '';
 }
