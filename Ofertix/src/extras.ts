@@ -20,7 +20,7 @@ export function primeirosPassos(db: DB, conta: number) {
   const passos = [
     { id: 'numero', texto: 'Conectar um número de WhatsApp', link: '#whatsapp', feito: n(db, "SELECT COUNT(*) AS n FROM instancias WHERE conta_id = ? AND status = 'conectado'", conta) > 0 },
     { id: 'grupos', texto: 'Ligar o envio em pelo menos um grupo', link: '#grupos', feito: n(db, 'SELECT COUNT(*) AS n FROM grupos WHERE conta_id = ? AND enviar = 1', conta) > 0 },
-    { id: 'afiliado', texto: 'Cadastrar seu link de afiliado (Shopee, Amazon ou Mercado Livre)', link: '#config', feito: !!(cfg.shopee_app_id || cfg.amazon_tag || cfg.ml_modelo) },
+    { id: 'afiliado', texto: 'Cadastrar seu link de afiliado (Shopee, Amazon ou Mercado Livre)', link: '#plataformas', feito: !!(cfg.shopee_app_id || cfg.amazon_tag || cfg.ml_modelo) },
     { id: 'nicho', texto: 'Escolher o nicho e a curadoria', link: '#nicho', feito: !!String(cfg.nicho ?? '').trim() },
     { id: 'entrada', texto: 'Criar o link de entrada para a bio', link: '#entradas', feito: n(db, 'SELECT COUNT(*) AS n FROM entradas WHERE conta_id = ?', conta) > 0 },
     { id: 'envio', texto: 'Publicar a primeira oferta', link: '#ofertas', feito: n(db, "SELECT COUNT(*) AS n FROM envios WHERE conta_id = ? AND status = 'enviado'", conta) > 0 },

@@ -160,5 +160,13 @@ export function semearDemo(db: DB, agora = Date.now()) {
     [260, 'ignorada', 'Repetida: a mesma mensagem já foi copiada nas últimas 12 horas', 'Escova Secadora 3 em 1 Íons 1200W'],
   ] as const;
   for (const [min, st, mot, res] of log) db.prepare('INSERT INTO espelho_log (conta_id, espelho_id, em, status, motivo, resumo) VALUES (?, ?, ?, ?, ?, ?)').run(c.id, esp, agora - min * 60_000, st, mot, res);
+  // Instagram (6.7): perfil conectado, palavra-chave EU QUERO e alguns pedidos.
+  db.prepare("INSERT INTO insta_contas (conta_id, ig_id, usuario, token, token_em, conectado_em) VALUES (?, 'demo', 'achadinhos.da.carla', 'demo', ?, ?)").run(c.id, agora, agora - 5 * 86400_000);
+  const rg = Number(db.prepare('INSERT INTO insta_regras (conta_id, nome, palavras, mensagem, publica, ativo, respondidas, criado_em) VALUES (?, ?, ?, ?, ?, 1, 87, ?)')
+    .run(c.id, 'EU QUERO · grupos', 'eu quero, quero, link', 'Oi, {nome}! 💖 Aqui está o link dos grupos de achadinhos:\nhttps://ofertix.cloud/g/achadinhos-da-carla?o=insta\n\nEscolha o seu tema e entre 😉', 'Te mandei no direct! 💌\nEnviado, confere o direct 😉', agora - 5 * 86400_000).lastInsertRowid);
+  const ped = [[4, 'mariana.souza', 'Eu quero!!! 😍', 'enviada', 'Link enviado no direct e respondido no post'], [11, 'julia_lima', 'quero', 'enviada', 'Link enviado no direct e respondido no post'],
+    [19, 'mariana.souza', 'eu quero', 'ignorada', 'Já recebeu o link nas últimas 24 horas'], [35, 'bia.costa', 'EU QUERO', 'enviada', 'Link enviado no direct e respondido no post'], [62, '', 'eu quero o link', 'enviada', 'Link enviado no direct (pediu por mensagem)']] as const;
+  ped.forEach(([min, u, t, st, mot], i) => db.prepare('INSERT INTO insta_log (conta_id, regra_id, tipo, ref, de_id, de_usuario, texto, midia, status, motivo, em) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(c.id, rg, u ? 'comentario' : 'direct', `demo${i}`, `p${u || i}`, u, t, 'm1', st, mot, agora - min * 60_000));
   return c.id;
 }

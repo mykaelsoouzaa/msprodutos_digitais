@@ -114,6 +114,85 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.7 (Instagram: comentou EU QUERO, recebe o link no direct)
+
+Página nova **Instagram** no menu. Quem comenta a palavra-chave num post ou reel (ou manda no direct) recebe a
+mensagem com o link no direct, e o comentário ganha uma resposta pública ("Te mandei no direct! 💌"). A mesma pessoa
+recebe uma vez por post a cada 24 horas. Tudo pela API oficial do Instagram, com um app da Meta da MS Soluções.
+
+### 1. Criar o app na Meta (uma vez)
+1. Em developers.facebook.com → Meus apps → Criar app → caso de uso **"Gerenciar mensagens e conteúdo no Instagram"**
+   (tipo Empresa). Nome: Ofertix.
+2. Em Configurações do app → Básico: URL da Política de Privacidade `https://ofertix.cloud/privacidade` e
+   URL de exclusão de dados `https://ofertix.cloud/privacidade#exclusao`. Salve.
+3. No produto **Instagram → Configuração da API com login do Instagram**:
+   - copie o **ID do app do Instagram** e a **Chave secreta do app do Instagram** (vão no `.env`, passo 2);
+   - em "Configurar o login comercial do Instagram", URI de redirecionamento: `https://ofertix.cloud/instagram/retorno`;
+   - em "Configurar webhooks": URL de retorno `https://ofertix.cloud/webhook/instagram`, token de verificação = o
+     `INSTAGRAM_VERIFY_TOKEN` do `.env`; depois de verificar, assine os campos **comments** e **messages**.
+4. Em Funções do app → Funções → **Testadores do Instagram**, adicione o perfil (ex.: ofertix.cloud) e aceite o convite no
+   Instagram (Configurações → Apps e sites → Convites de testador), ou pelo site instagram.com.
+5. No Instagram do perfil: Configurações → Mensagens e respostas → Ferramentas conectadas → **Permitir acesso às mensagens** ligado.
+
+Com o app em modo de Desenvolvimento, só os perfis com função no app (o seu) funcionam. Para clientes do Ofertix
+conectarem os próprios perfis, o app passa pela Análise do app da Meta (permissões de comentários e mensagens).
+
+### 2. Servidor
+Já logado na VPS, acrescente ao `/srv/ms/ofertix/.env` (sem colar os valores em lugar nenhum):
+```
+INSTAGRAM_APP_ID=<id do app do Instagram>
+INSTAGRAM_APP_SECRET=<chave secreta do app do Instagram>
+INSTAGRAM_VERIFY_TOKEN=<um texto aleatório>
+```
+e reinicie (`pm2 restart ofertix`). O webhook precisa responder antes de clicar em Verificar no painel da Meta.
+
+### 3. No Ofertix
+Página Instagram → **Conectar Instagram** → entre com o perfil e autorize → "Nova palavra-chave". Teste comentando
+"eu quero" de outra conta num post.
+
+## Atualizar para a 6.6.5 (mesmo produto de dois grupos monitorados)
+
+Se dois grupos de origem mandam o mesmo produto (texto e link diferentes), só a primeira cópia sai; a outra fica
+como "Ignorada: Repetida" por 12 horas. O produto é reconhecido pelo código (MLB do Mercado Livre, item da Shopee, ASIN da Amazon).
+
+## Atualizar para a 6.6.4 (espelho com foto em mensagem só de texto)
+
+Mensagem copiada que era só texto com a prévia do link agora sai com a foto do produto (ou a miniatura da prévia).
+A linha que era só uma chamada para um link que saiu ("Convide seus amigos para o grupo: …") sai inteira.
+
+## Atualizar para a 6.6.3 (vitrine do Mercado Livre: produto certo)
+
+O código "MLB" do nome das fotos não conta mais como produto. O Ofertix usa o link de produto que está na página;
+com vários, fica o que bate com o título da oferta.
+
+## Atualizar para a 6.6.2 (vitrine do Mercado Livre com produto destacado)
+
+Quando o link /social/ abre a vitrine inteira do outro afiliado, o Ofertix fica com o produto destacado da oferta
+(o que aparece mais vezes na página) e põe os seus parâmetros nele. Se nenhum se destaca, continua bloqueado.
+
+## Atualizar para a 6.6.1 (link /social/ do Mercado Livre no espelhamento)
+
+Link do Mercado Livre que outro grupo manda pela vitrine dele (`/social/...`) agora vira o link da sua conta quando
+leva a um produto só: o Ofertix acha o código do anúncio (MLB...) no endereço ou na página e põe os seus parâmetros.
+Se a vitrine mostrar vários produtos, a mensagem continua bloqueada e o motivo mostra o endereço.
+A mensagem de bloqueio passou a dizer "Link do Mercado Livre".
+
+## Atualizar para a 6.6 (Conectar plataformas, busca melhor, grupos de monitoramento)
+
+- **Conectar plataformas** (menu Conta): Shopee, Amazon e Mercado Livre saíram de Configurações e ganharam página própria, com o passo a passo e um botão Salvar só delas.
+- **Busca na Shopee:** até 50 produtos por vez; filtros de categoria (sem precisar escrever nada), preço até R$ 20/30/50/100/200 e "Para o grupo", que usa o tema do grupo e já deixa só ele marcado na hora de enviar. O que já está na vitrine não aparece.
+- **Grupos de envio:** grupos de monitoramento (captura ou origem de espelhamento) aparecem em cinza, com a etiqueta "monitoramento", e não podem virar grupo de envio (nem o contrário).
+- **Automação:** botão Sincronizar grupos ao lado do grupo de origem; "Últimas mensagens" mostra há quanto tempo atualizou e lê de novo sozinha a cada 30 segundos.
+
+Nada muda no banco nem no `.env`.
+
+## Atualizar para a 6.5 (passo a passo das lojas)
+
+- Em Configurações, a parte de lojas virou **Lojas de afiliado**, em três colunas (Shopee, Amazon e Mercado Livre), cada uma com o passo a passo, os campos e se já está configurada.
+- **Achar a tag** (Amazon) e **Achar meus parâmetros** (Mercado Livre): cole um link gerado pela sua conta e o Ofertix preenche o campo sozinho. Links curtos (`amzn.to`, `/sec/`) são abertos para chegar ao endereço final.
+
+Nada muda no banco nem no `.env`.
+
 ## Atualizar para a 6.4 (regras da Amazon e do Mercado Livre)
 
 - **Amazon:** o link sai direto (sem `/r/`, então não conta clique), sem preço e sem foto, com o aviso de associado no fim. Vale para ofertas, vitrine pública, lista do dia e espelhamento.

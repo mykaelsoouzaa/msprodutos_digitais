@@ -69,6 +69,56 @@ export async function resolverLink(url: string, f: typeof fetch = fetch, max = 5
   return atual;
 }
 
+/**
+ * Mercado Livre: link /social/ (a vitrine do afiliado que mandou a oferta) → o produto dela.
+ * Procura o código do anúncio (MLB…) primeiro no próprio endereço e, se não estiver lá, na página.
+ * Com vários produtos, fica o do título da página (o destacado da oferta); sem como decidir, devolve vazio.
+ */
+export async function produtoDoSocialML(url: string, f: typeof fetch = fetch): Promise<string> {
+  const ids = (t: string) => [...new Set([...t.matchAll(/\bMLB-?(\d{6,})/gi)].map((m) => m[1]!))];
+  let texto = url;
+  try { texto = decodeURIComponent(decodeURIComponent(url)); } catch { /* fica o original */ }
+  const noEndereco = ids(texto);
+  if (noEndereco.length === 1) return `https://produto.mercadolivre.com.br/MLB-${noEndereco[0]}`;
+  try {
+    const r = await f(url, { headers: { 'user-agent': 'Mozilla/5.0 (compatible; Ofertix/1.0)', 'accept-language': 'pt-BR' }, signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return '';
+    const html = (await r.text()).slice(0, 600_000);
+    // Links de produto completos na página (anúncio ou catálogo), na ordem em que aparecem.
+    // Códigos soltos não servem: o nome das fotos também tem "MLB…" (ex.: D_NQ_NP_846237-MLB104793048175_012026-P.webp).
+    const vezes = new Map<string, number>();
+    const linkDe = new Map<string, string>();
+    for (const m of html.matchAll(/https?:\/\/(?:www\.|produto\.)?mercadoli(?:vre|bre)\.com\.br\/[^"'\s<>\\]*?(?:MLB-?\d{6,}|\/p\/MLB\d{6,})[^"'\s<>\\]*/gi)) {
+      const u = m[0].split('?')[0]!.split('#')[0]!;
+      if (/\.(webp|jpe?g|png|gif|svg)$/i.test(u) || /\/social\//.test(u)) continue;
+      const id = ids(u)[0];
+      if (!id) continue;
+      if (!linkDe.has(id)) linkDe.set(id, u);
+      vezes.set(id, (vezes.get(id) ?? 0) + 1);
+    }
+    if (linkDe.size === 1) return [...linkDe.values()][0]!;
+    if (linkDe.size > 1) {
+      // Vitrine com vários: o produto da oferta é o do título da página (og:title); senão, o que mais aparece.
+      const titulo = (html.match(/<meta[^>]+property="og:title"[^>]+content="([^"]*)"/i)?.[1] ?? '')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const palavras = titulo.split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !/^(mercado|livre|r)$/.test(w));
+      const nota = (u: string) => {
+        const slug = u.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        return palavras.filter((w) => slug.includes(w)).length;
+      };
+      const ordem = [...linkDe].map(([id, u]) => ({ u, n: nota(u), v: vezes.get(id) ?? 0 }))
+        .sort((x, y) => y.n - x.n || y.v - x.v);
+      const [p1, p2] = ordem;
+      if (p1 && (p1.n > (p2?.n ?? -1) || (p1.n === p2!.n && p1.v > p2!.v))) return p1.u;
+      return '';
+    }
+    // Sem link de produto: só aceita código que não seja de foto, e só se for um.
+    const soltos = [...new Set([...html.matchAll(/\bMLB-?(\d{6,})(?![\d_])/gi)].filter((m) => !/-$/.test(html.slice(Math.max(0, m.index! - 1), m.index!))).map((m) => m[1]!))];
+    if (soltos.length === 1) return `https://produto.mercadolivre.com.br/MLB-${soltos[0]}`;
+  } catch { /* sem página */ }
+  return '';
+}
+
 export interface DadosPagina { titulo: string; imagem: string; preco: number | null }
 
 const meta = (html: string, prop: string) => {

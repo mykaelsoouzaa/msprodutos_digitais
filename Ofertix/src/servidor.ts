@@ -14,6 +14,9 @@ import * as s from './servico.ts';
 import * as ent from './entradas.ts';
 import * as v6 from './v6.ts';
 import * as v10 from './v10.ts';
+import * as ig from './instagram.ts';
+import { extrairAfiliado } from './regras.ts';
+import { resolverLink } from './links.ts';
 import { paginaVendas, paginaAnuncio, TEXTO_ZAP } from './vendas.ts';
 
 const PUBLICO = join(import.meta.dirname, '..', 'public');
@@ -43,6 +46,8 @@ const pagina = (res: ServerResponse, status: number, msg: string, portal: string
 <div style="max-width:420px;text-align:center"><h1 style="color:#2ee68f;margin:0 0 8px">Ofertix</h1><p>${msg}</p>
 <p><a style="color:#2ee68f" href="${portal}">Ir para a área do cliente da MS Soluções</a></p></div>`);
 };
+
+const esc = (t: string) => String(t ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]!);
 
 function redirecionar(res: ServerResponse, para: string, cookie?: string) {
   const h: Record<string, string> = { location: para, 'cache-control': 'no-store' };
@@ -74,6 +79,16 @@ function sessaoDemo(app: App, leitura = false) {
   const c = contaPorEmail(app.demo.db, EMAIL_DEMO);
   return novaSessaoCookie(app, { conta: c.id, email: EMAIL_DEMO, nome: 'Demonstração', demo: true, admin: false, leitura });
 }
+
+const PRIVACIDADE = `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Política de privacidade · Ofertix</title>
+<body style="font:16px/1.6 system-ui,sans-serif;max-width:760px;margin:0 auto;padding:32px 16px;color:#1c1420;background:#fff">
+<h1>Política de privacidade do Ofertix</h1><p>O Ofertix é um sistema da MS Soluções Tecnológicas (Sete Lagoas, MG) para afiliados que mantêm grupos de ofertas no WhatsApp e perfis no Instagram.</p>
+<h2>Que dados usamos</h2><p>Da conta do cliente: nome, e-mail, configurações, ofertas, grupos e números de WhatsApp conectados. Do Instagram conectado pelo cliente: o nome de usuário, o identificador da conta profissional e um token de acesso; dos comentários e mensagens que contêm uma palavra-chave escolhida pelo cliente: o identificador, o nome de usuário de quem escreveu e o texto, só para responder com a mensagem configurada e mostrar o registro ao cliente.</p>
+<h2>Para que</h2><p>Para enviar as ofertas e as respostas que o próprio cliente configurou. Não vendemos nem compartilhamos dados com terceiros. Os registros de comentários e mensagens ficam guardados por até 90 dias.</p>
+<h2 id="exclusao">Exclusão de dados</h2><p>O cliente pode desconectar o Instagram a qualquer momento na página Instagram do Ofertix; o token e a conexão são apagados na hora. Para apagar todos os dados da conta, ou se você comentou num perfil atendido pelo Ofertix e quer que seus dados sejam apagados, peça pelo WhatsApp (31) 99904-1748 ou pelo site mssolucoestech.com.br. Atendemos em até 15 dias.</p>
+<p style="color:#5c4a56">Atualizada em 13/11/2026.</p></body></html>`;
+
+const cfgInsta = (app: App): ig.CfgInsta => ({ appId: app.cfg.instagramAppId ?? '', appSecret: app.cfg.instagramAppSecret ?? '', verifyToken: app.cfg.instagramVerifyToken ?? '', urlPublica: app.cfg.urlPublica, segredo: app.cfg.segredoSessao });
 
 export function criarServidor(app: App) {
   return createServer(async (req, res) => {
@@ -133,6 +148,36 @@ export function criarServidor(app: App) {
         const ev = await lerJson(req);
         const n = await s.eventoWhatsApp(app.real, wh[1], url.searchParams.get('t') ?? '', ev);
         return json(res, 200, { ok: true, capturadas: n });
+      }
+
+      // ---------- Instagram: webhook da Meta e volta do login ----------
+      if (caminho === '/webhook/instagram') {
+        if (req.method === 'GET') {
+          const ok = url.searchParams.get('hub.mode') === 'subscribe' && !!app.cfg.instagramVerifyToken && url.searchParams.get('hub.verify_token') === app.cfg.instagramVerifyToken;
+          res.writeHead(ok ? 200 : 403, { 'content-type': 'text/plain' });
+          return res.end(ok ? String(url.searchParams.get('hub.challenge') ?? '') : 'recusado');
+        }
+        if (req.method === 'POST') {
+          const bruto = await corpo(req, 1_000_000);
+          if (!ig.assinaturaValida(bruto, String(req.headers['x-hub-signature-256'] ?? ''), app.cfg.instagramAppSecret ?? '')) return json(res, 403, { erro: 'assinatura' });
+          let ev: any = {};
+          try { ev = JSON.parse(bruto); } catch { /* corpo inválido */ }
+          json(res, 200, { ok: true });
+          ig.eventoInstagram(app.real, ev).catch((e) => console.error('instagram', e));
+          return;
+        }
+      }
+      if (caminho === '/privacidade' && req.method === 'GET') {
+        res.writeHead(200, { 'content-type': TIPOS['.html'], 'cache-control': 'public, max-age=3600' });
+        return res.end(PRIVACIDADE);
+      }
+      if (caminho === '/instagram/retorno' && req.method === 'GET') {
+        const erro = url.searchParams.get('error_description') || url.searchParams.get('error');
+        if (erro) return pagina(res, 400, `O Instagram não foi conectado: ${esc(erro)}. Volte ao Ofertix e tente de novo.`, app.cfg.portalUrl);
+        try {
+          const r2 = await ig.concluirConexao(app.real, cfgInsta(app), url.searchParams.get('code') ?? '', url.searchParams.get('state') ?? '');
+          return pagina(res, 200, `Instagram <b>@${esc(r2.usuario)}</b> conectado ao Ofertix. Pode fechar esta aba e voltar ao painel (página Instagram).`, app.cfg.portalUrl);
+        } catch (e) { return pagina(res, 400, esc((e as Error).message), app.cfg.portalUrl); }
       }
 
       // ---------- Link curto (conta o clique e manda para a loja) ----------
@@ -320,7 +365,8 @@ export function criarServidor(app: App) {
         case 'POST /api/agendamentos/:id/repetir': { const b = await lerJson(req); return r({ id: v6.enviarDeNovo(ctx, conta, id, b.quando ? Number(b.quando) : undefined) }, 201); }
 
         // ---------- v6 ----------
-        case 'GET /api/shopee/busca': return r(await v6.buscarShopee(ctx, conta, url.searchParams.get('q') ?? '', url.searchParams.get('ordem') ?? 'vendidos', Number(url.searchParams.get('pagina')) || 1));
+        case 'GET /api/shopee/busca': return r(await v6.buscarShopee(ctx, conta, url.searchParams.get('q') ?? '', url.searchParams.get('ordem') ?? 'vendidos', Number(url.searchParams.get('pagina')) || 1, {
+          categoria: url.searchParams.get('cat') ?? '', precoMax: Number(url.searchParams.get('max')) || 0, grupo: Number(url.searchParams.get('grupo')) || 0 }));
         case 'POST /api/shopee/adicionar': {
           const b = await lerJson(req);
           const oid = await v6.adicionarDaBusca(ctx, conta, b.item, !!b.vitrine);
@@ -356,7 +402,8 @@ export function criarServidor(app: App) {
 
         case 'GET /api/grupos': {
           const p = s.planoDa(db, conta);
-          const lista = db.prepare('SELECT g.*, i.nome AS numero_nome FROM grupos g JOIN instancias i ON i.id = g.instancia_id WHERE g.conta_id = ? ORDER BY g.enviar DESC, g.monitorar DESC, g.nome').all(conta);
+          const lista = db.prepare(`SELECT g.*, i.nome AS numero_nome, EXISTS (SELECT 1 FROM espelhos e WHERE e.origem_grupo_id = g.id) AS espelho
+            FROM grupos g JOIN instancias i ON i.id = g.instancia_id WHERE g.conta_id = ? ORDER BY g.enviar DESC, (g.monitorar OR EXISTS (SELECT 1 FROM espelhos e WHERE e.origem_grupo_id = g.id)), g.nome`).all(conta);
           return r({ lista, limites: { envio: p.gruposEnvio, monitorados: p.gruposMonitorados, captura: p.captura } });
         }
         case 'POST /api/grupos/:id': {
@@ -378,6 +425,17 @@ export function criarServidor(app: App) {
           v10.salvarEspelho(db, conta, { ...e, origem: e.origem_grupo_id, remover: e.remover.join('\n'), ativo: !!b.ativo }, id);
           return r({ ok: true });
         }
+        // ---------- Instagram: palavra-chave no comentário → link no direct ----------
+        case 'GET /api/instagram': return r(ig.painel(db, conta, cfgInsta(app), Date.now()));
+        case 'POST /api/instagram/conectar': {
+          if (sess.demo) throw new s.ErroUso('Na demonstração o Instagram já aparece conectado. Na sua conta, este botão abre o login do Instagram.');
+          return r({ url: ig.linkConectar(cfgInsta(app), conta) });
+        }
+        case 'DELETE /api/instagram/conexao': ig.desconectar(db, conta); return r({ ok: true });
+        case 'POST /api/instagram/regras': return r({ id: ig.salvarRegra(db, conta, await lerJson(req)) }, 201);
+        case 'PUT /api/instagram/regras/:id': return r({ id: ig.salvarRegra(db, conta, await lerJson(req), id) });
+        case 'DELETE /api/instagram/regras/:id': ig.apagarRegra(db, conta, id); return r({ ok: true });
+        case 'POST /api/instagram/simular': { const b = await lerJson(req); return r(ig.simular(db, conta, String(b.texto ?? '').slice(0, 500))); }
         case 'DELETE /api/espelhos/:id': v10.apagarEspelho(db, conta, id); return r({ ok: true });
         case 'POST /api/espelhos/previa': {
           const b = await lerJson(req);
@@ -426,6 +484,21 @@ export function criarServidor(app: App) {
           const c = s.config(db, conta);
           return r({ ...c, shopee_segredo: c.shopee_segredo ? '••••••••' : '', modelo_mensagem: c.modelo_mensagem });
         }
+        case 'POST /api/lojas/extrair': {
+          const b = await lerJson(req);
+          if (sess.demo) return r({ valor: b.loja === 'amazon' ? 'carla-20' : 'matt_tool=12345678&matt_word=carla' });
+          try { return r({ valor: await extrairAfiliado(String(b.loja ?? ''), String(b.url ?? ''), (u) => resolverLink(u, ctx.f)) }); }
+          catch (e) { throw new s.ErroUso((e as Error).message); }
+        }
+        case 'POST /api/plataformas': {
+          const b = await lerJson(req);
+          const atual = s.config(db, conta);
+          db.prepare('UPDATE config_conta SET shopee_app_id = ?, shopee_segredo = ?, amazon_tag = ?, ml_modelo = ? WHERE conta_id = ?').run(
+            String(b.shopee_app_id ?? '').trim().slice(0, 40),
+            b.shopee_segredo && !String(b.shopee_segredo).startsWith('•') ? String(b.shopee_segredo).trim().slice(0, 100) : atual.shopee_segredo,
+            String(b.amazon_tag ?? '').trim().slice(0, 40), String(b.ml_modelo ?? '').trim().slice(0, 300), conta);
+          return r({ ok: true });
+        }
         case 'POST /api/config': {
           const b = await lerJson(req);
           const atual = s.config(db, conta);
@@ -440,9 +513,11 @@ export function criarServidor(app: App) {
               intervalo_min = ?, intervalo_max = ?, auto_publicar = ?, desconto_minimo = ?,
               janela_inicio = ?, janela_fim = ?, repeticao_horas = ?, contar_cliques = ?, conferir_preco = ?,
               horarios_auto = ?, resumo_numero = ?, resumo_hora = ? WHERE conta_id = ?`).run(
-            String(b.shopee_app_id ?? '').trim().slice(0, 40),
+            // As lojas ficam em Conectar plataformas (6.6); sem os campos, mantém o que está salvo.
+            'shopee_app_id' in b ? String(b.shopee_app_id ?? '').trim().slice(0, 40) : atual.shopee_app_id,
             b.shopee_segredo && !String(b.shopee_segredo).startsWith('•') ? String(b.shopee_segredo).trim().slice(0, 100) : atual.shopee_segredo,
-            String(b.amazon_tag ?? '').trim().slice(0, 40), String(b.ml_modelo ?? '').trim().slice(0, 300),
+            'amazon_tag' in b ? String(b.amazon_tag ?? '').trim().slice(0, 40) : atual.amazon_tag,
+            'ml_modelo' in b ? String(b.ml_modelo ?? '').trim().slice(0, 300) : atual.ml_modelo,
             String(b.modelo_mensagem ?? '').slice(0, 1500), min, Math.max(min + 5, n(b.intervalo_max, 15, 900, 70)),
             b.auto_publicar ? 1 : 0, n(b.desconto_minimo, 0, 90, 0),
             hora(b.janela_inicio, 8), hora(b.janela_fim, 22), Math.min(720, Math.max(0, Math.round(Number(b.repeticao_horas) || 0))),
@@ -585,6 +660,8 @@ export function iniciarRotinas(app: App, intervaloMs = 5000) {
   // Arquivamento das ofertas paradas: uma vez por hora.
   const arquivo = setInterval(() => {
     try { x.rodarArquivamento(app.real); v10.limparMidias(app.real.db, Date.now()); } catch (e) { console.error('arquivo', e); }
+    ig.limparLog(app.real.db);
+    ig.renovarTokens(app.real).catch((e) => console.error('instagram tokens', e));
   }, 3600_000);
   // Estado dos números a cada 5 minutos (além do aviso que a Evolution API manda quando cai).
   const estados = setInterval(async () => {

@@ -128,9 +128,9 @@ async function linkDaConta(c: Ctx, conta: number, url: string) {
     return { plataforma: pl, urlOriginal: url.split('?')[0], urlAfiliado: para, titulo: '', imagem: '', precoDe: null, precoPor: null, comissaoPct: null };
   }
   const pl = plataformaDe(url);
-  if (pl === 'shopee' && !(cfg.shopee_app_id && cfg.shopee_segredo)) throw new ErroUso('Cadastre a Open API da Shopee em Configurações para trocar links da Shopee');
-  if (pl === 'amazon' && !cfg.amazon_tag) throw new ErroUso('Cadastre a sua tag da Amazon em Configurações');
-  if (pl === 'mercadolivre' && !cfg.ml_modelo) throw new ErroUso('Cadastre o seu modelo de link do Mercado Livre em Configurações');
+  if (pl === 'shopee' && !(cfg.shopee_app_id && cfg.shopee_segredo)) throw new ErroUso('Cadastre a Open API da Shopee em Conectar plataformas para trocar links da Shopee');
+  if (pl === 'amazon' && !cfg.amazon_tag) throw new ErroUso('Cadastre a sua tag da Amazon em Conectar plataformas');
+  if (pl === 'mercadolivre' && !cfg.ml_modelo) throw new ErroUso('Cadastre o seu modelo de link do Mercado Livre em Conectar plataformas');
   if (pl === 'magalu') throw new ErroUso('O Ofertix ainda não gera link de afiliado da Magalu');
   const o = await converterLink(c, conta, url);
   if (!o.urlAfiliado) throw new ErroUso('A loja não devolveu o seu link de afiliado');
@@ -162,7 +162,12 @@ export async function reescrever(c: Ctx, conta: number, original: string, remove
     let alvo = url;
     if (!lojaSuportada(url) && !c.demo) alvo = await resolverLink(url, c.f).catch(() => url);
     if (!lojaSuportada(alvo)) {
-      texto = texto.split(bruto).join('');
+      // Tira o link; se a linha era só uma chamada para ele ("Convide seus amigos para o grupo: <link>"), a linha sai inteira.
+      texto = texto.split('\n').flatMap((l) => {
+        if (!l.includes(bruto)) return [l];
+        const resto = l.split(bruto).join('').trimEnd();
+        return /:\s*$/.test(resto) ? [] : [resto];
+      }).join('\n');
       trocas.push({ de: bruto, para: '', loja: 'Outro site', status: 'removido', motivo: 'Não é link de loja: saiu do texto' });
       continue;
     }
@@ -174,13 +179,22 @@ export async function reescrever(c: Ctx, conta: number, original: string, remove
       ofertas.push(o);
     } catch (e) {
       trocas.push({ de: bruto, para: '', loja, status: 'erro', motivo: (e as Error).message });
-      bloqueio ||= `Link da ${loja} sem troca: ${(e as Error).message}`;
+      bloqueio ||= `Link ${DA[plataformaDe(alvo)] ?? 'da'} ${loja} sem troca: ${(e as Error).message}`;
     }
   }
   // Linhas que ficaram vazias depois de tirar links não viram buracos no texto.
   texto = texto.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
   return { texto, trocas, bloqueio, ofertas, amazon: ofertas.some((o) => o.plataforma === 'amazon') };
 }
+/** Identifica o produto, seja qual for o jeito do link: código MLB do Mercado Livre, item da Shopee, ASIN da Amazon. */
+export function chaveProduto(url: string): string {
+  const u = String(url ?? '');
+  const ml = u.match(/\bMLB-?(\d+)/i); if (ml) return `ml:${ml[1]}`;
+  const sh = u.match(/(?:-i\.|\/product\/)(\d+)[./](\d+)/); if (sh) return `shopee:${sh[1]}.${sh[2]}`;
+  const az = u.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i); if (az) return `amazon:${az[1]!.toUpperCase()}`;
+  return u.split('?')[0]!.split('#')[0]!.replace(/\/+$/, '').toLowerCase();
+}
+const DA: Record<string, string> = { shopee: 'da', amazon: 'da', magalu: 'da', mercadolivre: 'do' };
 const limpar = (u: string) => u.replace(/[).,;!?*_~]+$/, '');
 
 // ------------------------------------------------------------------ mídia (imagem da mensagem original)
@@ -247,6 +261,17 @@ export async function espelhar(c: Ctx, inst: any, grupo: any, d: any): Promise<n
     if (motivo) { registrar(c.db, conta, e.id, 'ignorada', `Curadoria: ${motivo}`, resumo, agora); return 0; }
   }
 
+  // O mesmo produto vindo de outro grupo monitorado (texto diferente, mesma oferta) não sai duas vezes.
+  if (principal) {
+    const chave = chaveProduto(principal.urlOriginal);
+    const recentes = c.db.prepare(`SELECT o.url_original FROM agendamentos a JOIN ofertas o ON o.id = a.oferta_id
+      WHERE a.conta_id = ? AND a.origem = 'espelho' AND a.criado_em > ? AND a.status <> 'cancelado'`).all(conta, agora - 12 * 3600_000) as any[];
+    if (chave && recentes.some((x) => chaveProduto(x.url_original) === chave)) {
+      registrar(c.db, conta, e.id, 'ignorada', 'Repetida: o mesmo produto já foi copiado nas últimas 12 horas', resumo, agora);
+      return 0;
+    }
+  }
+
   // Amazon: a cópia sai sem preço, sem a imagem e com o aviso obrigatório (src/regras.ts).
   let imagem = '';
   if (temImagem && !rw.amazon) {
@@ -254,6 +279,16 @@ export async function espelhar(c: Ctx, inst: any, grupo: any, d: any): Promise<n
       const m = await c.wpp.midia(inst.chave, d);
       if (m?.base64) imagem = `${c.urlPublica}/m/${guardarMidia(c.db, conta, m.base64, m.mimetype, agora)}`;
     } catch { /* sem a imagem, segue só o texto */ }
+  }
+  // Mensagem só de texto com prévia do link (a foto que o WhatsApp mostra é do link da loja). O link trocado aponta
+  // para o Ofertix, que não tem essa prévia; então a cópia sai com a foto do produto, ou com a miniatura da prévia.
+  if (!imagem && !rw.amazon && rw.ofertas.length) {
+    if (/^https:\/\//.test(principal?.imagem ?? '')) imagem = principal.imagem;
+    else {
+      const mini = msg.extendedTextMessage?.jpegThumbnail;
+      const b64 = typeof mini === 'string' ? mini : mini ? Buffer.from(Object.values(mini) as number[]).toString('base64') : '';
+      if (b64) { try { imagem = `${c.urlPublica}/m/${guardarMidia(c.db, conta, b64, 'image/jpeg', agora)}`; } catch { /* sem miniatura */ } }
+    }
   }
   const base = e.rodape ? rodapeAfiliado(rw.texto, nicho.rodape) : rw.texto;
   const texto = rw.amazon ? ajustarAmazon(base) : base;
