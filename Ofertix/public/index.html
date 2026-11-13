@@ -126,6 +126,7 @@ h1,h2,h3{font-family:var(--fonte-titulo);letter-spacing:-.01em;margin:0}
 .status.enviado,.status.conectado,.status.concluido,.status.ativo{background:var(--verde-suave);color:var(--verde)}
 .status.erro,.status.desconectado,.status.cancelado{background:var(--vermelho-suave);color:var(--vermelho)}
 .status.conectando{background:var(--amarelo-suave);color:var(--amarelo)}
+.status.enviada{background:var(--verde-suave);color:var(--verde)}
 .status.agendada{background:var(--verde-suave);color:var(--verde)}
 .status.bloqueada{background:var(--vermelho-suave);color:var(--vermelho)}
 .status.ignorada{background:var(--surface-2);color:var(--texto-2)}
@@ -351,7 +352,7 @@ const quandoTxt = (ms) => {
 const foto = (img, cls = '') => img && /^https?:/.test(img)
   ? `<img src="${esc(img)}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('🛍️'))">`
   : esc(String(img || '').startsWith('emoji:') ? img.slice(6) : '🛍️');
-const STATUS = { pendente: 'Pendente', enviando: 'Enviando', enviado: 'Enviado', erro: 'Erro', cancelado: 'Cancelado', conectado: 'Conectado', conectando: 'Conectando', desconectado: 'Desconectado', concluido: 'Concluído', ativo: 'Ativo', agendada: 'Copiada', bloqueada: 'Bloqueada', ignorada: 'Ignorada' };
+const STATUS = { pendente: 'Pendente', enviando: 'Enviando', enviado: 'Enviado', erro: 'Erro', cancelado: 'Cancelado', conectado: 'Conectado', conectando: 'Conectando', desconectado: 'Desconectado', concluido: 'Concluído', ativo: 'Ativo', agendada: 'Copiada', bloqueada: 'Bloqueada', ignorada: 'Ignorada', enviada: 'Enviada' };
 const status = (s) => `<span class="status ${esc(s)}">${esc(STATUS[s] || s)}</span>`;
 
 function aviso(msg, erro = false) {
@@ -424,6 +425,7 @@ const I = {
   calendario: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
   espelho: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V5a2 2 0 0 1 2-2h11"/>',
   filtro: '<path d="M22 3H2l8 9.46V19l4 2v-8.54z"/>',
+  insta: '<rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/>',
   carrinho: '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/>',
 };
 const ico = (n, t = 18) => `<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg>`;
@@ -432,7 +434,7 @@ const ico = (n, t = 18) => `<svg width="${t}" height="${t}" viewBox="0 0 24 24" 
 const E = { eu: null, periodo: '7d', filtroOfertas: '', filtroCat: '', filtroStatus: '', grupoMembros: '' };
 const TELAS = [
   ['visao', 'Visão geral', 'Painel'], ['ofertas', 'Ofertas'], ['agendamentos', 'Agendamentos', null, 'agenda'],
-  ['grupos', 'Grupos de envio', 'Grupos'], ['entradas', 'Links de entrada', null, 'link'], ['automacao', 'Automação', null, 'espelho'], ['automaticas', 'Mensagens automáticas', null, 'raio'], ['membros', 'Membros'],
+  ['grupos', 'Grupos de envio', 'Grupos'], ['entradas', 'Links de entrada', null, 'link'], ['automacao', 'Automação', null, 'espelho'], ['instagram', 'Instagram', null, 'insta'], ['automaticas', 'Mensagens automáticas', null, 'raio'], ['membros', 'Membros'],
   ['comissoes', 'Comissões', 'Resultados'], ['cupons', 'Cupons'],
   ['nicho', 'Nicho e curadoria', 'Conta', 'estrela'], ['whatsapp', 'WhatsApp'], ['plataformas', 'Conectar plataformas', null, 'link'], ['config', 'Configurações'],
 ];
@@ -1393,6 +1395,92 @@ async function telaAutomacao() {
   });
 }
 
+// ------------------------------------------------------------------ Instagram (6.7): comentou a palavra → link no direct
+const MSG_INSTA = 'Oi, {nome}! 👋 Aqui está o link que você pediu:\nhttps://ofertix.cloud/?o=insta\n\nQualquer dúvida, é só responder aqui 😉';
+async function telaInstagram() {
+  const d = await api('instagram');
+  const ed = E.editIg ? d.regras.find((x) => x.id === E.editIg) : null;
+  const novo = E.novoIg || !!ed;
+  const con = d.conectado;
+  C().innerHTML = cabeca('insta', 'Instagram', 'Quem comenta a palavra-chave no seu post (ou manda no direct) recebe o seu link no direct na hora, sozinho.',
+    con ? `<button class="botao" id="ig-nova">${ico('mais', 16)}Nova palavra-chave</button>` : '') + `
+    ${!d.disponivel && !E.eu?.demo ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>O app do Instagram ainda não foi configurado no servidor. Fale com a MS Soluções.</span></div>` : ''}
+    ${con?.erro ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>Problema com o acesso ao Instagram: ${esc(con.erro)}. Conecte de novo.</span></div>` : ''}
+    <div class="kpis">
+      ${kpi('insta', con ? `<span style="font-size:20px;word-break:break-all">@${esc(con.usuario)}</span>` : '—', con ? 'Conectado' : 'Instagram não conectado', con ? '' : 'l')}
+      ${kpi('enviar', num(d.hoje.enviadas), 'Links enviados hoje')}
+      ${kpi('filtro', num(d.hoje.ignoradas), 'Ignorados hoje (já tinham recebido)')}
+      ${kpi('alerta', num(d.hoje.erros), 'Erros hoje', 'l')}
+    </div>
+    ${!con ? `<section class="cartao secao-form" style="margin-bottom:16px"><h2>Conectar o Instagram</h2>
+      <p>O perfil precisa ser <b>profissional</b> (Comercial ou Criador de conteúdo). Você entra com o Instagram numa aba nova e autoriza o Ofertix a ler os comentários e responder no direct. O Ofertix nunca vê a sua senha.</p>
+      <div style="display:flex;justify-content:flex-end"><button class="botao" id="ig-conectar">${ico('insta', 16)}Conectar Instagram</button></div></section>` : ''}
+    ${novo ? `<form class="cartao secao-form" id="form-ig" style="margin-bottom:16px"><h2>${ed ? 'Editar palavra-chave' : 'Nova palavra-chave'}</h2>
+      <div class="form-grade">
+        <div class="campo"><label for="ig-nome">Nome (só para você)</label><input id="ig-nome" maxlength="60" value="${esc(ed?.nome || 'EU QUERO · teste grátis')}"></div>
+        <div class="campo"><label for="ig-pal">Palavras-chave (separe por vírgula)</label><input id="ig-pal" value="${esc(ed?.palavras || 'eu quero, quero')}">
+          <span class="ajuda">Maiúscula, acento e pontuação não importam: "Eu quero!!" também vale.</span></div>
+      </div>
+      <div class="campo" style="margin-top:12px"><label for="ig-msg">Mensagem no direct</label><textarea id="ig-msg" rows="5">${esc(ed?.mensagem || MSG_INSTA)}</textarea>
+        <span class="ajuda">{nome} vira o @ da pessoa. Ponha o link logo no começo: a pessoa vê sem abrir a conversa.</span></div>
+      <div class="campo" style="margin-top:12px"><label for="ig-pub">Resposta no comentário (opcional, uma por linha; o Ofertix sorteia)</label><textarea id="ig-pub" rows="3" placeholder="Te mandei no direct! 💌&#10;Enviado, confere o direct 😉&#10;Já está no seu direct!">${esc(ed?.publica ?? 'Te mandei no direct! 💌\nEnviado, confere o direct 😉\nJá está no seu direct! 🚀')}</textarea>
+        <span class="ajuda">Responder no post mostra para todo mundo que funciona e anima mais gente a comentar.</span></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px"><button class="botao sec" type="button" id="ig-cancelar">Cancelar</button><button class="botao" type="submit">${ed ? 'Salvar' : 'Ligar'}</button></div>
+    </form>` : ''}
+    <div class="grade-2" style="align-items:start">
+      <section class="cartao bloco"><h2>Palavras-chave</h2><p class="sub">Valem para todos os posts, reels e para o direct. A mesma pessoa recebe uma vez por post a cada 24 horas.</p>
+        <div class="linhas">${d.regras.length ? d.regras.map((x) => `<div class="linha"><div class="miniatura">${ico('insta', 18)}</div>
+          <div class="meio"><div class="tit">${esc(x.nome)}</div><div class="det"><span>${esc(x.palavras)}</span><span>· ${num(x.respondidas)} enviada(s)</span></div></div>
+          <label class="inter" title="Ligada"><input type="checkbox" data-ig-ativo="${x.id}" ${x.ativo ? 'checked' : ''} aria-label="Ligada"><span></span></label>
+          <button class="botao sec peq" data-ig-editar="${x.id}" aria-label="Editar">${ico('editar', 14)}</button><button class="botao sec peq" data-ig-apagar="${x.id}" aria-label="Apagar">${ico('lixo', 14)}</button></div>`).join('')
+          : `<div class="vazio">${ico('insta', 30)}<h3>Nenhuma palavra-chave</h3>${con ? 'Crie a primeira: quem comentar recebe o link no direct.' : 'Conecte o Instagram para começar.'}</div>`}</div>
+        ${con ? `<p class="ajuda" style="margin-top:12px">Conectado desde ${quandoTxt(con.desde)} · <a href="#" id="ig-sair">Desconectar</a></p>` : ''}
+      </section>
+      <section class="cartao bloco"><h2>Testar um comentário</h2><p class="sub">Escreva um comentário e veja o que a pessoa recebe.</p>
+        <div class="campo"><input id="ig-teste" value="Eu quero!! 😍"></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="botao sec" type="button" id="ig-testar">${ico('insta', 16)}Ver resposta</button></div>
+        <div id="ig-res"></div>
+      </section>
+    </div>
+    <section class="cartao bloco" style="margin-top:16px"><div class="cab-reg"><div><h2>Últimos pedidos</h2><p class="sub">Comentários e mensagens com a palavra-chave e o que o Ofertix fez.</p></div>
+      <button class="botao sec peq" type="button" id="ig-atualizar">${ico('sync', 14)}Atualizar</button></div>
+      ${d.registro.length ? `<div class="rolagem"><table class="tabela"><thead><tr><th>Quando</th><th>De</th><th>Onde</th><th>Texto</th><th>Situação</th><th>Detalhe</th></tr></thead><tbody>
+        ${d.registro.map((l) => `<tr><td style="white-space:nowrap">${quandoTxt(l.em)}</td><td>${l.de_usuario ? '@' + esc(l.de_usuario) : 'direct'}</td><td>${l.tipo === 'direct' ? 'Direct' : 'Comentário'}</td><td>${esc(l.texto)}</td><td>${status(l.status)}</td><td style="color:var(--mudo)">${esc(l.motivo)}</td></tr>`).join('')}
+      </tbody></table></div>` : '<div class="vazio">Assim que alguém comentar a palavra-chave, aparece aqui.</div>'}
+    </section>`;
+  if ($('#ig-conectar')) $('#ig-conectar').onclick = tentar(async () => {
+    const r = await api('instagram/conectar', { method: 'POST' });
+    window.open(r.url, '_blank', 'noopener');
+    aviso('Termine a conexão na aba do Instagram e depois toque em Atualizar');
+  });
+  if ($('#ig-nova')) $('#ig-nova').onclick = () => { E.novoIg = true; E.editIg = null; telaInstagram(); };
+  if ($('#ig-sair')) $('#ig-sair').onclick = tentar(async (e) => { e.preventDefault(); if (!confirm('Desconectar o Instagram? As palavras-chave param de responder.')) return; await api('instagram/conexao', { method: 'DELETE' }); telaInstagram(); });
+  $('#ig-atualizar').onclick = () => telaInstagram();
+  if ($('#form-ig')) {
+    $('#form-ig').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    $('#ig-cancelar').onclick = () => { E.novoIg = false; E.editIg = null; telaInstagram(); };
+    $('#form-ig').onsubmit = tentar(async (e) => {
+      e.preventDefault();
+      const corpo = { nome: $('#ig-nome').value, palavras: $('#ig-pal').value, mensagem: $('#ig-msg').value, publica: $('#ig-pub').value, ativo: ed ? ed.ativo : true };
+      if (ed) await api('instagram/regras/' + ed.id, { method: 'PUT', body: corpo }); else await api('instagram/regras', { method: 'POST', body: corpo });
+      E.novoIg = false; E.editIg = null; aviso('Palavra-chave salva'); telaInstagram();
+    });
+  }
+  C().querySelectorAll('[data-ig-ativo]').forEach((i) => (i.onchange = async () => {
+    const x = d.regras.find((r) => r.id === Number(i.dataset.igAtivo));
+    try { await api('instagram/regras/' + x.id, { method: 'PUT', body: { ...x, ativo: i.checked } }); aviso(i.checked ? 'Ligada' : 'Desligada'); }
+    catch (e) { i.checked = !i.checked; aviso(e.message, true); }
+  }));
+  C().querySelectorAll('[data-ig-editar]').forEach((b) => (b.onclick = () => { E.editIg = Number(b.dataset.igEditar); E.novoIg = false; telaInstagram(); }));
+  C().querySelectorAll('[data-ig-apagar]').forEach((b) => (b.onclick = tentar(async () => { if (!confirm('Apagar esta palavra-chave?')) return; await api('instagram/regras/' + b.dataset.igApagar, { method: 'DELETE' }); telaInstagram(); })));
+  $('#ig-testar').onclick = tentar(async () => {
+    const r = await api('instagram/simular', { method: 'POST', body: { texto: $('#ig-teste').value } });
+    $('#ig-res').innerHTML = r.regra
+      ? `<p class="ajuda" style="margin-top:10px">Pega na palavra-chave <b>${esc(r.regra)}</b>. No direct:</p><div class="zap" style="margin-top:8px"><div class="bolha"><span>${zapHtml(r.mensagem)}</span><span class="hora">${hora(Date.now())}</span></div></div>${r.publica.length ? `<p class="ajuda" style="margin-top:8px">No comentário, uma destas: ${r.publica.map(esc).join(' · ')}</p>` : ''}`
+      : '<p class="ajuda" style="margin-top:10px">Nenhuma palavra-chave ligada pega esse comentário: nada é enviado.</p>';
+  });
+}
+
 const htmlRegistro = (registro) => registro.length ? `<div class="rolagem"><table class="tabela"><thead><tr><th>Quando</th><th>Origem</th><th>Mensagem</th><th>Situação</th><th>Detalhe</th></tr></thead><tbody>
   ${registro.map((l) => `<tr><td style="white-space:nowrap">${quandoTxt(l.em)}</td><td>${esc(l.origem_nome)}</td><td>${esc(l.resumo)}</td><td>${status(l.status)}</td><td style="color:var(--mudo)">${esc(l.motivo)}${l.envio_status ? ` · envio: ${esc(STATUS[l.envio_status] || l.envio_status)}` : ''}</td></tr>`).join('')}
   </tbody></table></div>` : '<div class="vazio">Assim que chegar uma mensagem num grupo de origem, ela aparece aqui.</div>';
@@ -1645,7 +1733,7 @@ function escolherGrupos(temaId) {
   $('#salvar-g').onclick = tentar(async () => { await api(`temas/${temaId}/grupos`, { method: 'POST', body: { grupos: ordem.map(Number) } }); fechar(); aviso('Grupos do tema salvos'); telaEntradas(); });
 }
 
-const ROTAS = { plataformas: telaPlataformas, automacao: telaAutomacao, automaticas: telaAutomaticas, nicho: telaNicho, entradas: telaEntradas, visao: telaVisao, ofertas: telaOfertas, agendamentos: telaAgendamentos, grupos: telaGrupos, membros: telaMembros, comissoes: telaComissoes, cupons: telaCupons, whatsapp: telaWhatsapp, config: telaConfig, admin: telaAdmin };
+const ROTAS = { instagram: telaInstagram, plataformas: telaPlataformas, automacao: telaAutomacao, automaticas: telaAutomaticas, nicho: telaNicho, entradas: telaEntradas, visao: telaVisao, ofertas: telaOfertas, agendamentos: telaAgendamentos, grupos: telaGrupos, membros: telaMembros, comissoes: telaComissoes, cupons: telaCupons, whatsapp: telaWhatsapp, config: telaConfig, admin: telaAdmin };
 
 async function navegar() {
   const tela = (location.hash.slice(1) || 'visao').split('/')[0];

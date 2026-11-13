@@ -264,6 +264,46 @@ CREATE TABLE IF NOT EXISTS espelho_log (
   hash TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS espelho_log_conta ON espelho_log (conta_id, em);
+CREATE TABLE IF NOT EXISTS insta_contas (
+  conta_id INTEGER PRIMARY KEY REFERENCES contas(id) ON DELETE CASCADE,
+  ig_id TEXT NOT NULL,                 -- id da conta profissional (o mesmo que vem no webhook)
+  usuario TEXT NOT NULL DEFAULT '',
+  token TEXT NOT NULL,                 -- token de longa duração (60 dias, renovado sozinho)
+  token_em INTEGER NOT NULL,
+  conectado_em INTEGER NOT NULL,
+  erro TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS insta_contas_ig ON insta_contas (ig_id);
+
+CREATE TABLE IF NOT EXISTS insta_regras (
+  id INTEGER PRIMARY KEY,
+  conta_id INTEGER NOT NULL REFERENCES contas(id) ON DELETE CASCADE,
+  nome TEXT NOT NULL,
+  palavras TEXT NOT NULL,              -- "eu quero, quero, link"
+  mensagem TEXT NOT NULL,              -- o que vai no direct ({nome} = @ da pessoa)
+  publica TEXT NOT NULL DEFAULT '',    -- respostas no comentário, uma por linha (sorteia uma)
+  ativo INTEGER NOT NULL DEFAULT 1,
+  respondidas INTEGER NOT NULL DEFAULT 0,
+  criado_em INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS insta_log (
+  id INTEGER PRIMARY KEY,
+  conta_id INTEGER NOT NULL REFERENCES contas(id) ON DELETE CASCADE,
+  regra_id INTEGER,
+  tipo TEXT NOT NULL,                  -- comentario | direct
+  ref TEXT NOT NULL,                   -- id do comentário ou da mensagem
+  de_id TEXT NOT NULL,
+  de_usuario TEXT NOT NULL DEFAULT '',
+  texto TEXT NOT NULL DEFAULT '',
+  midia TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL,                -- enviada | ignorada | erro
+  motivo TEXT NOT NULL DEFAULT '',
+  em INTEGER NOT NULL,
+  UNIQUE (conta_id, tipo, ref)
+);
+CREATE INDEX IF NOT EXISTS insta_log_conta ON insta_log (conta_id, em);
+
 CREATE TABLE IF NOT EXISTS midias (
   codigo TEXT PRIMARY KEY,
   conta_id INTEGER NOT NULL,
