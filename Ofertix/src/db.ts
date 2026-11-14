@@ -358,6 +358,9 @@ const COLUNAS_V2: [string, string, string][] = [
   // v10: envio por tema
   ['grupos', 'categorias', "TEXT NOT NULL DEFAULT ''"],
   ['grupos', 'preco_max', 'INTEGER NOT NULL DEFAULT 0'],
+  // 6.7.1: Instagram pelo Login do Facebook para Empresas
+  ['insta_contas', 'modo', "TEXT NOT NULL DEFAULT 'ig'"],
+  ['insta_contas', 'page_id', "TEXT NOT NULL DEFAULT ''"],
 ];
 
 export function abrirBanco(arquivo: string): DB {

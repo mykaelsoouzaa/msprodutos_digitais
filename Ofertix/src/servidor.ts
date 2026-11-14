@@ -88,7 +88,7 @@ const PRIVACIDADE = `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><me
 <h2 id="exclusao">Exclusão de dados</h2><p>O cliente pode desconectar o Instagram a qualquer momento na página Instagram do Ofertix; o token e a conexão são apagados na hora. Para apagar todos os dados da conta, ou se você comentou num perfil atendido pelo Ofertix e quer que seus dados sejam apagados, peça pelo WhatsApp (31) 99904-1748 ou pelo site mssolucoestech.com.br. Atendemos em até 15 dias.</p>
 <p style="color:#5c4a56">Atualizada em 13/11/2026.</p></body></html>`;
 
-const cfgInsta = (app: App): ig.CfgInsta => ({ appId: app.cfg.instagramAppId ?? '', appSecret: app.cfg.instagramAppSecret ?? '', verifyToken: app.cfg.instagramVerifyToken ?? '', urlPublica: app.cfg.urlPublica, segredo: app.cfg.segredoSessao });
+const cfgInsta = (app: App): ig.CfgInsta => ({ appId: app.cfg.instagramAppId ?? '', appSecret: app.cfg.instagramAppSecret ?? '', verifyToken: app.cfg.instagramVerifyToken ?? '', urlPublica: app.cfg.urlPublica, segredo: app.cfg.segredoSessao, configId: app.cfg.instagramConfigId ?? '' });
 
 export function criarServidor(app: App) {
   return createServer(async (req, res) => {

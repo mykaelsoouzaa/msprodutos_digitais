@@ -11,8 +11,16 @@ import type { DB } from './db.ts';
 import { ErroUso, type Ctx } from './servico.ts';
 
 export const GRAPH = 'https://graph.instagram.com/v22.0';
+export const FB = 'https://graph.facebook.com/v22.0';
 export const ESCOPOS = 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments';
-export interface CfgInsta { appId: string; appSecret: string; verifyToken: string; urlPublica: string; segredo: string }
+// Apps novos da Meta (2026) não têm mais "API com login do Instagram": entram pelo Login do Facebook para Empresas,
+// com uma configuração (config_id). Com INSTAGRAM_CONFIG_ID preenchido o Ofertix usa esse caminho (graph.facebook.com,
+// token da Página ligada ao Instagram, que não vence). Sem ele, usa o login do Instagram (apps antigos).
+export interface CfgInsta { appId: string; appSecret: string; verifyToken: string; urlPublica: string; segredo: string; configId?: string }
+/** Endereços da API conforme o jeito que a conta conectou. */
+const rotas = (ic: any) => ic.modo === 'fb'
+  ? { msg: `${FB}/${ic.page_id}/messages`, resp: (id: string) => `${FB}/${id}/replies` }
+  : { msg: `${GRAPH}/${ic.ig_id}/messages`, resp: (id: string) => `${GRAPH}/${id}/replies` };
 const agoraDe = (c: Ctx) => (c.agora ? c.agora() : Date.now());
 
 // ------------------------------------------------------------------ texto
@@ -43,6 +51,10 @@ export function lerEstado(estado: string, segredo: string, agora = Date.now()): 
 export const retornoUrl = (cfg: CfgInsta) => `${cfg.urlPublica}/instagram/retorno`;
 export function linkConectar(cfg: CfgInsta, conta: number): string {
   if (!cfg.appId || !cfg.appSecret) throw new ErroUso('O app do Instagram ainda não foi configurado no servidor (INSTAGRAM_APP_ID e INSTAGRAM_APP_SECRET)');
+  if (cfg.configId) {
+    const f = new URLSearchParams({ client_id: cfg.appId, redirect_uri: retornoUrl(cfg), response_type: 'code', config_id: cfg.configId, override_default_response_type: 'true', state: estadoConexao(conta, cfg.segredo) });
+    return `https://www.facebook.com/v22.0/dialog/oauth?${f}`;
+  }
   const q = new URLSearchParams({ enable_fb_login: '0', force_authentication: '1', client_id: cfg.appId, redirect_uri: retornoUrl(cfg), response_type: 'code', scope: ESCOPOS, state: estadoConexao(conta, cfg.segredo) });
   return `https://www.instagram.com/oauth/authorize?${q}`;
 }
@@ -62,6 +74,7 @@ async function jsonDe(r: Response, oQue: string) {
 export async function concluirConexao(c: Ctx, cfg: CfgInsta, codigo: string, estado: string): Promise<{ conta: number; usuario: string }> {
   const conta = lerEstado(estado, cfg.segredo, agoraDe(c));
   if (!conta) throw new ErroUso('O pedido de conexão expirou. Volte ao Ofertix e clique em Conectar Instagram de novo.');
+  if (cfg.configId) return conectarPeloFacebook(c, cfg, conta, codigo);
   const form = new URLSearchParams({ client_id: cfg.appId, client_secret: cfg.appSecret, grant_type: 'authorization_code', redirect_uri: retornoUrl(cfg), code: String(codigo ?? '').replace(/#_$/, '') });
   const curto = await jsonDe(await c.f('https://api.instagram.com/oauth/access_token', { method: 'POST', body: form, headers: { 'content-type': 'application/x-www-form-urlencoded' } }), 'código');
   const tokCurto = curto.access_token ?? curto.data?.[0]?.access_token;
@@ -72,9 +85,28 @@ export async function concluirConexao(c: Ctx, cfg: CfgInsta, codigo: string, est
   await jsonDe(await c.f(`${GRAPH}/me/subscribed_apps?subscribed_fields=comments,messages&access_token=${encodeURIComponent(token)}`, { method: 'POST' }), 'webhook');
   const agora = agoraDe(c);
   c.db.prepare(`INSERT INTO insta_contas (conta_id, ig_id, usuario, token, token_em, conectado_em) VALUES (?, ?, ?, ?, ?, ?)
-    ON CONFLICT (conta_id) DO UPDATE SET ig_id = excluded.ig_id, usuario = excluded.usuario, token = excluded.token, token_em = excluded.token_em, conectado_em = excluded.conectado_em`)
+    ON CONFLICT (conta_id) DO UPDATE SET ig_id = excluded.ig_id, usuario = excluded.usuario, token = excluded.token, token_em = excluded.token_em, conectado_em = excluded.conectado_em, modo = 'ig', page_id = ''`)
     .run(conta, String(eu.user_id ?? eu.id), String(eu.username ?? ''), token, agora, agora);
   return { conta, usuario: String(eu.username ?? '') };
+}
+
+/** Login do Facebook para Empresas: código → token do usuário (longo) → Página com Instagram profissional → token da Página. */
+async function conectarPeloFacebook(c: Ctx, cfg: CfgInsta, conta: number, codigo: string): Promise<{ conta: number; usuario: string }> {
+  const q = (o: Record<string, string>) => new URLSearchParams(o).toString();
+  const curto = await jsonDe(await c.f(`${FB}/oauth/access_token?${q({ client_id: cfg.appId, client_secret: cfg.appSecret, redirect_uri: retornoUrl(cfg), code: String(codigo ?? '').replace(/#_$/, '') })}`), 'código');
+  const longo = await jsonDe(await c.f(`${FB}/oauth/access_token?${q({ grant_type: 'fb_exchange_token', client_id: cfg.appId, client_secret: cfg.appSecret, fb_exchange_token: String(curto.access_token) })}`), 'token');
+  const pags = await jsonDe(await c.f(`${FB}/me/accounts?${q({ fields: 'id,name,access_token,instagram_business_account{id,username}', limit: '100', access_token: String(longo.access_token) })}`), 'páginas');
+  const pag = (Array.isArray(pags.data) ? pags.data : []).find((p: any) => p.instagram_business_account?.id && p.access_token);
+  if (!pag) throw new ErroUso('Nenhuma Página do Facebook com Instagram profissional foi autorizada. Ligue o Instagram a uma Página (no Instagram: Editar perfil → Página) e conecte de novo, marcando a Página e o Instagram.');
+  const ig = pag.instagram_business_account;
+  let erro = '';
+  try { await jsonDe(await c.f(`${FB}/${pag.id}/subscribed_apps?${q({ subscribed_fields: 'feed,messages', access_token: pag.access_token })}`, { method: 'POST' }), 'webhook'); }
+  catch (e) { erro = (e as Error).message; }
+  const agora = agoraDe(c);
+  c.db.prepare(`INSERT INTO insta_contas (conta_id, ig_id, usuario, token, token_em, conectado_em, erro, modo, page_id) VALUES (?, ?, ?, ?, ?, ?, ?, 'fb', ?)
+    ON CONFLICT (conta_id) DO UPDATE SET ig_id = excluded.ig_id, usuario = excluded.usuario, token = excluded.token, token_em = excluded.token_em, conectado_em = excluded.conectado_em, erro = excluded.erro, modo = 'fb', page_id = excluded.page_id`)
+    .run(conta, String(ig.id), String(ig.username ?? ''), String(pag.access_token), agora, agora, erro.slice(0, 300), String(pag.id));
+  return { conta, usuario: String(ig.username ?? '') };
 }
 
 export function desconectar(db: DB, conta: number) { db.prepare('DELETE FROM insta_contas WHERE conta_id = ?').run(conta); }
@@ -84,7 +116,7 @@ export const limparLog = (db: DB, agora = Date.now()) => db.prepare('DELETE FROM
 
 /** Token de longa duração vale 60 dias: renova os que têm mais de 20 dias. */
 export async function renovarTokens(c: Ctx): Promise<number> {
-  const velhos = c.db.prepare('SELECT conta_id, token FROM insta_contas WHERE token_em < ?').all(agoraDe(c) - 20 * 86400_000) as any[];
+  const velhos = c.db.prepare("SELECT conta_id, token FROM insta_contas WHERE modo <> 'fb' AND token_em < ?").all(agoraDe(c) - 20 * 86400_000) as any[];
   let n = 0;
   for (const v of velhos) {
     try {
@@ -130,12 +162,12 @@ export function simular(db: DB, conta: number, texto: string, usuario = 'cliente
 
 // ------------------------------------------------------------------ painel
 export function painel(db: DB, conta: number, cfg: Pick<CfgInsta, 'appId' | 'urlPublica'>, agora = Date.now()) {
-  const ic = db.prepare('SELECT usuario, conectado_em, token_em, erro FROM insta_contas WHERE conta_id = ?').get(conta) as any;
+  const ic = db.prepare('SELECT usuario, conectado_em, token_em, erro, modo FROM insta_contas WHERE conta_id = ?').get(conta) as any;
   const hoje = new Date(agora); hoje.setHours(0, 0, 0, 0);
   const cont = (st: string) => (db.prepare('SELECT COUNT(*) AS n FROM insta_log WHERE conta_id = ? AND status = ? AND em >= ?').get(conta, st, hoje.getTime()) as any).n;
   return {
     disponivel: !!cfg.appId,
-    conectado: ic ? { usuario: ic.usuario, desde: ic.conectado_em, erro: ic.erro || '' } : null,
+    conectado: ic ? { usuario: ic.usuario, desde: ic.conectado_em, erro: ic.erro || '', modo: ic.modo } : null,
     regras: listarRegras(db, conta),
     hoje: { enviadas: cont('enviada'), ignoradas: cont('ignorada'), erros: cont('erro') },
     registro: db.prepare('SELECT l.*, r.nome AS regra_nome FROM insta_log l LEFT JOIN insta_regras r ON r.id = l.regra_id WHERE l.conta_id = ? ORDER BY l.em DESC, l.id DESC LIMIT 40').all(conta),
@@ -189,11 +221,11 @@ async function comentario(c: Ctx, ic: any, v: any): Promise<number> {
     return 0;
   }
   try {
-    await chamar(c, `${GRAPH}/${ic.ig_id}/messages`, ic.token, { recipient: { comment_id: id }, message: { text: montar(r.mensagem, usuario) } });
+    await chamar(c, rotas(ic).msg, ic.token, { recipient: { comment_id: id }, message: { text: montar(r.mensagem, usuario) } });
     const pub = sortear(r.publica);
     let extra = '';
     if (pub) {
-      try { await chamar(c, `${GRAPH}/${id}/replies`, ic.token, { message: montar(pub, usuario) }); extra = ' e respondido no post'; }
+      try { await chamar(c, rotas(ic).resp(id), ic.token, { message: montar(pub, usuario) }); extra = ' e respondido no post'; }
       catch (e) { extra = ` (resposta no post falhou: ${(e as Error).message})`; }
     }
     c.db.prepare('UPDATE insta_regras SET respondidas = respondidas + 1 WHERE id = ?').run(r.id);
@@ -218,7 +250,7 @@ async function direct(c: Ctx, ic: any, m: any): Promise<number> {
     return 0;
   }
   try {
-    await chamar(c, `${GRAPH}/${ic.ig_id}/messages`, ic.token, { recipient: { id: de }, message: { text: montar(r.mensagem, '') } });
+    await chamar(c, rotas(ic).msg, ic.token, { recipient: { id: de }, message: { text: montar(r.mensagem, '') } });
     c.db.prepare('UPDATE insta_regras SET respondidas = respondidas + 1 WHERE id = ?').run(r.id);
     registrar(c.db, conta, { ...base, status: 'enviada', motivo: 'Link enviado no direct (pediu por mensagem)' }, agora);
     return 1;

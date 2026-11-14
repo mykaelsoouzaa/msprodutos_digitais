@@ -90,7 +90,7 @@ test('comentário com a palavra → link no direct e resposta no post; uma vez p
   // Resposta pública falhou: o direct conta e o motivo aparece.
   e.falharPublica();
   assert.equal(await ig.eventoInstagram(e.ctx, comentario('c5', 'u2', 'bia', 'EU QUERO')), 1);
-  const p = ig.painel(e.db, e.conta, { appId: '123', urlPublica: 'https://ofertix.teste' }, Date.now());
+  const p = ig.painel(e.db, e.conta, { appId: '123', urlPublica: 'https://ofertix.teste' }, e.ctx.agora());
   assert.equal(p.conectado?.usuario, 'ofertix.cloud');
   assert.deepEqual(p.hoje, { enviadas: 3, ignoradas: 1, erros: 0 });
   assert.match((p.registro as any[])[0].motivo, /resposta no post falhou: .*sem permissão/);
@@ -141,4 +141,34 @@ test('rotas: webhook com verificação e assinatura; página Instagram na demons
     const con = await fetch(base + '/api/instagram/conectar', { method: 'POST', headers: h });
     assert.equal(con.status, 400, 'na demonstração não abre o login de verdade');
   } finally { srv.close(); }
+});
+
+test('apps novos: conexão pelo Login do Facebook para Empresas (Página + Instagram) e envio pela Página', async () => {
+  const db = abrirBanco(':memory:');
+  const chamadas: { url: string; corpo: any; metodo: string }[] = [];
+  const f = (async (u: string, o: any = {}) => {
+    const url = String(u);
+    chamadas.push({ url, corpo: o.body ? JSON.parse(o.body) : null, metodo: o.method ?? 'GET' });
+    if (url.includes('/oauth/access_token') && url.includes('fb_exchange_token')) return Response.json({ access_token: 'usuario-longo' });
+    if (url.includes('/oauth/access_token')) return Response.json({ access_token: 'usuario-curto' });
+    if (url.includes('/me/accounts')) return Response.json({ data: [{ id: 'pg0', name: 'Sem Insta', access_token: 'x' }, { id: 'pg1', name: 'Ofertix', access_token: 'token-pagina', instagram_business_account: { id: '1789', username: 'ofertix.cloud' } }] });
+    return Response.json({ success: true, id: 'ok' });
+  }) as any;
+  const ctx = { db, wpp: new WhatsAppSimulado(), f, urlPublica: 'https://ofertix.teste' };
+  const conta = contaPorEmail(db, 'ana@exemplo.com', 'Ana').id;
+  const cfg: ig.CfgInsta = { appId: '123', appSecret: SEGREDO, verifyToken: 'vt', urlPublica: 'https://ofertix.teste', segredo: 'x'.repeat(32), configId: '777' };
+  const url = new URL(ig.linkConectar(cfg, conta));
+  assert.equal(url.hostname, 'www.facebook.com');
+  assert.equal(url.searchParams.get('config_id'), '777');
+  const r = await ig.concluirConexao(ctx, cfg, 'cod', url.searchParams.get('state')!);
+  assert.equal(r.usuario, 'ofertix.cloud');
+  const ic = db.prepare('SELECT * FROM insta_contas').get() as any;
+  assert.deepEqual([ic.modo, ic.page_id, ic.ig_id, ic.token], ['fb', 'pg1', '1789', 'token-pagina']);
+  assert.ok(chamadas.some((c) => c.url.includes('/pg1/subscribed_apps') && c.metodo === 'POST'));
+  // Token da Página não vence: não renova.
+  assert.equal(await ig.renovarTokens({ ...ctx, agora: () => Date.now() + 90 * 86400_000 }), 0);
+  ig.salvarRegra(db, conta, { palavras: 'eu quero', mensagem: 'Link: https://ofertix.cloud', publica: 'No direct!' });
+  assert.equal(await ig.eventoInstagram(ctx, comentario('c1', 'u1', 'mari', 'eu quero')), 1);
+  assert.ok(chamadas.some((c) => c.url === 'https://graph.facebook.com/v22.0/pg1/messages' && c.corpo?.recipient?.comment_id === 'c1'));
+  assert.ok(chamadas.some((c) => c.url === 'https://graph.facebook.com/v22.0/c1/replies'));
 });

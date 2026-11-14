@@ -1413,7 +1413,7 @@ async function telaInstagram() {
       ${kpi('alerta', num(d.hoje.erros), 'Erros hoje', 'l')}
     </div>
     ${!con ? `<section class="cartao secao-form" style="margin-bottom:16px"><h2>Conectar o Instagram</h2>
-      <p>O perfil precisa ser <b>profissional</b> (Comercial ou Criador de conteúdo). Você entra com o Instagram numa aba nova e autoriza o Ofertix a ler os comentários e responder no direct. O Ofertix nunca vê a sua senha.</p>
+      <p>O perfil precisa ser <b>profissional</b> (Comercial ou Criador de conteúdo) e estar ligado a uma <b>Página do Facebook</b>. Numa aba nova, você entra com o Facebook, marca a Página e o Instagram e autoriza o Ofertix a ler os comentários e responder no direct. O Ofertix nunca vê a sua senha.</p>
       <div style="display:flex;justify-content:flex-end"><button class="botao" id="ig-conectar">${ico('insta', 16)}Conectar Instagram</button></div></section>` : ''}
     ${novo ? `<form class="cartao secao-form" id="form-ig" style="margin-bottom:16px"><h2>${ed ? 'Editar palavra-chave' : 'Nova palavra-chave'}</h2>
       <div class="form-grade">
