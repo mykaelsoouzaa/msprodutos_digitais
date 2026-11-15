@@ -114,6 +114,14 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.8 (TikTok Shop)
+
+Links do TikTok Shop entram como qualquer loja (Ofertas → colar o link). O link de afiliado do TikTok Shop só sai do app
+(produto → Compartilhar → Copiar link, com a verificação de identidade feita), então o Ofertix manda o link exatamente
+como foi colado, sem o /r/, com foto e preço. Vale 100 dias: depois disso o envio é recusado com o aviso para gerar um
+novo. No espelhamento, link do TikTok Shop de outra pessoa bloqueia a mensagem (não tem como virar o da conta).
+Passo a passo na página Conectar plataformas. Nada a configurar no servidor.
+
 ## Atualizar para a 6.7.1 (Instagram pelo login do Facebook, apps novos)
 
 Com `INSTAGRAM_CONFIG_ID` no `.env`, o botão Conectar Instagram abre o login do Facebook para Empresas: a pessoa

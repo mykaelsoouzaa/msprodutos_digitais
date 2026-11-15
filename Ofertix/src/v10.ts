@@ -132,6 +132,7 @@ async function linkDaConta(c: Ctx, conta: number, url: string) {
   if (pl === 'amazon' && !cfg.amazon_tag) throw new ErroUso('Cadastre a sua tag da Amazon em Conectar plataformas');
   if (pl === 'mercadolivre' && !cfg.ml_modelo) throw new ErroUso('Cadastre o seu modelo de link do Mercado Livre em Conectar plataformas');
   if (pl === 'magalu') throw new ErroUso('O Ofertix ainda não gera link de afiliado da Magalu');
+  if (pl === 'tiktok') throw new ErroUso('o link de afiliado do TikTok Shop só sai do app do TikTok, então o de outra pessoa não tem como virar o seu');
   const o = await converterLink(c, conta, url);
   if (!o.urlAfiliado) throw new ErroUso('A loja não devolveu o seu link de afiliado');
   return o;
@@ -192,9 +193,10 @@ export function chaveProduto(url: string): string {
   const ml = u.match(/\bMLB-?(\d+)/i); if (ml) return `ml:${ml[1]}`;
   const sh = u.match(/(?:-i\.|\/product\/)(\d+)[./](\d+)/); if (sh) return `shopee:${sh[1]}.${sh[2]}`;
   const az = u.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i); if (az) return `amazon:${az[1]!.toUpperCase()}`;
+  const tk = u.match(/tiktok[^/]*\/.*\/product\/(\d{8,})/i); if (tk) return `tiktok:${tk[1]}`;
   return u.split('?')[0]!.split('#')[0]!.replace(/\/+$/, '').toLowerCase();
 }
-const DA: Record<string, string> = { shopee: 'da', amazon: 'da', magalu: 'da', mercadolivre: 'do' };
+const DA: Record<string, string> = { shopee: 'da', amazon: 'da', magalu: 'da', mercadolivre: 'do', tiktok: 'do' };
 const limpar = (u: string) => u.replace(/[).,;!?*_~]+$/, '');
 
 // ------------------------------------------------------------------ mídia (imagem da mensagem original)

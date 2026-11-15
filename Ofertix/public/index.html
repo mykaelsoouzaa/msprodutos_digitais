@@ -109,7 +109,8 @@ h1,h2,h3{font-family:var(--fonte-titulo);letter-spacing:-.01em;margin:0}
 .linha .tit{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .linha .det{color:var(--mudo);font-size:12.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px}
 .loja{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.02em}
-.lojas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:6px}
+.lojas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:6px}
+@media (min-width:1500px){.lojas{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:980px){.lojas{grid-template-columns:1fr}}
 .loja-col{border:1px solid var(--borda);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--surface)}
 .loja-cab{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -118,7 +119,7 @@ h1,h2,h3{font-family:var(--fonte-titulo);letter-spacing:-.01em;margin:0}
 .passos a{color:var(--verde-forte)}
 .loja-nota{margin:0;font-size:12.5px;color:var(--mudo);line-height:1.45}
 .linha-campo{display:flex;gap:6px;flex-wrap:wrap}.linha-campo input{flex:1 1 200px;min-width:0}.linha-campo .botao{flex:1 0 auto}
-.loja.shopee{background:#ee4d2d;color:#fff}.loja.mercadolivre{background:#ffe600;color:#2d3277}.loja.amazon{background:#232f3e;color:#ff9900}.loja.magalu{background:#0086ff;color:#fff}.loja.outra{background:var(--surface-2);color:var(--texto-2)}
+.loja.shopee{background:#ee4d2d;color:#fff}.loja.mercadolivre{background:#ffe600;color:#2d3277}.loja.amazon{background:#232f3e;color:#ff9900}.loja.magalu{background:#0086ff;color:#fff}.loja.tiktok{background:#111;color:#fff;box-shadow:inset 3px 0 #25f4ee,inset -3px 0 #fe2c55}.loja.outra{background:var(--surface-2);color:var(--texto-2)}
 .status{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .status::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .status.pendente{background:var(--amarelo-suave);color:var(--amarelo)}
@@ -315,7 +316,7 @@ tr.monit td{color:var(--mudo)}tr.monit td:first-child{opacity:.75}
       <button class="icone-btn so-celular" id="abrir-menu" aria-label="Abrir menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
       <form class="colar" id="form-colar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
-        <input id="link-topo" placeholder="Cole o link do produto (Shopee, Mercado Livre, Amazon, Magalu)" autocomplete="off" aria-label="Link do produto">
+        <input id="link-topo" placeholder="Cole o link do produto (Shopee, Mercado Livre, Amazon, TikTok Shop)" autocomplete="off" aria-label="Link do produto">
         <button class="botao peq" type="submit">Gerar<span class="txt-btn"> oferta</span></button>
       </form>
       <button class="icone-btn" id="pausa" aria-label="Pausar todos os envios" title="Pausar todos os envios"></button>
@@ -340,7 +341,7 @@ const reais = (c) => c == null ? '—' : 'R$ ' + (c / 100).toLocaleString('pt-BR
 const reaisCurto = (c) => 'R$ ' + (c / 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 const num = (n) => Number(n || 0).toLocaleString('pt-BR');
 const pct = (de, por) => (de && por && de > por ? Math.round((1 - por / de) * 100) : 0);
-const LOJAS = { shopee: 'Shopee', mercadolivre: 'Mercado Livre', amazon: 'Amazon', magalu: 'Magalu', outra: 'Loja' };
+const LOJAS = { shopee: 'Shopee', mercadolivre: 'Mercado Livre', amazon: 'Amazon', magalu: 'Magalu', tiktok: 'TikTok Shop', outra: 'Loja' };
 const loja = (p) => `<span class="loja ${esc(p || 'outra')}">${esc(LOJAS[p] || 'Loja')}</span>`;
 const hora = (ms) => new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 const quandoTxt = (ms) => {
@@ -1097,6 +1098,16 @@ async function telaPlataformas() {
           <div class="campo"><label for="ml-link">Link gerado no seu painel</label><div class="linha-campo"><input id="ml-link" placeholder="https://mercadolivre.com/sec/..."><button class="botao sec peq" type="button" data-extrair="mercadolivre">Achar meus parâmetros</button></div></div>
           <div class="campo"><label for="ml">Seus parâmetros de afiliado</label><input id="ml" value="${esc(c.ml_modelo)}" placeholder="matt_tool=...&matt_word=..."></div>
           <p class="loja-nota">O Ofertix tira os parâmetros de outros afiliados de qualquer link do Mercado Livre e põe os seus. Também aceita um endereço com {url}.</p>
+        </div>
+        <div class="loja-col">
+          <div class="loja-cab"><span class="loja tiktok">TikTok Shop</span><span class="status ativo">Pronto para usar</span></div>
+          <ol class="passos">
+            <li>No app do TikTok, entre na <b>Central de Criadores → TikTok Shop</b> e ative o afiliado.</li>
+            <li>Faça a <b>verificação de identidade</b> e cadastre a conta bancária. Sem a verificação, o link não paga comissão.</li>
+            <li>Abra o produto, toque em <b>Compartilhar → Copiar link</b>.</li>
+            <li>Cole o link em <b>Ofertas → Nova oferta</b>, como um link de qualquer loja.</li>
+          </ol>
+          <p class="loja-nota"><b>Como funciona:</b> o link de afiliado do TikTok Shop só sai do app, então o Ofertix manda o seu link exatamente como você colou, com foto e preço (não conta clique). Vale <b>100 dias</b>: depois disso a oferta para de sair e é só gerar um novo. Comissão de quem comprar em até 14 dias. No espelhamento, link do TikTok Shop de outra pessoa não tem como virar o seu: a mensagem fica bloqueada.</p>
         </div>
       </div></section>
     <div style="display:flex;justify-content:flex-end"><button class="botao" type="submit">Salvar plataformas</button></div>

@@ -1,9 +1,9 @@
 // Reconhece links de lojas, troca pelo link de afiliado e busca os dados do produto.
 import { limparAmazon, limparRastreioML } from './regras.ts';
-export type Plataforma = 'shopee' | 'mercadolivre' | 'amazon' | 'magalu' | 'outra';
+export type Plataforma = 'shopee' | 'mercadolivre' | 'amazon' | 'magalu' | 'tiktok' | 'outra';
 
 export const NOME_PLATAFORMA: Record<Plataforma, string> = {
-  shopee: 'Shopee', mercadolivre: 'Mercado Livre', amazon: 'Amazon', magalu: 'Magalu', outra: 'Loja',
+  shopee: 'Shopee', mercadolivre: 'Mercado Livre', amazon: 'Amazon', magalu: 'Magalu', tiktok: 'TikTok Shop', outra: 'Loja',
 };
 
 const URL_RE = /https?:\/\/[^\s<>"'`]+/gi;
@@ -21,8 +21,26 @@ export function plataformaDe(url: string): Plataforma {
   if (/(^|\.)mercadolivre\.com\.br$|(^|\.)mercadolibre\.com$|(^|\.)meli\.la$|(^|\.)mlstatic\.com$/.test(host)) return 'mercadolivre';
   if (/(^|\.)amazon\.com\.br$|(^|\.)amzn\.to$|(^|\.)a\.co$/.test(host)) return 'amazon';
   if (/(^|\.)magazineluiza\.com\.br$|(^|\.)magalu\.com$|(^|\.)divulgador\.magalu\.com$/.test(host)) return 'magalu';
+  if (ehProdutoTikTok(url)) return 'tiktok';
   return 'outra';
 }
+
+/**
+ * TikTok Shop (6.8): página de produto, de loja ou de vitrine do TikTok Shop. Link curto do app (vm.tiktok.com,
+ * vt.tiktok.com, tiktok.com/t/) pode ser vídeo comum: só vira TikTok Shop depois de aberto (linkCurtoTikTok).
+ */
+export function ehProdutoTikTok(url: string): boolean {
+  let u: URL;
+  try { u = new URL(url); } catch { return false; }
+  const h = u.hostname.toLowerCase();
+  if (/(^|\.)shop\.tiktok\.com$|(^|\.)tiktokshop\.com$/.test(h)) return true;
+  return /(^|\.)tiktok\.com$/.test(h) && /^\/(view\/product|shop|product)\b|\/(product|showcase)\//.test(u.pathname);
+}
+export function linkCurtoTikTok(url: string): boolean {
+  try { const u = new URL(url); return /^(vm|vt)\.tiktok\.com$/i.test(u.hostname) || (/(^|\.)tiktok\.com$/i.test(u.hostname) && /^\/t\//.test(u.pathname)); } catch { return false; }
+}
+/** Código do produto do TikTok Shop (…/product/1729…). */
+export const idTikTok = (url: string) => String(url ?? '').match(/\/product\/(\d{8,})/)?.[1] ?? '';
 
 export const lojaSuportada = (url: string) => plataformaDe(url) !== 'outra';
 

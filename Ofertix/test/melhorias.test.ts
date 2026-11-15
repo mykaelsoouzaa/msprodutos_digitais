@@ -283,3 +283,22 @@ test('servidor: /r/ redireciona e conta; CSV sai com cabeçalho de download', as
     assert.ok(pv.texto.startsWith('🔥 *Air Fryer'));
   } finally { srv.close(); }
 });
+
+test('TikTok Shop: o link do app sai direto (sem /r/) e com foto; depois de 100 dias não sai mais', async () => {
+  const e = ambiente();
+  await preparar(e, 1);
+  const id = novaOferta(e, { plataforma: 'tiktok', urlOriginal: 'https://www.tiktok.com/view/product/1729384756123456789', urlAfiliado: 'https://vt.tiktok.com/ZSabc123/', imagem: 'https://p16.tiktokcdn.com/g.jpg' });
+  const o = s.oferta(e.db, e.conta, id);
+  s.agendar(e.ctx, e.conta, { ofertaId: id, texto: s.textoOferta(e.db, e.conta, o), imagem: o.imagem });
+  await mandarTudo(e);
+  assert.equal(e.wpp.enviados.length, 1);
+  assert.match(e.wpp.enviados[0].texto, /https:\/\/vt\.tiktok\.com\/ZSabc123\//);
+  assert.doesNotMatch(e.wpp.enviados[0].texto, /ofertix\.teste\/r\//);
+  assert.equal(e.wpp.enviados[0].imagem, 'https://p16.tiktokcdn.com/g.jpg');
+  e.avancar(100 * 24 * HORA);
+  e.db.prepare('UPDATE config_conta SET repeticao_horas = 0').run();
+  s.agendar(e.ctx, e.conta, { ofertaId: id, texto: s.textoOferta(e.db, e.conta, o) });
+  await mandarTudo(e);
+  assert.equal(e.wpp.enviados.length, 1, 'link vencido não sai');
+  assert.match((e.db.prepare("SELECT erro FROM envios WHERE status = 'erro'").get() as any).erro, /vencido/);
+});

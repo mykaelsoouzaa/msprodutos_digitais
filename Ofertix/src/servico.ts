@@ -4,7 +4,7 @@ import { type DB, agora } from './db.ts';
 import { plano } from './planos.ts';
 import {
   type Plataforma, NOME_PLATAFORMA, plataformaDe, extrairLinks, lojaSuportada, idsShopee,
-  linkAmazon, linkModelo, resolverLink, buscarPagina, produtoDoSocialML } from './links.ts';
+  linkAmazon, linkModelo, resolverLink, buscarPagina, produtoDoSocialML, ehProdutoTikTok, linkCurtoTikTok, idTikTok } from './links.ts';
 import { linkCurtoShopee, produtoShopee, comissoesShopee, avaliacaoShopee } from './shopee.ts';
 import { anotarEntrada, anotarPreco, limiteDoNumero } from './extras.ts';
 import { classificar, colecaoDoDia, lerNicho, motivoRecusa, rodapeAfiliado, CATEGORIAS, nomeCategoria } from './nicho.ts';
@@ -39,7 +39,9 @@ export async function converterLink(c: Ctx, conta: number, url: string): Promise
   if (!/^https?:$/.test(u.protocol)) throw new ErroUso('Link inválido');
   const cfg = config(c.db, conta);
   let final = u.toString();
-  if (plataformaDe(final) === 'outra') throw new ErroUso('Por enquanto o Ofertix aceita links da Shopee, Mercado Livre, Amazon e Magalu');
+  // TikTok Shop: o link de afiliado só sai do app do TikTok. O Ofertix manda o link exatamente como foi colado.
+  if (linkCurtoTikTok(final) || ehProdutoTikTok(final)) return linkTikTok(c, final);
+  if (plataformaDe(final) === 'outra') throw new ErroUso('Por enquanto o Ofertix aceita links da Shopee, Mercado Livre, Amazon, TikTok Shop e Magalu');
   // Links curtos (s.shopee, amzn.to, meli.la...) precisam ser abertos para achar o produto.
   if (/^(s\.shopee\.com\.br|shp\.ee|amzn\.to|a\.co|meli\.la)$/i.test(u.hostname) || /\/(sec|social)\//.test(u.pathname)) final = await resolverLink(final, c.f);
   // Mercado Livre: link /social/ (vitrine de outro afiliado). Tenta achar o produto dela; sem produto único, não troca.
@@ -78,6 +80,24 @@ export async function converterLink(c: Ctx, conta: number, url: string): Promise
   }
   return base;
 }
+
+/**
+ * TikTok Shop (Programa de Tráfego Externo): o link gerado no app (produto → Compartilhar → Copiar link) leva a comissão
+ * do criador por 14 dias e vale 100 dias. Não dá para gerar nem trocar esse link fora do app, então ele sai como veio,
+ * sem o link curto /r/ do Ofertix. O endereço aberto só serve para achar o produto (título, foto, repetição).
+ */
+async function linkTikTok(c: Ctx, url: string): Promise<NovaOferta> {
+  let aberto = url;
+  if (linkCurtoTikTok(url)) aberto = await resolverLink(url, c.f).catch(() => url);
+  if (linkCurtoTikTok(url) && !ehProdutoTikTok(aberto)) throw new ErroUso('Esse link do TikTok não é de um produto do TikTok Shop. No app, abra o produto, toque em Compartilhar e copie o link.');
+  const id = idTikTok(aberto);
+  const base: NovaOferta = { plataforma: 'tiktok', urlOriginal: id ? `https://www.tiktok.com/view/product/${id}` : aberto.split('?')[0]!, urlAfiliado: url, titulo: '', imagem: '', precoDe: null, precoPor: null, comissaoPct: null };
+  const pg = await buscarPagina(aberto, c.f).catch(() => null);
+  if (pg) { base.titulo = pg.titulo.replace(/\s*[-|]\s*TikTok( Shop)?\s*$/i, ''); base.imagem = pg.imagem; base.precoPor = pg.preco; }
+  return base;
+}
+/** Link do TikTok Shop vale 100 dias: depois disso a oferta não sai mais (precisa de um link novo). */
+export const TIKTOK_VALIDADE = 100 * 86400_000;
 
 export function salvarOferta(c: Ctx, conta: number, o: NovaOferta, origem = 'manual', origemGrupo = ''): number {
   c.db.prepare(`INSERT INTO ofertas (conta_id, plataforma, url_original, url_afiliado, titulo, imagem, preco_de, preco_por, comissao_pct, origem, origem_grupo, criado_em, categoria, nota, vendas)
@@ -304,7 +324,7 @@ const inicioDoDia = (ms: number) => { const d = new Date(ms); d.setHours(0, 0, 0
 
 /** Manda o que está na hora. Respeita o limite diário por número do plano. */
 export async function processarFila(c: Ctx, maximo = 20): Promise<number> {
-  const fila = c.db.prepare(`SELECT e.*, i.chave, i.status AS inst_status, g.jid, a.texto, a.imagem, a.oferta_id, a.enquete, o.url_afiliado, o.plataforma
+  const fila = c.db.prepare(`SELECT e.*, i.chave, i.status AS inst_status, g.jid, a.texto, a.imagem, a.oferta_id, a.enquete, o.url_afiliado, o.plataforma, o.criado_em AS oferta_criada
     FROM envios e JOIN instancias i ON i.id = e.instancia_id JOIN grupos g ON g.id = e.grupo_id JOIN agendamentos a ON a.id = e.agendamento_id
     LEFT JOIN ofertas o ON o.id = a.oferta_id
     WHERE e.status = 'fila' AND e.enviar_em <= ? ORDER BY e.enviar_em LIMIT ?`).all(t(c), maximo) as any[];
@@ -350,8 +370,14 @@ export async function processarFila(c: Ctx, maximo = 20): Promise<number> {
         }
         let texto = expandirVariacoes(e.texto);
         // Amazon: o link sai direto (sem /r/) e sem foto; regras do Programa de Associados em src/regras.ts.
+        // TikTok Shop: o link sai direto (só o link oficial do app leva a comissão), com foto.
         const amazon = e.plataforma === 'amazon';
-        if (!amazon && cfg.contar_cliques && e.url_afiliado && /^https?:\/\//.test(c.urlPublica) && texto.includes(e.url_afiliado)) {
+        const direto = amazon || e.plataforma === 'tiktok';
+        if (e.plataforma === 'tiktok' && e.oferta_criada && t(c) - Number(e.oferta_criada) > TIKTOK_VALIDADE - 86400_000) {
+          c.db.prepare("UPDATE envios SET status = 'erro', erro = ? WHERE id = ?").run('Link do TikTok Shop vencido (vale 100 dias): gere um link novo no app e cole de novo', e.id);
+          continue;
+        }
+        if (!direto && cfg.contar_cliques && e.url_afiliado && /^https?:\/\//.test(c.urlPublica) && texto.includes(e.url_afiliado)) {
           texto = texto.split(e.url_afiliado).join(linkRastreado(c, e, e.url_afiliado));
         }
         await c.wpp.enviar(e.chave, e.jid, texto, !amazon && /^https?:\/\//.test(e.imagem) ? e.imagem : undefined);

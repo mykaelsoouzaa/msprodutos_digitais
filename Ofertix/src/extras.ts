@@ -286,6 +286,8 @@ export function vitrinePublica(c: Ctx, slug: string) {
   const lista = ofertas.map((o) => {
     // Amazon: link direto, sem preço e sem foto (regras do Programa de Associados, src/regras.ts).
     if (o.plataforma === 'amazon') return { titulo: o.titulo, imagem: 'emoji:🛒', preco_de: null, preco_por: null, categoria: o.categoria, link: o.url_afiliado };
+    // TikTok Shop: só o link oficial do app leva a comissão; sai direto, sem /r/.
+    if (o.plataforma === 'tiktok') return { titulo: o.titulo, imagem: o.imagem, preco_de: o.preco_de, preco_por: o.preco_por, categoria: o.categoria, link: o.url_afiliado };
     let l = c.db.prepare("SELECT codigo FROM links WHERE conta_id = ? AND oferta_id = ? AND grupo_id IS NULL AND agendamento_id IS NULL AND destino = ?").get(e.conta_id, o.id, o.url_afiliado) as any;
     if (!l) {
       l = { codigo: novoCodigo() };
