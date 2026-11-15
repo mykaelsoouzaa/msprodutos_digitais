@@ -114,6 +114,14 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.11.1 (cliques de verdade)
+
+Os cliques contavam a prévia do link: na hora do envio, a Evolution API abre o link para montar a prévia, e isso virava
+"clique" em cada grupo. Agora não contam: acesso nos primeiros 20 segundos depois de o link nascer, acesso do próprio
+servidor ou da rede interna (IP público do endereço do Ofertix, 127.x, 10.x, 172.16-31.x, 192.168.x), robôs e
+bibliotecas (axios, undici, Baileys, prévias de redes sociais) e a mesma pessoa abrindo o mesmo link de novo em 30
+minutos. Ao subir, os "cliques" antigos dos primeiros 20 segundos são apagados uma vez (tabela `migracoes`).
+
 ## Atualizar para a 6.11 (10 pacotes prontos de curadoria)
 
 Nicho e curadoria → Curadoria → Pacotes prontos: Achadinhos femininos, Achados até R$ 50, Tudo até R$ 20, Casa e

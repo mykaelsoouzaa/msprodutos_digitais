@@ -261,9 +261,17 @@ test('servidor: /r/ redireciona e conta; CSV sai com cabeçalho de download', as
   await new Promise((r) => srv.once('listening', r));
   const base = `http://localhost:${(srv.address() as any).port}`;
   try {
-    const r = await fetch(base + '/r/abc1234', { redirect: 'manual', headers: { 'user-agent': 'Mozilla/5.0' } });
+    // Acesso da rede interna (a Evolution API montando a prévia): redireciona, mas não conta.
+    const interno = await fetch(base + '/r/abc1234', { redirect: 'manual', headers: { 'user-agent': 'Mozilla/5.0' } });
+    assert.equal(interno.status, 302);
+    assert.equal((e.db.prepare('SELECT COUNT(*) AS n FROM cliques').get() as any).n, 0);
+    const r = await fetch(base + '/r/abc1234', { redirect: 'manual', headers: { 'user-agent': 'Mozilla/5.0 (iPhone)', 'x-forwarded-for': '200.150.1.2' } });
     assert.equal(r.status, 302);
     assert.equal(r.headers.get('location'), 'https://loja.com/p');
+    assert.equal((e.db.prepare('SELECT COUNT(*) AS n FROM cliques').get() as any).n, 1);
+    // A mesma pessoa abrindo de novo logo depois conta uma vez só; prévia do WhatsApp não conta.
+    await fetch(base + '/r/abc1234', { redirect: 'manual', headers: { 'user-agent': 'Mozilla/5.0 (iPhone)', 'x-forwarded-for': '200.150.1.2' } });
+    await fetch(base + '/r/abc1234', { redirect: 'manual', headers: { 'user-agent': 'WhatsApp/2.24.1 A', 'x-forwarded-for': '31.13.1.1' } });
     assert.equal((e.db.prepare('SELECT COUNT(*) AS n FROM cliques').get() as any).n, 1);
     assert.equal((await fetch(base + '/r/zzzzzzz', { redirect: 'manual' })).status, 404);
     const cookie = 'ofx=' + assinarSessao({ conta: e.conta, email: 'ana@exemplo.com', nome: 'Ana', demo: false, admin: false, leitura: false, exp: Date.now() + 60_000 }, 'seg');

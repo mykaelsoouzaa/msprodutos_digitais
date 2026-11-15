@@ -15,6 +15,7 @@ import * as ent from './entradas.ts';
 import * as v6 from './v6.ts';
 import * as v10 from './v10.ts';
 import * as ig from './instagram.ts';
+import { lookup as dnsLookup } from 'node:dns/promises';
 import { campanhasShopee } from './shopee.ts';
 import { extrairAfiliado } from './regras.ts';
 import { resolverLink } from './links.ts';
@@ -94,6 +95,17 @@ const DEMO_CAMPANHAS = (agora: number) => [
   { nome: 'Achadinhos até R$ 19,90 com frete grátis', imagem: '', link: 'https://s.shopee.com.br/demoachados', comissaoPct: 9, inicio: agora - 86400_000, fim: agora + 6 * 86400_000 },
   { nome: 'Beleza em dobro: moedas extras', imagem: '', link: 'https://s.shopee.com.br/demobeleza', comissaoPct: 10, inicio: null, fim: null },
 ];
+
+// IP público do próprio servidor (o do endereço público): acesso vindo dele é a Evolution API montando a prévia.
+let ipsDoServidor: string[] = [];
+let ipsEm = 0;
+function ipsProprios(urlPublica: string): string[] {
+  if (Date.now() - ipsEm > 3600_000) {
+    ipsEm = Date.now();
+    try { dnsLookup(new URL(urlPublica).hostname, { all: true }).then((l) => { ipsDoServidor = l.map((x) => x.address); }).catch(() => {}); } catch { /* sem endereço */ }
+  }
+  return ipsDoServidor;
+}
 
 const cfgInsta = (app: App): ig.CfgInsta => ({ appId: app.cfg.instagramAppId ?? '', appSecret: app.cfg.instagramAppSecret ?? '', verifyToken: app.cfg.instagramVerifyToken ?? '', urlPublica: app.cfg.urlPublica, segredo: app.cfg.segredoSessao, configId: app.cfg.instagramConfigId ?? '' });
 
@@ -191,7 +203,10 @@ export function criarServidor(app: App) {
       const rl = caminho.match(/^\/r\/([A-Za-z0-9]{5,12})$/);
       if (rl) {
         const ua = String(req.headers['user-agent'] ?? '');
-        const destino = s.registrarClique(app.real, rl[1], ua) ?? s.registrarClique(app.demo, rl[1], ua);
+        // IP de quem clicou: o Caddy põe em X-Forwarded-For; o primeiro da lista é o do visitante.
+        const ip = String(req.headers['x-forwarded-for'] ?? '').split(',')[0]!.trim() || String(req.socket.remoteAddress ?? '');
+        const proprios = ipsProprios(app.cfg.urlPublica);
+        const destino = s.registrarClique(app.real, rl[1], ua, ip, proprios) ?? s.registrarClique(app.demo, rl[1], ua, ip, proprios);
         if (!destino) return pagina(res, 404, 'Esta oferta não existe mais.', app.cfg.portalUrl);
         res.writeHead(302, { location: destino, 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' });
         return res.end();

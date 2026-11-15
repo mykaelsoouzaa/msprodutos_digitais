@@ -83,3 +83,23 @@ test('6.11: pacotes prontos têm regras válidas e o pacote aplicado aparece no 
     assert.equal(p.nicho.colecoes.length, 7);
   }
 });
+
+test('6.11.1: clique nos primeiros 20 s (prévia do envio) e de IP interno não conta', () => {
+  const db = abrirBanco(':memory:');
+  let agora = 1_000_000;
+  const ctx = { db, wpp: new WhatsAppSimulado(), f: fetch, urlPublica: 'https://o.teste', agora: () => agora };
+  const conta = contaPorEmail(db, 'a@b.com', 'A').id;
+  db.prepare("INSERT INTO links (codigo, conta_id, destino, criado_em) VALUES ('k1', ?, 'https://loja/p', ?)").run(conta, agora);
+  const n = () => (db.prepare('SELECT COUNT(*) AS n FROM cliques').get() as any).n;
+  agora += 3000; s.registrarClique(ctx, 'k1', 'Mozilla/5.0 (Windows NT 10.0) Chrome/120', '187.53.98.248', ['187.53.98.248']);
+  agora += 3000; s.registrarClique(ctx, 'k1', 'Mozilla/5.0 (Linux; Android 14)', '177.1.2.3');
+  assert.equal(n(), 0, 'cedo demais: é a prévia');
+  agora += 60_000; s.registrarClique(ctx, 'k1', 'Mozilla/5.0 (Linux; Android 14)', '172.18.0.5');
+  assert.equal(n(), 0, 'rede interna do Docker');
+  s.registrarClique(ctx, 'k1', 'axios/1.6.0', '177.1.2.3');
+  assert.equal(n(), 0, 'biblioteca de programação');
+  s.registrarClique(ctx, 'k1', 'Mozilla/5.0 (Linux; Android 14)', '177.1.2.3');
+  assert.equal(n(), 1);
+  assert.equal(s.ipInterno('::ffff:10.0.0.4'), true);
+  assert.equal(s.ipInterno('200.1.1.1'), false);
+});

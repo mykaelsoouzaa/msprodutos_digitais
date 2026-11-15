@@ -311,13 +311,36 @@ export function linkRastreado(c: Ctx, e: { conta_id: number; oferta_id: number |
   return `${c.urlPublica}/r/${codigo}`;
 }
 
-export const ROBO = /bot|crawl|spider|slurp|facebookexternalhit|^WhatsApp\/|preview|curl|wget|python|node-fetch|headless/i;
+export const ROBO = /bot|crawl|spider|slurp|facebookexternalhit|facebookcatalog|meta-externalagent|^WhatsApp\/|whatsapp|preview|embed|curl|wget|python|node-fetch|undici|axios|got\/|okhttp|go-http|java\/|libwww|httpclient|baileys|headless|lighthouse|scrapy|iframely|skypeuri|vkshare|telegram|discord|slack|twitter|linkedin|pinterest|google-|apple|yandex|bingpreview|petal|ahrefs|semrush/i;
 
 /** Clique no link curto: devolve o destino e conta o clique (robôs de prévia não contam). */
-export function registrarClique(c: Ctx, codigo: string, userAgent: string): string | null {
+/**
+ * O que não é clique de gente (6.11.1):
+ *  - robôs pelo agente (prévia do WhatsApp, do Facebook, buscadores, bibliotecas de programação);
+ *  - acesso do próprio servidor ou da rede interna: a Evolution API abre o link para montar a prévia na hora do envio;
+ *  - acesso nos primeiros 20 segundos depois de o link ser criado (a prévia é montada no envio, ninguém clica tão rápido);
+ *  - a mesma pessoa (IP + navegador) abrindo o mesmo link de novo em 30 minutos conta uma vez só.
+ */
+export const JANELA_PREVIA = 20_000;
+const vistosClique = new Map<string, number>();
+export const ipInterno = (ip: string, proprios: string[] = []) => {
+  const x = String(ip ?? '').replace(/^::ffff:/, '').trim();
+  return !x || proprios.includes(x) || /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|::1$|fc|fd|fe80)/i.test(x);
+};
+export function registrarClique(c: Ctx, codigo: string, userAgent: string, ip = '', ipsProprios: string[] = []): string | null {
   const l = c.db.prepare('SELECT * FROM links WHERE codigo = ?').get(codigo) as any;
   if (!l) return null;
-  if (userAgent && !ROBO.test(userAgent)) c.db.prepare('INSERT INTO cliques (codigo, conta_id, em) VALUES (?, ?, ?)').run(codigo, l.conta_id, t(c));
+  const agora = t(c);
+  const gente = userAgent && !ROBO.test(userAgent) && !(ip && ipInterno(ip, ipsProprios)) && agora - Number(l.criado_em) >= JANELA_PREVIA;
+  if (gente) {
+    const chave = `${codigo}|${ip}|${userAgent}`;
+    const antes = vistosClique.get(chave);
+    if (!antes || agora - antes > 30 * 60_000) {
+      vistosClique.set(chave, agora);
+      if (vistosClique.size > 50_000) vistosClique.clear();
+      c.db.prepare('INSERT INTO cliques (codigo, conta_id, em) VALUES (?, ?, ?)').run(codigo, l.conta_id, agora);
+    }
+  }
   return l.destino;
 }
 

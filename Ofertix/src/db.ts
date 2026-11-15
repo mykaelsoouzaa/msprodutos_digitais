@@ -377,6 +377,13 @@ export function abrirBanco(arquivo: string): DB {
     const tem = (db.prepare(`PRAGMA table_info(${tabela})`).all() as any[]).some((c) => c.name === coluna);
     if (!tem) db.exec(`ALTER TABLE ${tabela} ADD COLUMN ${coluna} ${tipo}`);
   }
+  // Correções de dados que rodam uma vez só.
+  db.exec('CREATE TABLE IF NOT EXISTS migracoes (nome TEXT PRIMARY KEY, em INTEGER NOT NULL)');
+  if (!db.prepare("SELECT 1 FROM migracoes WHERE nome = 'cliques-previa'").get()) {
+    // 6.11.1: tira os "cliques" da prévia do link montada no envio (até 20 s depois de o link nascer).
+    db.exec('DELETE FROM cliques WHERE id IN (SELECT q.id FROM cliques q JOIN links l ON l.codigo = q.codigo WHERE q.em - l.criado_em < 20000)');
+    db.prepare("INSERT INTO migracoes (nome, em) VALUES ('cliques-previa', ?)").run(Date.now());
+  }
   return db;
 }
 
