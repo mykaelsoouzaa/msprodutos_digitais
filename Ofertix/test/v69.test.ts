@@ -72,3 +72,14 @@ test('6.10: grupo monitorado não entra em membros nem no resumo do WhatsApp', a
   assert.ok(m.churnDiario <= 100);
   assert.match(s.textoResumo(ctx, conta), /\+2 \/ −0 membros nos seus grupos/);
 });
+
+test('6.11: pacotes prontos têm regras válidas e o pacote aplicado aparece no nicho', async () => {
+  const { PACOTES, MODELOS } = await import('../src/nicho.ts');
+  assert.ok(PACOTES.length >= 10);
+  assert.equal(new Set(PACOTES.map((p) => p.id)).size, PACOTES.length, 'ids únicos');
+  for (const p of PACOTES) {
+    assert.ok(p.nicho.pacote && p.descricao && p.horarios, p.id);
+    assert.ok(MODELOS.some((m) => m.texto === p.modelo), `modelo do pacote ${p.id}`);
+    assert.equal(p.nicho.colecoes.length, 7);
+  }
+});

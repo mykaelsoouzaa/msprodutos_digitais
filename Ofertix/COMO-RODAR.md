@@ -114,6 +114,13 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.11 (10 pacotes prontos de curadoria)
+
+Nicho e curadoria → Curadoria → Pacotes prontos: Achadinhos femininos, Achados até R$ 50, Tudo até R$ 20, Casa e
+cozinha, Beleza e skincare, Moda e acessórios, Mães e bebês, Tech e eletrônicos, Achadinhos masculinos e Black Friday.
+Cada um traz regras, coleções da semana, modelo de mensagem, rodapé e horários (`PACOTES` em `src/nicho.ts`,
+`POST /api/nicho/pacote`). O pacote em uso fica marcado.
+
 ## Atualizar para a 6.10 (membros só dos seus grupos e 10 melhorias)
 
 - Grupo monitorado (ou origem de espelhamento) não entra mais em Membros, nos resumos diário e semanal do WhatsApp,

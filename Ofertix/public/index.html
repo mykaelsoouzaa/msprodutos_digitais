@@ -122,6 +122,13 @@ h1,h2,h3{font-family:var(--fonte-titulo);letter-spacing:-.01em;margin:0}
 .lotacao i{display:block;width:90px;height:5px;border-radius:3px;background:linear-gradient(90deg,var(--verde) var(--p),var(--surface-2) var(--p))}
 .lotacao i.quase{background:linear-gradient(90deg,var(--amarelo) var(--p),var(--surface-2) var(--p))}.lotacao i.cheia{background:linear-gradient(90deg,var(--vermelho) var(--p),var(--surface-2) var(--p))}
 @media (max-width:640px){.eh-linha{grid-template-columns:1fr}.busca-ag{flex:1 1 100%}}
+.pacotes{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:12px}
+.pacote-card{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--borda);border-radius:14px;padding:14px}
+.pacote-card.em-uso{border-color:var(--verde);box-shadow:0 0 0 1px var(--verde) inset}
+.pc-topo{display:flex;gap:10px;align-items:center}.pc-topo .tit{font-weight:700}.pc-emoji{font-size:26px;line-height:1}
+.pc-desc{margin:0;font-size:13px;color:var(--texto-2);flex:1}
+.pc-chips{display:flex;flex-wrap:wrap;gap:4px}.pc-chips span{font-size:11.5px;background:var(--surface-2);color:var(--texto-2);border-radius:99px;padding:2px 8px}
+.pacote-card .botao{align-self:flex-start}
 .campanhas{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:12px}
 .campanha{display:flex;gap:12px;border:1px solid var(--borda);border-radius:14px;padding:12px;background:var(--surface)}
 .camp-img{flex:none;width:64px;height:64px;border-radius:12px;background:var(--laranja-suave);color:var(--laranja);display:flex;align-items:center;justify-content:center;overflow:hidden}
@@ -1622,7 +1629,7 @@ function editarTema(g) {
 
 const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 async function telaNicho() {
-  const [d, ab] = await Promise.all([api('nicho'), api('abastecer').catch(() => null)]), n = d.nicho, r = n.regras;
+  const [d, ab, pacotes] = await Promise.all([api('nicho'), api('abastecer').catch(() => null), api('nicho/pacotes').catch(() => [])]), n = d.nicho, r = n.regras;
   const opCat = (sel) => `<option value="">Qualquer categoria</option>` + d.categorias.filter((c) => c.id !== 'outros').map((c) => `<option value="${c.id}" ${sel === c.id ? 'selected' : ''}>${c.emoji} ${esc(c.nome)}${c.naVitrine ? ` (${c.naVitrine} na vitrine)` : ' (vitrine vazia)'}</option>`).join('');
   const nomeCat = (id) => { const c = d.categorias.find((x) => x.id === id); return c ? `${c.emoji} ${c.nome}` : id; };
   const resumo = [
@@ -1639,9 +1646,15 @@ async function telaNicho() {
         <div class="ajuda" style="margin-top:8px">Coleção de hoje: <b>${hojeCol ? esc(nomeCat(hojeCol)) : 'qualquer categoria'}</b> · Horários: ${d.horarios ? esc(d.horarios) : 'nenhum'}${n.pacote ? ` · Pacote: ${esc(n.pacote)}` : ''}</div></section>
       <div class="abas" role="tablist">${[['curadoria', 'filtro', 'Curadoria'], ['rotina', 'agenda', 'Rotina da semana'], ['mensagens', 'msg', 'Mensagens']].map(([id, ic, nome]) => `<button type="button" role="tab" class="aba ${E.abaNicho === id ? 'ativa' : ''}" data-aba-n="${id}" aria-selected="${E.abaNicho === id}">${ico(ic, 16)}${nome}</button>`).join('')}</div>
     </div>
-    <section class="cartao secao-form pacote" data-aba="curadoria"><h2>✨ Pacote pronto: achadinhos femininos</h2>
-      <p>Configura tudo de uma vez para um grupo de achadinhos de casa, cozinha, organização, beleza e moda: até R$ 50, nota mínima 4,7 e 100 vendas, coleções de segunda a sábado, modelo de mensagem com tom de amiga, rodapé de afiliado e cinco horários automáticos (9h, 12h, 15h, 19h e 21h).</p>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="botao" type="button" id="aplicar-pacote">${ico('estrela', 16)}Aplicar pacote</button>${n.pacote ? `<span class="selo">Em uso: ${esc(n.pacote)}</span>` : ''}<span class="ajuda" style="color:var(--mudo);font-size:12.5px">Substitui o modelo da mensagem e os horários atuais. Dá para ajustar tudo depois.</span></div></section>
+    <section class="cartao secao-form pacote" data-aba="curadoria"><h2>✨ Pacotes prontos</h2>
+      <p>Cada pacote configura a curadoria, as coleções da semana, o modelo da mensagem, o rodapé e os horários automáticos de uma vez. Dá para ajustar tudo depois. Escolha o que tem a cara do seu grupo.</p>
+      <div class="pacotes">${pacotes.map((p) => { const emUso = n.pacote === p.nome; const rg = p.regras; return `<article class="pacote-card ${emUso ? 'em-uso' : ''}">
+        <div class="pc-topo"><span class="pc-emoji">${p.emoji}</span><div><div class="tit">${esc(p.nome)}</div>${emUso ? '<span class="selo">Em uso</span>' : ''}</div></div>
+        <p class="pc-desc">${esc(p.descricao)}</p>
+        <div class="pc-chips">${[rg.precoMax ? `até ${reais(rg.precoMax)}` : 'qualquer preço', rg.notaMin ? `nota ${String(rg.notaMin).replace('.', ',')}+` : '', rg.vendasMin ? `${num(rg.vendasMin)}+ vendas` : '', `${p.horarios.split(',').length} horários`, p.modelo].filter(Boolean).map((x) => `<span>${esc(x)}</span>`).join('')}</div>
+        <button class="botao ${emUso ? 'sec' : ''} peq" type="button" data-pacote="${esc(p.id)}" data-pacote-nome="${esc(p.nome)}">${emUso ? 'Aplicar de novo' : 'Aplicar'}</button>
+      </article>`; }).join('')}</div>
+      <p class="ajuda" style="margin-top:10px">Aplicar substitui a curadoria, as coleções, o modelo da mensagem e os horários atuais. Tem vários grupos de temas diferentes? Use o pacote mais geral aqui e o <b>Tema</b> de cada grupo em Grupos de envio.</p></section>
     <form id="form-nicho">
     <section class="cartao secao-form" data-aba="curadoria"><h2>Curadoria</h2><p>Vale para as ofertas capturadas dos grupos monitorados. As que não passam ficam de fora sem você precisar olhar uma por uma.</p>
       <div class="campo"><label>Categorias aceitas (nenhuma marcada = todas)</label><div class="chips" id="cats">${d.categorias.map((c) => `<button type="button" class="chip ${r.categorias.includes(c.id) ? 'ativo' : ''}" data-ncat="${c.id}">${c.emoji} ${esc(c.nome)}</button>`).join('')}</div></div>
@@ -1697,7 +1710,10 @@ async function telaNicho() {
   };
   C().querySelectorAll('[data-aba-n]').forEach((b) => (b.onclick = () => mostrarAba(b.dataset.abaN)));
   mostrarAba(E.abaNicho);
-  $('#aplicar-pacote').onclick = tentar(async () => { await api('nicho/achadinhos', { method: 'POST' }); aviso('Pacote de achadinhos aplicado'); telaNicho(); });
+  C().querySelectorAll('[data-pacote]').forEach((b) => (b.onclick = tentar(async () => {
+    if (!confirm(`Aplicar o pacote "${b.dataset.pacoteNome}"? A curadoria, as coleções, o modelo da mensagem e os horários atuais serão trocados.`)) return;
+    await api('nicho/pacote', { method: 'POST', body: { id: b.dataset.pacote } }); aviso(`Pacote "${b.dataset.pacoteNome}" aplicado`); telaNicho();
+  })));
   const reaisC = (v) => { const x = Number(String(v).replace(/\./g, '').replace(',', '.')); return Number.isFinite(x) && x > 0 ? Math.round(x * 100) : 0; };
   $('#form-nicho').onsubmit = tentar(async (e) => {
     e.preventDefault();

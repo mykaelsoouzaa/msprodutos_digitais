@@ -7,7 +7,7 @@ import { type DB, contaPorEmail } from './db.ts';
 import { conferirAcessoPortal, usarAcesso, assinarSessao, lerSessao, type Sessao } from './portal.ts';
 import { PLANOS } from './planos.ts';
 import * as x from './extras.ts';
-import { CATEGORIAS, ID_CATEGORIAS, MODELOS, PACOTE_ACHADINHOS, RODAPE_PADRAO, classificar, limparNicho, motivoRecusa } from './nicho.ts';
+import { CATEGORIAS, ID_CATEGORIAS, MODELOS, PACOTES, PACOTE_ACHADINHOS, RODAPE_PADRAO, classificar, limparNicho, motivoRecusa } from './nicho.ts';
 import { EMAIL_DEMO } from './demo.ts';
 import { montarMensagem, expandirVariacoes, temVariacoes } from './mensagem.ts';
 import * as s from './servico.ts';
@@ -612,14 +612,19 @@ export function criarServidor(app: App) {
           db.prepare('UPDATE config_conta SET modelo_mensagem = ? WHERE conta_id = ?').run(m.texto, conta);
           return r({ ok: true });
         }
-        case 'POST /api/nicho/achadinhos': {
-          // Pacote pronto: regras, coleções, rodapé, modelo de mensagem e horários de um grupo de achadinhos.
+        case 'GET /api/nicho/pacotes': return r(PACOTES.map((p) => ({ id: p.id, nome: p.nome, emoji: p.emoji, descricao: p.descricao, horarios: p.horarios, regras: p.nicho.regras, modelo: MODELOS.find((m) => m.texto === p.modelo)?.nome ?? '' })));
+        case 'POST /api/nicho/achadinhos':
+        case 'POST /api/nicho/pacote': {
+          // Pacote pronto: regras, coleções, rodapé, modelo de mensagem e horários.
+          const b = caminho.endsWith('/achadinhos') ? { id: 'achadinhos' } : await lerJson(req);
+          const p = PACOTES.find((x) => x.id === String(b.id ?? ''));
+          if (!p) throw new s.ErroUso('Pacote não encontrado', 404);
           db.prepare('UPDATE config_conta SET nicho = ?, modelo_mensagem = ?, horarios_auto = ? WHERE conta_id = ?')
-            .run(JSON.stringify(PACOTE_ACHADINHOS.nicho), PACOTE_ACHADINHOS.modelo, PACOTE_ACHADINHOS.horarios, conta);
+            .run(JSON.stringify(p.nicho), p.modelo, p.horarios, conta);
           // Ofertas antigas sem categoria ganham uma agora.
           for (const o of db.prepare("SELECT id, titulo FROM ofertas WHERE conta_id = ? AND categoria = ''").all(conta) as any[])
             db.prepare('UPDATE ofertas SET categoria = ? WHERE id = ?').run(classificar(o.titulo), o.id);
-          return r({ nicho: PACOTE_ACHADINHOS.nicho });
+          return r({ nicho: p.nicho });
         }
         case 'POST /api/nicho/testar': {
           // Diz se uma oferta passaria nas regras, sem salvar nada.
