@@ -49,3 +49,26 @@ test('foto da página: og:image:secure_url, twitter:image e endereço sem https'
   assert.equal(lerPagina('<meta name="twitter:image" content="//http2.mlstatic.com/a.jpg">').imagem, 'https://http2.mlstatic.com/a.jpg');
   assert.equal(lerPagina('<meta property="og:image:secure_url" content="https://x/b.jpg"><meta property="og:image" content="http://x/b.jpg">').imagem, 'https://x/b.jpg');
 });
+
+test('6.10: grupo monitorado não entra em membros nem no resumo do WhatsApp', async () => {
+  const db = abrirBanco(':memory:');
+  const ctx = { db, wpp: new WhatsAppSimulado(), f: (async () => new Response('')) as any, urlPublica: 'https://o.teste' };
+  const conta = contaPorEmail(db, 'a@b.com', 'A').id;
+  const inst = await s.novaInstancia(ctx, conta, 'Principal');
+  await s.atualizarEstado(ctx, conta, inst);
+  const g = db.prepare('SELECT id, jid FROM grupos WHERE conta_id = ? ORDER BY id').all(conta) as any[];
+  db.prepare("UPDATE contas SET plano = 'pro' WHERE id = ?").run(conta);
+  s.alternarGrupo(db, conta, g[0].id, 'enviar', true);
+  s.alternarGrupo(db, conta, g[1].id, 'monitorar', true);
+  const i = db.prepare('SELECT chave, token_webhook FROM instancias').get() as any;
+  const ev = (jid: string, n: number, action: string) => s.eventoWhatsApp(ctx, i.chave, i.token_webhook, { event: 'group-participants.update', data: { id: jid, participants: Array(n).fill('x'), action } });
+  await ev(g[0].jid, 2, 'add');
+  await ev(g[1].jid, 300, 'add');
+  await ev(g[1].jid, 200, 'remove');
+  const m = s.membros(ctx, conta, '7d');
+  assert.equal(m.entradas, 2);
+  assert.equal(m.saidas, 0);
+  assert.equal(m.grupos, 1);
+  assert.ok(m.churnDiario <= 100);
+  assert.match(s.textoResumo(ctx, conta), /\+2 \/ −0 membros nos seus grupos/);
+});

@@ -243,8 +243,9 @@ export function textoResumoSemana(c: Ctx, conta: number): string {
   const env = n(db, "SELECT COUNT(*) AS n FROM envios WHERE conta_id = ? AND status = 'enviado' AND enviado_em >= ? AND enviado_em < ?", conta, de, ate);
   const cli = n(db, 'SELECT COUNT(*) AS n FROM cliques WHERE conta_id = ? AND em >= ? AND em < ?', conta, de, ate);
   const com = n(db, "SELECT COALESCE(SUM(comissao_centavos),0) AS n FROM comissoes WHERE conta_id = ? AND status <> 'cancelado' AND em >= ? AND em < ?", conta, de, ate);
-  const ent = n(db, "SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'entrou' AND em >= ? AND em < ?", conta, de, ate);
-  const sai = n(db, "SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'saiu' AND em >= ? AND em < ?", conta, de, ate);
+  const SO = 'grupo_id NOT IN (SELECT id FROM grupos WHERE monitorar = 1 UNION SELECT origem_grupo_id FROM espelhos)';
+  const ent = n(db, `SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'entrou' AND em >= ? AND em < ? AND ${SO}`, conta, de, ate);
+  const sai = n(db, `SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'saiu' AND em >= ? AND em < ? AND ${SO}`, conta, de, ate);
   const top = db.prepare(`SELECT o.titulo, COUNT(k.id) AS n FROM cliques k JOIN links l ON l.codigo = k.codigo JOIN ofertas o ON o.id = l.oferta_id
     WHERE k.conta_id = ? AND k.em >= ? AND k.em < ? GROUP BY o.id ORDER BY n DESC LIMIT 3`).all(conta, de, ate) as any[];
   const h = melhoresHorarios(c, conta).sugestao;

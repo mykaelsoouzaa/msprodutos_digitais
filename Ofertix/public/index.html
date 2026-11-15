@@ -109,6 +109,19 @@ h1,h2,h3{font-family:var(--fonte-titulo);letter-spacing:-.01em;margin:0}
 .linha .tit{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .linha .det{color:var(--mudo);font-size:12.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px}
 .loja{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.02em}
+.item .cont.alerta{background:var(--vermelho-suave);color:var(--vermelho)}.item .cont.bom{background:var(--verde-suave);color:var(--verde)}
+.envios-hoje{margin:16px 0}.eh-linha{display:grid;grid-template-columns:minmax(160px,260px) 1fr;gap:14px;align-items:center;margin-top:10px}
+.eh-nome{display:flex;flex-direction:column;font-size:13px}.eh-nome span{color:var(--mudo);font-size:12.5px}
+.meta-barra.quase i{background:var(--amarelo)}.meta-barra.cheia i{background:var(--vermelho)}
+.alerta button.icone-btn{margin-left:4px}.alerta a{text-decoration:none;color:inherit;white-space:nowrap}
+.barra-filtros{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.busca-ag{min-width:240px;flex:0 1 320px}.n-aba{display:inline-block;min-width:18px;padding:0 6px;border-radius:9px;background:var(--surface-2);color:var(--texto-2);font-size:11px;font-weight:700;margin-left:4px}
+.chip.ativo .n-aba{background:rgba(255,255,255,.25);color:inherit}.n-aba.ruim{background:var(--vermelho-suave);color:var(--vermelho)}
+.tag-origem.sem-foto{background:var(--amarelo-suave);color:var(--amarelo)}
+.lotacao{display:inline-flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:90px}
+.lotacao i{display:block;width:90px;height:5px;border-radius:3px;background:linear-gradient(90deg,var(--verde) var(--p),var(--surface-2) var(--p))}
+.lotacao i.quase{background:linear-gradient(90deg,var(--amarelo) var(--p),var(--surface-2) var(--p))}.lotacao i.cheia{background:linear-gradient(90deg,var(--vermelho) var(--p),var(--surface-2) var(--p))}
+@media (max-width:640px){.eh-linha{grid-template-columns:1fr}.busca-ag{flex:1 1 100%}}
 .campanhas{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:12px}
 .campanha{display:flex;gap:12px;border:1px solid var(--borda);border-radius:14px;padding:12px;background:var(--surface)}
 .camp-img{flex:none;width:64px;height:64px;border-radius:12px;background:var(--laranja-suave);color:var(--laranja);display:flex;align-items:center;justify-content:center;overflow:hidden}
@@ -458,7 +471,10 @@ function montarMenu() {
   let h = '';
   for (const [id, nome, grupo, icn] of TELAS) {
     if (grupo) h += `<div class="grupo-menu">${grupo}</div>`;
-    h += `<a class="item ${atual === id ? 'ativo' : ''}" href="#${id}">${ico(icn || id)}${nome}${id === 'agendamentos' && E.pendentes ? `<span class="cont">${E.pendentes}</span>` : ''}</a>`;
+    const cont = id === 'agendamentos' ? E.pendentes : id === 'automacao' ? E.cont?.espelhoBloqueadas : id === 'instagram' ? E.cont?.instagram : 0;
+    const tipoCont = id === 'automacao' ? ' alerta' : id === 'instagram' ? ' bom' : '';
+    const dicaCont = id === 'automacao' ? ' title="Mensagens bloqueadas hoje"' : id === 'instagram' ? ' title="Links enviados no direct hoje"' : '';
+    h += `<a class="item ${atual === id ? 'ativo' : ''}" href="#${id}">${ico(icn || id)}${nome}${cont ? `<span class="cont${tipoCont}"${dicaCont}>${cont}</span>` : ''}</a>`;
   }
   if (E.eu?.admin) h += `<div class="grupo-menu">MS Soluções</div><a class="item ${atual === 'admin' ? 'ativo' : ''}" href="#admin">${ico('admin')}Administração</a>`;
   $('#menu').innerHTML = h;
@@ -503,7 +519,7 @@ function graficoLinha(serie) {
   if (max - min < 10) { min -= 5; max += 5; }
   const folga = (max - min) * 0.15; min = Math.max(0, Math.floor(min - folga)); max = Math.ceil(max + folga);
   const x = (i) => m.l + (serie.length < 2 ? 0 : (i * (L - m.l - m.r)) / (serie.length - 1));
-  const y = (v) => m.t + (A - m.t - m.b) * (1 - (v - min) / (max - min));
+  const y = (v) => Math.min(A - m.b, Math.max(m.t, m.t + (A - m.t - m.b) * (1 - (v - min) / (max - min))));
   let g = '';
   for (let k = 0; k <= 4; k++) { const v = Math.round(min + ((max - min) * k) / 4); g += `<line x1="${m.l}" x2="${L - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grade)"/><text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end">${num(v)}</text>`; }
   const pts = serie.map((s, i) => `${x(i)},${y(s.total)}`).join(' ');
@@ -518,7 +534,7 @@ function graficoLinha(serie) {
   const ult = serie[serie.length - 1];
   g += `<circle cx="${x(serie.length - 1)}" cy="${y(ult.total)}" r="4" fill="var(--serie-a)" stroke="var(--surface)" stroke-width="2"/>`;
   g += `<circle class="marcador" r="5" fill="var(--serie-a)" stroke="var(--surface)" stroke-width="2" style="display:none"/>`;
-  return `<div class="grafico"><svg viewBox="0 0 ${L} ${A}" role="img" aria-label="Total de participantes por dia">${g}</svg><div class="dica"></div></div>`;
+  return `<div class="grafico"><svg viewBox="0 0 ${L} ${A}" role="img" aria-label="Total de participantes por dia" style="overflow:hidden">${g}</svg><div class="dica"></div></div>`;
 }
 
 /** Entradas para cima, saídas para baixo da linha zero. */
@@ -567,8 +583,8 @@ function ligarDicas(raiz) {
 const C = () => $('#conteudo');
 
 async function telaVisao() {
-  const [v, av, pp, res, hor, datas] = await Promise.all([api('visao?periodo=' + E.periodo), api('avisos').catch(() => []), api('primeiros-passos').catch(() => null),
-    api('resultados?periodo=' + E.periodo).catch(() => null), api('horarios').catch(() => null), api('datas').catch(() => [])]);
+  const [v, av, pp, res, hor, datas, cont] = await Promise.all([api('visao?periodo=' + E.periodo), api('avisos').catch(() => []), api('primeiros-passos').catch(() => null),
+    api('resultados?periodo=' + E.periodo).catch(() => null), api('horarios').catch(() => null), api('datas').catch(() => []), atualizarContadores(true)]);
   E.pendentes = v.pendentes; montarMenu();
   const maxO = Math.max(1, ...v.topOfertas.map((x) => x.cliques)), maxG = Math.max(1, ...v.topGrupos.map((x) => x.cliques));
   const porEnvio = (c, e) => (e ? (c / e).toFixed(1).replace('.', ',') + ' por envio' : '');
@@ -586,6 +602,7 @@ async function telaVisao() {
       ${kpi('ima', num(v.capturadas), 'Ofertas capturadas', 'l')}
       ${kpi('comissoes', reaisCurto(v.comissao), 'Comissão no período')}
     </div>
+    ${barraEnvios(cont?.numeros)}
     <div class="grade-2">
       <section class="cartao bloco"><h2>Envio de mensagens</h2><p class="sub">Mensagens enviadas por dia para ${v.gruposEnvio} grupo(s) de envio${v.erros ? ` · <span style="color:var(--vermelho)">${v.erros} com erro</span>` : ''}</p>
         ${v.serie.length > 1 ? graficoBarras(v.serie, 'enviados', 'mensagens enviadas') : `<div class="kpi"><div class="valor">${num(v.enviados)}</div><div class="rot">mensagens ${rotPer}</div></div>`}
@@ -634,6 +651,7 @@ async function telaVisao() {
         return `<div class="calor" role="img" aria-label="Mapa de cliques por dia e hora"><span class="rt"></span>${Array.from({ length: 24 }, (_, h) => `<span class="rt" style="justify-content:center">${h % 3 === 0 ? h : ''}</span>`).join('')}
           ${hor.grade.map((l, d) => `<span class="rt">${dias[d]}</span>${l.map((t, h) => `<span title="${dias[d]} ${h}h: ${String(t).replace('.', ',')} cliques por mensagem" style="background:${t ? `color-mix(in srgb,var(--verde) ${Math.round(15 + (t / max) * 85)}%,transparent)` : 'var(--surface-2)'}"></span>`).join('')}`).join('')}</div>`; })()
         : '<div class="vazio">O mapa aparece depois dos primeiros envios com contagem de cliques.</div>'}</section>` : ''}`;
+  ligarDispensar();
   if ($('#usar-horarios')) $('#usar-horarios').onclick = tentar(async () => { const r = await api('horarios/usar', { method: 'POST', body: { horarios: $('#usar-horarios').dataset.h.split(',') } }); aviso('Horários automáticos: ' + r.horarios.join(', ')); });
   if ($('#editar-meta')) $('#editar-meta').onclick = tentar(async () => {
     const atual = res.meta.valor ? (res.meta.valor / 100).toFixed(2).replace('.', ',') : '';
@@ -644,9 +662,18 @@ async function telaVisao() {
   ligarDicas(C());
 }
 
+// Aviso dispensado some por 24 horas neste navegador (a chave é o texto sem os números, que mudam).
+const chaveAviso = (t) => String(t).replace(/\d+/g, '#').slice(0, 120);
+function lerDispensados() { try { return JSON.parse(localStorage.getItem('ofx-avisos') || '{}'); } catch { return {}; } }
+function dispensarAviso(t) { try { const d = lerDispensados(); d[chaveAviso(t)] = Date.now(); localStorage.setItem('ofx-avisos', JSON.stringify(d)); } catch { /* sem armazenamento */ } }
 function avisosHtml(lista) {
-  if (!lista?.length) return '';
-  return `<div class="avisos">${lista.map((a) => `<a class="alerta ${esc(a.nivel)}" href="${esc(a.link)}">${ico('alerta', 17)}<span>${esc(a.texto)}</span><b>Resolver →</b></a>`).join('')}</div>`;
+  const d = lerDispensados();
+  const vis = (lista ?? []).filter((a) => !(d[chaveAviso(a.texto)] > Date.now() - 86_400_000));
+  if (!vis.length) return '';
+  return `<div class="avisos">${vis.map((a) => `<div class="alerta ${esc(a.nivel)}">${ico('alerta', 17)}<span>${esc(a.texto)}</span><a href="${esc(a.link)}"><b>Resolver →</b></a><button class="icone-btn peq" data-dispensar="${esc(a.texto)}" title="Dispensar por 24 horas" aria-label="Dispensar aviso">${ico('x', 14)}</button></div>`).join('')}</div>`;
+}
+function ligarDispensar(refazer) {
+  C().querySelectorAll('[data-dispensar]').forEach((b) => (b.onclick = () => { dispensarAviso(b.dataset.dispensar); b.closest('.alerta')?.remove(); }));
 }
 
 const CATS = [['', 'Todas as categorias'], ['casa', '🏠 Casa'], ['cozinha', '🍳 Cozinha'], ['organizacao', '🗂️ Organização'], ['beleza', '💄 Beleza'], ['moda', '👗 Moda'], ['infantil', '🧸 Infantil'], ['eletronicos', '🎧 Eletrônicos'], ['outros', '🛍️ Outros']];
@@ -881,20 +908,25 @@ async function abrirEdicao(o) {
 }
 
 async function telaAgendamentos() {
-  const lista = await api('agendamentos' + (E.filtroStatus ? '?status=' + E.filtroStatus : ''));
-  E.pendentes = lista.filter((a) => a.status === 'pendente' || a.status === 'enviando').length; montarMenu();
+  const [todos, cont] = await Promise.all([api('agendamentos' + (E.filtroStatus ? '?status=' + E.filtroStatus : '')), atualizarContadores(true)]);
+  const termo = (E.buscaAg || '').toLowerCase().trim();
+  const lista = termo ? todos.filter((a) => `${a.titulo || ''} ${a.texto || ''}`.toLowerCase().includes(termo)) : todos;
+  const nAba = (v) => { const c = cont?.agendamentos || {}; return v === 'pendente' ? (c.pendente || 0) + (c.enviando || 0) : c[v] || 0; };
   const enviando = lista.filter((a) => a.status === 'enviando');
   C().innerHTML = cabeca('agenda', 'Agendamentos', 'Fila de publicações. Cada oferta vai para os grupos com um intervalo aleatório entre um e outro.',
     `<a class="botao sec" href="${window.OFERTIX_MOCK ? '#agendamentos' : '/api/exportar/envios.csv?periodo=30d'}" data-csv>${ico('baixar', 16)}Envios dos últimos 30 dias (CSV)</a>`) + `
-    <div class="chips" style="margin-bottom:14px">${[['', 'Próximos e recentes'], ['pendente', 'Pendentes'], ['enviado', 'Enviados'], ['erro', 'Com erro'], ['cancelado', 'Cancelados']].map(([v, n]) => `<button class="chip ${E.filtroStatus === v ? 'ativo' : ''}" data-status="${v}">${n}</button>`).join('')}</div>
+    <div class="barra-filtros"><div class="chips">${[['', 'Próximos e recentes'], ['pendente', 'Pendentes'], ['enviado', 'Enviados'], ['erro', 'Com erro'], ['cancelado', 'Cancelados']].map(([v, n]) => `<button class="chip ${E.filtroStatus === v ? 'ativo' : ''}" data-status="${v}">${n}${v && nAba(v) ? ` <small class="n-aba ${v === 'erro' ? 'ruim' : ''}">${num(nAba(v))}</small>` : ''}</button>`).join('')}</div>
+      <div class="campo busca-ag"><input id="busca-ag" type="search" placeholder="Buscar pelo produto ou texto" value="${esc(E.buscaAg || '')}" aria-label="Buscar agendamentos"></div></div>
     <section class="cartao bloco">${lista.length ? `<div class="linhas">${lista.map((a) => {
       const grupos = a.grupos === '"todos"' ? 'todos os grupos de envio' : `${JSON.parse(a.grupos).length} grupo(s)`;
       return `<div class="linha"><div class="miniatura">${foto(a.foto || a.imagem)}</div>
         <div class="meio"><div class="tit">${esc(a.titulo || a.texto.split('\n')[0].replace(/[*~_]/g, ''))}</div>
-          <div class="det">${a.plataforma ? loja(a.plataforma) : ''}${a.origem && a.origem !== 'manual' ? `<span class="tag-origem">${esc({ vitrine: 'vitrine', lote: 'lote', captura: 'capturada', enquete: 'enquete', lista: 'lista do dia', repetido: 'enviado de novo', recorrente: 'recorrente', 'boas-vindas': 'boas-vindas', espelho: 'espelhada' }[a.origem] || a.origem)}</span>` : ''}<span>${grupos}</span><span>· ${quandoTxt(a.quando)}</span>${a.total ? `<span>· ${a.enviados}/${a.total} enviados${a.erros ? `, ${a.erros} erro(s)` : ''}</span>` : ''}${a.pulados ? `<span>· ${a.pulados} grupo(s) pulado(s) por repetição</span>` : ''}${a.cliques ? `<span>· ${ico('clique', 12)} ${num(a.cliques)} cliques</span>` : ''}</div>
+          <div class="det">${a.plataforma ? loja(a.plataforma) : ''}${a.origem && a.origem !== 'manual' ? `<span class="tag-origem">${esc({ vitrine: 'vitrine', lote: 'lote', captura: 'capturada', enquete: 'enquete', lista: 'lista do dia', repetido: 'enviado de novo', recorrente: 'recorrente', 'boas-vindas': 'boas-vindas', espelho: 'espelhada' }[a.origem] || a.origem)}</span>` : ''}${a.origem === 'espelho' && !a.imagem && !a.foto ? '<span class="tag-origem sem-foto" title="A cópia saiu sem foto: veja o motivo em Automação → Últimas mensagens">sem foto</span>' : ''}<span>${grupos}</span><span>· ${quandoTxt(a.quando)}</span>${a.total ? `<span>· ${a.enviados}/${a.total} enviados${a.erros ? `, ${a.erros} erro(s)` : ''}</span>` : ''}${a.pulados ? `<span>· ${a.pulados} grupo(s) pulado(s) por repetição</span>` : ''}${a.cliques ? `<span>· ${ico('clique', 12)} ${num(a.cliques)} cliques</span>` : ''}</div>
           ${a.obs ? `<div class="motivo">${esc(a.obs)}</div>` : ''}</div>
         ${status(a.status)}${a.status === 'pendente' || a.status === 'enviando' ? `<button class="botao sec peq" data-cancelar="${a.id}">Cancelar</button>` : `<button class="botao sec peq" data-repetir="${a.id}" title="Enviar de novo">${ico('repetir', 14)}<span class="so-largo">De novo</span></button>`}</div>`;
     }).join('')}</div>` : `<div class="vazio">${ico('agenda', 34)}<h3>Nada por aqui</h3><a href="#ofertas">Gere uma oferta</a> e envie ou agende para seus grupos.</div>`}</section>`;
+  const ba = $('#busca-ag');
+  ba.oninput = () => { clearTimeout(E.tBusca); E.tBusca = setTimeout(() => { E.buscaAg = ba.value; telaAgendamentos().then(() => { const n = $('#busca-ag'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }); }, 300); };
   clearTimeout(E.timerAg);
   if (enviando.length && location.hash === '#agendamentos') E.timerAg = setTimeout(() => location.hash === '#agendamentos' && telaAgendamentos().catch(() => {}), 8000);
 }
@@ -918,6 +950,9 @@ function enviarDeNovo(id) {
   });
 }
 
+/** Participantes com a barra de lotação do grupo (o WhatsApp aceita até 1.024 pessoas). */
+const lotacao = (p) => { const pct = Math.min(100, Math.round((p / 1024) * 100)); return `<div class="lotacao" title="${pct}% da lotação (máximo 1.024)"><span>${num(p)}</span><i class="${pct >= 95 ? 'cheia' : pct >= 80 ? 'quase' : ''}" style="--p:${pct}%"></i></div>`; };
+
 async function telaGrupos() {
   const g = await api('grupos');
   const env = g.lista.filter((x) => x.enviar).length, mon = g.lista.filter((x) => x.monitorar).length;
@@ -930,7 +965,7 @@ async function telaGrupos() {
       ${kpi('pessoas', num(g.lista.filter((x) => x.enviar).reduce((s, x) => s + x.participantes, 0)), 'Pessoas alcançadas')}
     </div>
     <section class="cartao">${g.lista.length ? `<div class="rolagem"><table class="tabela"><thead><tr><th>Nome do grupo</th><th>Número</th><th class="num">Participantes</th><th>Enviar ofertas</th><th>Recebe</th><th>Capturar ofertas</th></tr></thead><tbody>
-      ${g.lista.map((x) => { const monit = !x.enviar && (x.monitorar || x.espelho); return `<tr class="${monit ? 'monit' : ''}"><td style="font-weight:500">${esc(x.nome)}${monit ? ` <span class="tag-monit">${x.espelho ? 'monitoramento · espelho' : 'monitoramento'}</span>` : ''}</td><td style="color:var(--mudo)">${esc(x.numero_nome)}</td><td class="num">${num(x.participantes)}</td>
+      ${g.lista.map((x) => { const monit = !x.enviar && (x.monitorar || x.espelho); return `<tr class="${monit ? 'monit' : ''}"><td style="font-weight:500">${esc(x.nome)}${monit ? ` <span class="tag-monit">${x.espelho ? 'monitoramento · espelho' : 'monitoramento'}</span>` : ''}</td><td style="color:var(--mudo)">${esc(x.numero_nome)}</td><td class="num">${x.enviar ? lotacao(x.participantes) : num(x.participantes)}</td>
         <td><label class="inter" ${monit ? 'title="Grupo de monitoramento: desligue o monitoramento para enviar"' : ''}><input type="checkbox" data-grupo="${x.id}" data-campo="enviar" ${x.enviar ? 'checked' : ''} ${monit ? 'disabled' : ''} aria-label="Enviar ofertas em ${esc(x.nome)}"><span></span></label></td>
         <td>${x.enviar ? `<span class="tema-grupo"><small>${esc(nomeTema(x) || 'Todas as ofertas')}</small><button class="botao sec peq" data-tema="${x.id}">${ico('editar', 13)}Tema</button></span>` : '<small style="color:var(--mudo)">—</small>'}</td>
         <td><label class="inter"><input type="checkbox" data-grupo="${x.id}" data-campo="monitorar" ${x.monitorar ? 'checked' : ''} ${g.limites.captura && !x.enviar ? '' : 'disabled'} aria-label="Capturar ofertas de ${esc(x.nome)}"><span></span></label></td></tr>`; }).join('')}
@@ -954,9 +989,9 @@ async function telaGrupos() {
 
 async function telaMembros() {
   const [m, g, cans] = await Promise.all([api(`membros?periodo=${E.periodo}${E.grupoMembros ? '&grupo=' + E.grupoMembros : ''}`), api('grupos'), api('cansados?periodo=' + E.periodo).catch(() => [])]);
-  const opcoes = g.lista.filter((x) => x.enviar || x.monitorar);
+  const opcoes = g.lista.filter((x) => x.enviar);
   const ent = m.serie.reduce((s, d) => s + d.entrou, 0), sai = m.serie.reduce((s, d) => s + d.saiu, 0);
-  C().innerHTML = cabeca('membros', 'Monitoramento de membros', 'Acompanhe o crescimento e a saída de pessoas dos seus grupos.',
+  C().innerHTML = cabeca('membros', 'Membros', 'Crescimento e saída de pessoas dos seus grupos de envio. Grupos monitorados (de outras pessoas) não entram nestes números.',
     `<div class="campo" style="min-width:200px"><select id="grupo-membros" aria-label="Grupo"><option value="">Todos os grupos</option>${opcoes.map((x) => `<option value="${x.id}" ${String(x.id) === E.grupoMembros ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}</select></div>`) + `
     <div style="margin-bottom:14px">${chipsPeriodo(['7d', '30d', 'mes', 'mes-anterior'])}</div>
     <div class="kpis">
@@ -969,8 +1004,8 @@ async function telaMembros() {
       <section class="cartao bloco"><h2>Evolução de membros</h2><p class="sub">Total de participantes no fim de cada dia</p>${m.serie.length > 1 ? graficoLinha(m.serie) : '<div class="vazio">Escolha um período maior</div>'}</section>
       <section class="cartao bloco"><h2>Entradas e saídas</h2><p class="sub">${num(ent)} entraram · ${num(sai)} saíram no período</p>${m.serie.length > 1 ? graficoEntradasSaidas(m.serie) : ''}</section>
     </div>
-    <section class="cartao" style="margin-top:16px"><div class="rolagem"><table class="tabela"><thead><tr><th>Grupo</th><th class="num">Participantes</th></tr></thead><tbody>
-      ${m.lista.map((x) => `<tr><td>${esc(x.nome)}</td><td class="num">${num(x.participantes)}</td></tr>`).join('') || '<tr><td colspan="2" class="vazio">Nenhum grupo com envio ou captura ligado.</td></tr>'}
+    <section class="cartao" style="margin-top:16px"><div class="rolagem"><table class="tabela"><thead><tr><th>Grupo</th><th class="num">Entraram</th><th class="num">Saíram</th><th class="num">Saldo</th><th class="num">Participantes</th></tr></thead><tbody>
+      ${m.lista.map((x) => { const sd = (x.entrou || 0) - (x.saiu || 0); return `<tr><td>${esc(x.nome)}</td><td class="num" style="color:var(--verde)">+${num(x.entrou || 0)}</td><td class="num" style="color:var(--laranja)">−${num(x.saiu || 0)}</td><td class="num" style="font-weight:600">${sd >= 0 ? '+' : '−'}${num(Math.abs(sd))}</td><td class="num">${lotacao(x.participantes)}</td></tr>`; }).join('') || '<tr><td colspan="5" class="vazio">Nenhum grupo de envio ligado.</td></tr>'}
     </tbody></table></div></section>
     <section class="cartao bloco" style="margin-top:16px"><h2>Grupos cansados</h2><p class="sub">Saídas a cada 100 mensagens enviadas no período. Acima de 2, o grupo pode estar recebendo ofertas demais; acima de 4, vale reduzir.</p>
       <div class="rolagem"><table class="tabela"><thead><tr><th>Grupo</th><th class="num">Mensagens</th><th class="num">Saídas</th><th class="num">Saídas por 100</th><th>Situação</th></tr></thead><tbody>
@@ -1339,7 +1374,7 @@ async function telaAutomaticas() {
 // ------------------------------------------------------------------ Automação: espelhamento de grupos (v10)
 const DESTINOS = { tema: 'Todos os grupos de envio, pelo tema de cada um', todos: 'Todos os grupos de envio, sem olhar o tema', grupos: 'Só os grupos que eu escolher' };
 async function telaAutomacao() {
-  const d = await api('automacao');
+  const [d] = await Promise.all([api('automacao'), atualizarContadores(true)]);
   const ed = E.editEsp ? d.lista.find((x) => x.id === E.editEsp) : null;
   const novo = E.novoEsp || !!ed;
   const envio = d.grupos.filter((g) => g.enviar);
@@ -1358,6 +1393,7 @@ async function telaAutomacao() {
       ${kpi('alerta', num(d.hoje.bloqueadas), 'Bloqueadas hoje (link sem troca)', 'l')}
       ${kpi('filtro', num(d.hoje.ignoradas), 'Ignoradas hoje (sem link, repetidas)')}
     </div>
+    ${barraEnvios(E.cont?.numeros)}
     ${novo ? `<form class="cartao secao-form" id="form-esp" style="margin-bottom:16px"><h2>${ed ? 'Editar espelhamento' : 'Novo espelhamento'}</h2>
       <p>O seu número precisa estar no grupo de origem. Ele só lê as mensagens; quem publica são os seus grupos de envio, com o intervalo e a janela de sempre. O limite do plano (${d.limite}) conta os grupos de origem copiados; os grupos para onde a cópia vai não entram na conta.</p>
       <div class="form-grade">
@@ -1819,8 +1855,23 @@ function escolherGrupos(temaId) {
 
 const ROTAS = { instagram: telaInstagram, plataformas: telaPlataformas, automacao: telaAutomacao, automaticas: telaAutomaticas, nicho: telaNicho, entradas: telaEntradas, visao: telaVisao, ofertas: telaOfertas, agendamentos: telaAgendamentos, grupos: telaGrupos, membros: telaMembros, comissoes: telaComissoes, cupons: telaCupons, whatsapp: telaWhatsapp, config: telaConfig, admin: telaAdmin };
 
+/** Números do menu (pendentes, bloqueadas, Instagram) e barra de envios de hoje; no máximo a cada 20 s. */
+async function atualizarContadores(forcar = false) {
+  if (!forcar && E.contEm && Date.now() - E.contEm < 20_000) return E.cont;
+  try { E.cont = await api('contadores'); E.contEm = Date.now(); E.pendentes = E.cont.pendentes; montarMenu(); } catch { /* sem contadores */ }
+  return E.cont;
+}
+/** Barra "Envios de hoje" por número: usados / limite (plano ou aquecimento). */
+function barraEnvios(numeros) {
+  if (!numeros?.length) return '';
+  return `<section class="cartao bloco envios-hoje"><div class="cab-reg"><div><h2>Envios de hoje</h2><p class="sub">Cada oferta gasta um envio por grupo. Quando a barra enche, o resto espera o dia seguinte.</p></div><a href="#whatsapp" style="font-size:13px">Números</a></div>
+    ${numeros.map((n) => { const pct = Math.min(100, Math.round((n.hoje / Math.max(1, n.limite)) * 100)); return `<div class="eh-linha"><div class="eh-nome"><b>${esc(n.nome)}</b><span>${num(n.hoje)} de ${num(n.limite)}${n.aquecendo ? ` · aquecimento, dia ${n.dia}` : ''}</span></div>
+      <div class="meta-barra ${pct >= 100 ? 'cheia' : pct >= 80 ? 'quase' : ''}"><i style="width:${pct}%"></i></div></div>`; }).join('')}</section>`;
+}
+
 async function navegar() {
   const tela = (location.hash.slice(1) || 'visao').split('/')[0];
+  atualizarContadores();
   if (E.telaAtual !== tela) { E.filtroStatus = ''; E.telaAtual = tela; }
   montarMenu();
   $('#lateral').classList.remove('aberta');

@@ -114,6 +114,19 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.10 (membros só dos seus grupos e 10 melhorias)
+
+- Grupo monitorado (ou origem de espelhamento) não entra mais em Membros, nos resumos diário e semanal do WhatsApp,
+  nem nos grupos cansados; entradas e saídas dele nem são gravadas. Saída diária (churn) calculada sobre a média de
+  participantes do período, no máximo 100%. Gráfico de membros sem passar da área.
+- Membros: tabela com entraram, saíram, saldo e lotação de cada grupo.
+- "Envios de hoje" por número (usados / limite do plano ou do aquecimento) na Visão geral e na Automação.
+- Avisos da Visão geral com "Dispensar" (some por 24 horas neste navegador).
+- Menu com números: Automação (mensagens bloqueadas hoje) e Instagram (links enviados hoje).
+- Agendamentos: quantidade em cada aba, busca pelo produto ou texto, selo "sem foto" na cópia que saiu sem foto.
+- Grupos de envio: barra de lotação (até 1.024 pessoas).
+- Resumo diário: total de participantes dos seus grupos, espelhamento do dia e links do Instagram.
+
 ## Atualizar para a 6.9 (layout e funções)
 
 - **Nicho e curadoria** em abas (Curadoria, Rotina da semana, Mensagens) com um resumo do que entra nos grupos no topo.

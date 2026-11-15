@@ -485,11 +485,12 @@ export async function eventoWhatsApp(c: Ctx, chave: string, token: string, ev: a
 
   if (tipo === 'group.participants.update') {
     const d = ev?.data ?? {};
-    const g = c.db.prepare('SELECT id FROM grupos WHERE instancia_id = ? AND jid = ?').get(i.id, String(d.id ?? '')) as any;
+    const g = c.db.prepare('SELECT id, monitorar, (SELECT 1 FROM espelhos WHERE origem_grupo_id = grupos.id) AS espelho FROM grupos WHERE instancia_id = ? AND jid = ?').get(i.id, String(d.id ?? '')) as any;
     const qtd = Array.isArray(d.participants) ? d.participants.length : 1;
     const acao = String(d.action ?? '');
     if (g && (acao === 'add' || acao === 'remove')) {
-      c.db.prepare('INSERT INTO membros_eventos (conta_id, grupo_id, tipo, qtd, em) VALUES (?, ?, ?, ?, ?)').run(i.conta_id, g.id, acao === 'add' ? 'entrou' : 'saiu', qtd, t(c));
+      // Entradas e saídas só contam nos seus grupos; grupo monitorado (ou origem de espelhamento) é de outra pessoa.
+      if (!g.monitorar && !g.espelho) c.db.prepare('INSERT INTO membros_eventos (conta_id, grupo_id, tipo, qtd, em) VALUES (?, ?, ?, ?, ?)').run(i.conta_id, g.id, acao === 'add' ? 'entrou' : 'saiu', qtd, t(c));
       c.db.prepare('UPDATE grupos SET participantes = MAX(0, participantes + ?) WHERE id = ?').run(acao === 'add' ? qtd : -qtd, g.id);
       if (acao === 'add') anotarEntrada(c.db, g.id, qtd);
     }
@@ -633,12 +634,16 @@ export function porCategoria(db: DB, conta: number, de: number, ate: number) {
   }).filter((x) => x.envios || x.cliques).sort((a, b) => b.cliquesPorEnvio - a.cliquesPorEnvio || b.cliques - a.cliques);
 }
 
+/** Filtro SQL: eventos de membros só dos grupos de envio (o monitorado é de outra pessoa). */
+export const SO_ENVIO = 'grupo_id NOT IN (SELECT id FROM grupos WHERE monitorar = 1 UNION SELECT origem_grupo_id FROM espelhos)';
+
 export function membros(c: Ctx, conta: number, nomePeriodo: string, grupo?: number) {
   const { de, ate } = periodo(nomePeriodo, t(c));
   const filtro = grupo ? ' AND grupo_id = ?' : '';
   const args: any[] = grupo ? [conta, de, ate, grupo] : [conta, de, ate];
-  const ev = c.db.prepare(`SELECT tipo, qtd, em FROM membros_eventos WHERE conta_id = ? AND em >= ? AND em < ?${filtro}`).all(...args) as any[];
-  const grupos = c.db.prepare(`SELECT id, nome, participantes FROM grupos WHERE conta_id = ? AND (enviar = 1 OR monitorar = 1)${grupo ? ' AND id = ?' : ''} ORDER BY participantes DESC`).all(...(grupo ? [conta, grupo] : [conta])) as any[];
+  // Só os seus grupos de envio: grupo monitorado (de outra pessoa) não entra nas estatísticas.
+  const ev = c.db.prepare(`SELECT tipo, qtd, em, grupo_id FROM membros_eventos WHERE conta_id = ? AND em >= ? AND em < ?${filtro} AND ${SO_ENVIO}`).all(...args) as any[];
+  const grupos = c.db.prepare(`SELECT id, nome, participantes FROM grupos WHERE conta_id = ? AND enviar = 1${grupo ? ' AND id = ?' : ''} ORDER BY participantes DESC`).all(...(grupo ? [conta, grupo] : [conta])) as any[];
   const total = grupos.reduce((s, g) => s + g.participantes, 0);
   const dias = porDia(de, ate).map((x) => diaLocal(new Date(x + 'T12:00:00').getTime()));
   const entrou = (d: string) => ev.filter((e) => e.tipo === 'entrou' && diaLocal(e.em) === d).reduce((s, e) => s + e.qtd, 0);
@@ -646,12 +651,16 @@ export function membros(c: Ctx, conta: number, nomePeriodo: string, grupo?: numb
   const saldoTotal = ev.reduce((s, e) => s + (e.tipo === 'entrou' ? e.qtd : -e.qtd), 0);
   // Total de cada dia reconstruído de trás para frente a partir do total atual.
   let acumulado = total;
-  const serie = dias.slice().reverse().map((d) => { const r = { dia: d, total: acumulado, entrou: entrou(d), saiu: saiu(d) }; acumulado -= r.entrou - r.saiu; return r; }).reverse();
+  const serie = dias.slice().reverse().map((d) => { const r = { dia: d, total: Math.max(0, acumulado), entrou: entrou(d), saiu: saiu(d) }; acumulado -= r.entrou - r.saiu; return r; }).reverse();
   const saidas = ev.filter((e) => e.tipo === 'saiu').reduce((s, e) => s + e.qtd, 0);
+  const entradas = ev.filter((e) => e.tipo === 'entrou').reduce((s, e) => s + e.qtd, 0);
+  // Saída diária (churn): saídas por dia sobre a média de participantes no período, nunca acima de 100%.
+  const media = serie.length ? serie.reduce((s, x) => s + x.total, 0) / serie.length : total;
+  const porGrupo = (id: number, tipo: string) => ev.filter((e) => e.grupo_id === id && e.tipo === tipo).reduce((s, e) => s + e.qtd, 0);
   return {
-    grupos: grupos.length, total, saldoDiario: dias.length ? Math.round((saldoTotal / dias.length) * 10) / 10 : 0,
-    churnDiario: total ? Math.round((saidas / dias.length / total) * 1000) / 10 : 0,
-    serie, lista: grupos,
+    grupos: grupos.length, total, entradas, saidas, saldoDiario: dias.length ? Math.round((saldoTotal / dias.length) * 10) / 10 : 0,
+    churnDiario: media >= 1 ? Math.min(100, Math.round((saidas / dias.length / media) * 1000) / 10) : 0,
+    serie, lista: grupos.map((g) => ({ ...g, entrou: porGrupo(g.id, 'entrou'), saiu: porGrupo(g.id, 'saiu') })),
   };
 }
 
@@ -782,8 +791,12 @@ export function textoResumo(c: Ctx, conta: number): string {
   const cliques = n('SELECT COUNT(*) AS n FROM cliques WHERE conta_id = ? AND em >= ? AND em < ?', conta, de, ate);
   const capt = n("SELECT COUNT(*) AS n FROM ofertas WHERE conta_id = ? AND origem = 'captura' AND criado_em >= ? AND criado_em < ?", conta, de, ate);
   const com = n("SELECT COALESCE(SUM(comissao_centavos),0) AS n FROM comissoes WHERE conta_id = ? AND status <> 'cancelado' AND em >= ? AND em < ?", conta, de, ate);
-  const entrou = n("SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'entrou' AND em >= ? AND em < ?", conta, de, ate);
-  const saiu = n("SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'saiu' AND em >= ? AND em < ?", conta, de, ate);
+  const entrou = n(`SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'entrou' AND em >= ? AND em < ? AND ${SO_ENVIO}`, conta, de, ate);
+  const saiu = n(`SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'saiu' AND em >= ? AND em < ? AND ${SO_ENVIO}`, conta, de, ate);
+  const participantes = n('SELECT COALESCE(SUM(participantes),0) AS n FROM grupos WHERE conta_id = ? AND enviar = 1', conta);
+  const esp = db.prepare("SELECT status, COUNT(*) AS n FROM espelho_log WHERE conta_id = ? AND em >= ? AND em < ? GROUP BY status").all(conta, de, ate) as any[];
+  const espN = (st: string) => Number(esp.find((x) => x.status === st)?.n ?? 0);
+  const insta = n("SELECT COUNT(*) AS n FROM insta_log WHERE conta_id = ? AND status = 'enviada' AND em >= ? AND em < ?", conta, de, ate);
   const pend = n("SELECT COUNT(*) AS n FROM agendamentos WHERE conta_id = ? AND status = 'pendente'", conta);
   const vitrine = n('SELECT COUNT(*) AS n FROM ofertas WHERE conta_id = ? AND vitrine = 1 AND esgotada = 0', conta);
   const top = db.prepare(`SELECT o.titulo, COUNT(k.id) AS n FROM cliques k JOIN links l ON l.codigo = k.codigo JOIN ofertas o ON o.id = l.oferta_id
@@ -794,8 +807,10 @@ export function textoResumo(c: Ctx, conta: number): string {
     `👆 ${cliques} cliques${enviados ? ` (${(cliques / enviados).toFixed(1).replace('.', ',')} por mensagem)` : ''}`,
     `🧲 ${capt} ofertas capturadas`,
     `💰 ${reais(com) || 'R$ 0,00'} em comissões registradas`,
-    `👥 +${entrou} / −${saiu} membros`,
+    `👥 +${entrou} / −${saiu} membros nos seus grupos (${participantes} no total)`,
   ];
+  if (esp.length) linhas.push(`🪞 Espelhamento: ${espN('agendada')} copiada(s), ${espN('bloqueada')} bloqueada(s), ${espN('ignorada')} ignorada(s)`);
+  if (insta) linhas.push(`📸 Instagram: ${insta} link(s) enviado(s) no direct`);
   if (top) linhas.push('', `🏆 Mais clicada: ${top.titulo} (${top.n})`);
   linhas.push('', `🗓️ ${pend} agendamento(s) pendente(s) · 🛍️ ${vitrine} na vitrine`);
   const av = avisos(c, conta).filter((a) => a.nivel !== 'info');

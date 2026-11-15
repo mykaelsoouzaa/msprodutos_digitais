@@ -294,6 +294,18 @@ export function criarServidor(app: App) {
         }
         case 'GET /api/visao': return r(s.visaoGeral(ctx, conta, per));
         case 'GET /api/avisos': return r(s.avisos(ctx, conta));
+        case 'GET /api/contadores': {
+          // Números do menu e da barra de envios de hoje (6.10).
+          const ini = new Date(); ini.setHours(0, 0, 0, 0);
+          const um = (sql: string, ...a: any[]) => Number((db.prepare(sql).get(...a) as any)?.n ?? 0);
+          const porStatus = Object.fromEntries((db.prepare('SELECT status, COUNT(*) AS n FROM agendamentos WHERE conta_id = ? GROUP BY status').all(conta) as any[]).map((x) => [x.status, Number(x.n)]));
+          return r({
+            pendentes: (porStatus.pendente ?? 0) + (porStatus.enviando ?? 0), agendamentos: porStatus,
+            espelhoBloqueadas: um("SELECT COUNT(*) AS n FROM espelho_log WHERE conta_id = ? AND status = 'bloqueada' AND em >= ?", conta, ini.getTime()),
+            instagram: um("SELECT COUNT(*) AS n FROM insta_log WHERE conta_id = ? AND status = 'enviada' AND em >= ?", conta, ini.getTime()),
+            numeros: x.numerosComLimite(ctx, conta).filter((i: any) => i.status === 'conectado').map((i: any) => ({ nome: i.nome, hoje: i.hoje, limite: i.limite, aquecendo: i.aquecendo, dia: i.dia })),
+          });
+        }
         case 'GET /api/exportar/envios.csv':
         case 'GET /api/exportar/comissoes.csv': {
           const qual = caminho.includes('envios') ? 'envios' : 'comissoes';
