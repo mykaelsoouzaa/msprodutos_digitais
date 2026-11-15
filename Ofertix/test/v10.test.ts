@@ -281,3 +281,29 @@ test('prévia do espelhamento e rotas da página Automação', async () => {
     assert.equal((await fetch(base + '/m/' + cod)).status, 404);
   } finally { srv.close(); }
 });
+
+test('6.8.1: assinatura @ sai, foto pela miniatura quando o download falha, mensagem temporária, limite do dia e todos os links contam clique', async () => {
+  const e = ambiente();
+  const p = await preparar(e);
+  v10.salvarEspelho(e.db, e.conta, { origem: p.origem, destino: 'todos', curadoria: false });
+  // A foto da mensagem não baixa; a página do produto não tem foto; sobra a miniatura que veio junto.
+  (e.wpp as any).midia = async () => { throw new Error('timeout'); };
+  e.ctx.f = (async () => new Response('<meta property="og:title" content="Shampoo Wella 1L">', { status: 200 })) as any;
+  const txt = ['🧴 Shampoo Wella 1L por R$ 109', 'Cupom: https://produto.mercadolivre.com.br/MLB-111-cupom', 'Compre: https://produto.mercadolivre.com.br/MLB-222-shampoo', '', 'Time @achadinhos.imperdiveis', 'contato: ze@exemplo.com'].join('\n');
+  const ev = evento(p.jidOrigem, { ephemeralMessage: { message: { imageMessage: { caption: txt, mimetype: 'image/jpeg', jpegThumbnail: Buffer.from('mini').toString('base64') } } } });
+  assert.equal(await s.eventoWhatsApp(e.ctx, p.chave.chave, p.chave.token_webhook, ev), 1);
+  const ag = e.db.prepare("SELECT * FROM agendamentos WHERE origem = 'espelho' ORDER BY id DESC").get() as any;
+  assert.doesNotMatch(ag.texto, /achadinhos\.imperdiveis/, 'assinatura de outro perfil sai');
+  assert.match(ag.texto, /ze@exemplo\.com/, 'e-mail não é assinatura');
+  assert.match(ag.imagem, /^https:\/\/ofertix\.teste\/m\//, 'foto pela miniatura');
+  assert.match((v10.registroEspelhos(e.db, e.conta) as any[])[0].motivo, /com a miniatura da mensagem/);
+  await esvaziarFila(e);
+  const enviados = e.wpp.enviados.filter((m) => /Shampoo/.test(m.texto));
+  assert.equal(enviados.length, 3);
+  assert.equal((enviados[0].texto.match(/ofertix\.teste\/r\//g) ?? []).length, 2, 'os dois links contam clique');
+  // Limite do dia: com o limite do plano Pro (800 por dia) usado, a cópia nem entra na fila.
+  const inst = e.db.prepare('SELECT id FROM instancias').get() as any;
+  for (let i = 0; i < 800; i++) e.db.prepare("INSERT INTO envios (conta_id, agendamento_id, instancia_id, grupo_id, enviar_em, status, enviado_em) VALUES (?, ?, ?, ?, ?, 'enviado', ?)").run(e.conta, ag.id, inst.id, p.envio[0], e.ctx.agora!(), e.ctx.agora!());
+  assert.equal(await s.eventoWhatsApp(e.ctx, p.chave.chave, p.chave.token_webhook, evento(p.jidOrigem, { conversation: 'Outra https://produto.mercadolivre.com.br/MLB-333-x' })), 0);
+  assert.match((v10.registroEspelhos(e.db, e.conta) as any[])[0].motivo, /Limite de envios de hoje atingido/);
+});

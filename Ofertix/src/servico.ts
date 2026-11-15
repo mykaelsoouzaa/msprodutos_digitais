@@ -138,7 +138,7 @@ export function textoOferta(db: DB, conta: number, o: any): string {
 
 // ---------------- Agendamentos e fila ----------------
 
-export function agendar(c: Ctx, conta: number, a: { ofertaId?: number; texto: string; imagem?: string; quando?: number; grupos?: number[] | 'todos'; origem?: string }): number {
+export function agendar(c: Ctx, conta: number, a: { ofertaId?: number; extras?: any[]; texto: string; imagem?: string; quando?: number; grupos?: number[] | 'todos'; origem?: string }): number {
   const texto = String(a.texto ?? '').trim();
   if (!texto) throw new ErroUso('Escreva o texto da oferta');
   if (texto.length > 4000) throw new ErroUso('Texto muito longo');
@@ -150,8 +150,8 @@ export function agendar(c: Ctx, conta: number, a: { ofertaId?: number; texto: st
   } else if (!(c.db.prepare('SELECT 1 FROM grupos WHERE conta_id = ? AND enviar = 1 LIMIT 1').get(conta))) {
     throw new ErroUso('Ligue o envio em ao menos um grupo');
   }
-  const r = c.db.prepare('INSERT INTO agendamentos (conta_id, oferta_id, texto, imagem, quando, grupos, origem, criado_em) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(conta, a.ofertaId ?? null, texto, a.imagem ?? '', quando, JSON.stringify(grupos), a.origem ?? 'manual', t(c));
+  const r = c.db.prepare('INSERT INTO agendamentos (conta_id, oferta_id, texto, imagem, quando, grupos, origem, criado_em, extras) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(conta, a.ofertaId ?? null, texto, a.imagem ?? '', quando, JSON.stringify(grupos), a.origem ?? 'manual', t(c), a.extras?.length ? JSON.stringify(a.extras) : '');
   return Number(r.lastInsertRowid);
 }
 
@@ -324,7 +324,7 @@ const inicioDoDia = (ms: number) => { const d = new Date(ms); d.setHours(0, 0, 0
 
 /** Manda o que está na hora. Respeita o limite diário por número do plano. */
 export async function processarFila(c: Ctx, maximo = 20): Promise<number> {
-  const fila = c.db.prepare(`SELECT e.*, i.chave, i.status AS inst_status, g.jid, a.texto, a.imagem, a.oferta_id, a.enquete, o.url_afiliado, o.plataforma, o.criado_em AS oferta_criada
+  const fila = c.db.prepare(`SELECT e.*, i.chave, i.status AS inst_status, g.jid, a.texto, a.imagem, a.oferta_id, a.enquete, a.extras, o.url_afiliado, o.plataforma, o.criado_em AS oferta_criada
     FROM envios e JOIN instancias i ON i.id = e.instancia_id JOIN grupos g ON g.id = e.grupo_id JOIN agendamentos a ON a.id = e.agendamento_id
     LEFT JOIN ofertas o ON o.id = a.oferta_id
     WHERE e.status = 'fila' AND e.enviar_em <= ? ORDER BY e.enviar_em LIMIT ?`).all(t(c), maximo) as any[];
@@ -379,6 +379,15 @@ export async function processarFila(c: Ctx, maximo = 20): Promise<number> {
         }
         if (!direto && cfg.contar_cliques && e.url_afiliado && /^https?:\/\//.test(c.urlPublica) && texto.includes(e.url_afiliado)) {
           texto = texto.split(e.url_afiliado).join(linkRastreado(c, e, e.url_afiliado));
+        }
+        // Outros links de loja da mesma mensagem (espelhamento): cada um com o seu link que conta clique.
+        if (cfg.contar_cliques && e.extras && /^https?:\/\//.test(c.urlPublica)) {
+          let lista: any[] = [];
+          try { lista = JSON.parse(e.extras); } catch { /* sem extras */ }
+          for (const [oid, url, pl] of lista) {
+            if (!url || pl === 'amazon' || pl === 'tiktok' || !texto.includes(url)) continue;
+            texto = texto.split(url).join(linkRastreado(c, { ...e, oferta_id: Number(oid) || null }, url));
+          }
         }
         await c.wpp.enviar(e.chave, e.jid, texto, !amazon && /^https?:\/\//.test(e.imagem) ? e.imagem : undefined);
         c.db.prepare("UPDATE envios SET status = 'enviado', enviado_em = ? WHERE id = ?").run(t(c), e.id);

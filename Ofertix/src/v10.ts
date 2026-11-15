@@ -7,8 +7,9 @@ import type { DB } from './db.ts';
 import type { Ctx } from './servico.ts';
 import { ErroUso, config, planoDa, converterLink, salvarOferta, agendar } from './servico.ts';
 import { ID_CATEGORIAS, nomeCategoria, lerNicho, motivoRecusa, rodapeAfiliado, classificar } from './nicho.ts';
-import { plataformaDe, lojaSuportada, resolverLink, NOME_PLATAFORMA, type Plataforma } from './links.ts';
+import { plataformaDe, lojaSuportada, resolverLink, buscarPagina, NOME_PLATAFORMA, type Plataforma } from './links.ts';
 import { reais } from './mensagem.ts';
+import { limiteDoNumero } from './extras.ts';
 import { ajustarAmazon } from './regras.ts';
 
 const t = (c: Ctx) => (c.agora ?? Date.now)();
@@ -153,6 +154,9 @@ export async function reescrever(c: Ctx, conta: number, original: string, remove
     if (tira.some((x) => baixa.includes(x))) return false;
     const m = l.match(URL_RE) ?? [];
     for (const u of m) if (CONVITE.test(u)) { trocas.push({ de: limpar(u), para: '', loja: 'Convite', status: 'removido', motivo: 'Convite de outro grupo: a linha saiu' }); return false; }
+    // Assinatura de outro perfil ("Time @achadinhos.imperdiveis", "Siga @loja"): a linha sai. E-mail não conta (o @ vem colado).
+    const arroba = !m.length && l.match(/(?:^|[\s(])@([A-Za-z0-9._]{3,30})/);
+    if (arroba) { trocas.push({ de: '@' + arroba[1], para: '', loja: 'Assinatura', status: 'removido', motivo: '@ de outro perfil: a linha saiu' }); return false; }
     return true;
   });
   let texto = linhas.join('\n');
@@ -217,6 +221,17 @@ export function limparMidias(db: DB, agora: number) { db.prepare('DELETE FROM mi
 
 // ------------------------------------------------------------------ o espelhamento em si
 
+/** Mensagem de grupo com mensagens temporárias ou "ver uma vez" vem embrulhada; tira o embrulho. */
+export function desembrulhar(m: any): any {
+  let x = m ?? {};
+  for (let i = 0; i < 4; i++) {
+    const dentro = x.ephemeralMessage?.message ?? x.viewOnceMessage?.message ?? x.viewOnceMessageV2?.message ?? x.documentWithCaptionMessage?.message;
+    if (!dentro) break;
+    x = dentro;
+  }
+  return x;
+}
+const miniatura = (mini: any): string => (typeof mini === 'string' ? mini : mini ? Buffer.from(Object.values(mini) as number[]).toString('base64') : '');
 const textoDaMensagem = (m: any): string =>
   String(m?.conversation ?? m?.extendedTextMessage?.text ?? m?.imageMessage?.caption ?? m?.videoMessage?.caption ?? '');
 
@@ -239,7 +254,7 @@ export async function espelhar(c: Ctx, inst: any, grupo: any, d: any): Promise<n
   if (!r) return null;
   const e = lerEspelho(r), conta = Number(inst.conta_id), agora = t(c);
   if (!planoDa(c.db, conta).captura) return 0;
-  const msg = d?.message ?? {};
+  const msg = desembrulhar(d?.message);
   const original = textoDaMensagem(msg);
   const temImagem = !!msg.imageMessage;
   if (!original.trim() && !temImagem) return 0; // figurinha, áudio, reação: não copia
@@ -256,7 +271,8 @@ export async function espelhar(c: Ctx, inst: any, grupo: any, d: any): Promise<n
 
   const cfg = config(c.db, conta);
   const nicho = lerNicho(cfg.nicho);
-  const principal = rw.ofertas[0];
+  // A oferta principal (título, foto, curadoria) é a do produto: a que tem foto, e não um link de cupom ou de loja.
+  const principal = rw.ofertas.find((o) => /^https:\/\//.test(o.imagem ?? '')) ?? rw.ofertas[0];
   if (principal && !principal.titulo) principal.titulo = resumo.slice(0, 120);
   if (e.curadoria && principal) {
     const motivo = motivoRecusa(nicho.regras, { titulo: principal.titulo, categoria: classificar(principal.titulo), precoPor: principal.precoPor, nota: principal.nota, vendas: principal.vendas });
@@ -274,41 +290,77 @@ export async function espelhar(c: Ctx, inst: any, grupo: any, d: any): Promise<n
     }
   }
 
+  // Limite do dia (plano ou aquecimento do número): se a cópia não cabe mais hoje, nem entra na fila
+  // (antes ela entrava e cada grupo virava um envio com erro).
+  {
+    const destinos = e.destino === 'grupos' && e.grupos.length ? e.grupos.length
+      : (c.db.prepare('SELECT * FROM grupos WHERE conta_id = ? AND enviar = 1').all(conta) as any[]).filter((g) => e.destino === 'todos' || !principal || aceitaOferta(g, { categoria: classificar(principal.titulo ?? ''), preco_por: principal.precoPor ?? null })).length;
+    const sobra = vagasHoje(c.db, conta, agora);
+    if (destinos > 0 && sobra.vagas < destinos) {
+      registrar(c.db, conta, e.id, 'ignorada', `Limite de envios de hoje atingido (${sobra.texto}). Volta amanhã`, resumo, agora);
+      return 0;
+    }
+  }
+
   // Amazon: a cópia sai sem preço, sem a imagem e com o aviso obrigatório (src/regras.ts).
-  let imagem = '';
+  // A foto, nesta ordem: a da mensagem original (vem no webhook, ou baixada pela Evolution API); a do produto (página da
+  // loja); a miniatura que vem junto da mensagem (foto ou prévia do link). Amazon: nunca (src/regras.ts).
+  let imagem = '', deOnde = '', falha = '';
+  const guardar = (b64: string, tipo: string) => `${c.urlPublica}/m/${guardarMidia(c.db, conta, b64, tipo, agora)}`;
   if (temImagem && !rw.amazon) {
     try {
-      const m = await c.wpp.midia(inst.chave, d);
-      if (m?.base64) imagem = `${c.urlPublica}/m/${guardarMidia(c.db, conta, m.base64, m.mimetype, agora)}`;
-    } catch { /* sem a imagem, segue só o texto */ }
+      const veio = String(d?.message?.base64 ?? msg.base64 ?? '');
+      const m = veio ? { base64: veio, mimetype: String(msg.imageMessage?.mimetype ?? 'image/jpeg').split(';')[0]! } : await c.wpp.midia(inst.chave, d);
+      if (m?.base64) { imagem = guardar(m.base64, m.mimetype); deOnde = 'a foto original'; }
+      else falha = 'a Evolution API não devolveu a foto';
+    } catch (err) { falha = `não deu para baixar a foto (${(err as Error).message.slice(0, 80)})`; }
   }
-  // Mensagem só de texto com prévia do link (a foto que o WhatsApp mostra é do link da loja). O link trocado aponta
-  // para o Ofertix, que não tem essa prévia; então a cópia sai com a foto do produto, ou com a miniatura da prévia.
   if (!imagem && !rw.amazon && rw.ofertas.length) {
-    if (/^https:\/\//.test(principal?.imagem ?? '')) imagem = principal.imagem;
-    else {
-      const mini = msg.extendedTextMessage?.jpegThumbnail;
-      const b64 = typeof mini === 'string' ? mini : mini ? Buffer.from(Object.values(mini) as number[]).toString('base64') : '';
-      if (b64) { try { imagem = `${c.urlPublica}/m/${guardarMidia(c.db, conta, b64, 'image/jpeg', agora)}`; } catch { /* sem miniatura */ } }
-    }
+    const comFoto = rw.ofertas.find((o) => /^https:\/\//.test(o.imagem ?? ''));
+    if (comFoto) { imagem = comFoto.imagem; deOnde = 'a foto do produto'; }
+  }
+  if (!imagem && !rw.amazon) {
+    const b64 = miniatura(msg.imageMessage?.jpegThumbnail) || miniatura(msg.extendedTextMessage?.jpegThumbnail);
+    if (b64) { try { imagem = guardar(b64, 'image/jpeg'); deOnde = 'a miniatura da mensagem'; } catch { /* sem miniatura */ } }
+  }
+  if (!imagem && !rw.amazon && principal?.urlOriginal) {
+    const pg = await buscarPagina(principal.urlOriginal, c.f).catch(() => null);
+    if (/^https:\/\//.test(pg?.imagem ?? '')) { imagem = pg!.imagem; deOnde = 'a foto da página do produto'; }
   }
   const base = e.rodape ? rodapeAfiliado(rw.texto, nicho.rodape) : rw.texto;
   const texto = rw.amazon ? ajustarAmazon(base) : base;
   const ofertaId = principal ? salvarOferta(c, conta, principal, 'espelho', grupo.nome) : undefined;
+  // Os outros links de loja da mensagem (cupom, segundo produto) também viram ofertas e ganham o link que conta clique.
+  const extras = rw.ofertas.filter((o) => o !== principal).map((o) => [salvarOferta(c, conta, o, 'espelho', grupo.nome), o.urlAfiliado, o.plataforma]);
   if (ofertaId && imagem) c.db.prepare("UPDATE ofertas SET imagem = CASE WHEN imagem = '' THEN ? ELSE imagem END WHERE id = ?").run(imagem, ofertaId);
   let grupos: number[] | 'todos' = 'todos';
   if (e.destino === 'grupos') grupos = e.grupos;
   if (e.destino === 'todos') grupos = (c.db.prepare('SELECT id FROM grupos WHERE conta_id = ? AND enviar = 1').all(conta) as any[]).map((x) => Number(x.id));
   try {
-    const ag = agendar(c, conta, { ofertaId, texto: texto || resumo, imagem, quando: agora + e.atraso_min * 60_000, grupos: Array.isArray(grupos) && !grupos.length ? 'todos' : grupos, origem: 'espelho' });
+    const ag = agendar(c, conta, { ofertaId, extras, texto: texto || resumo, imagem, quando: agora + e.atraso_min * 60_000, grupos: Array.isArray(grupos) && !grupos.length ? 'todos' : grupos, origem: 'espelho' });
     c.db.prepare('UPDATE espelhos SET copiadas = copiadas + 1 WHERE id = ?').run(e.id);
     const removidos = rw.trocas.filter((x) => x.status === 'removido').length;
-    registrar(c.db, conta, e.id, 'agendada', `${rw.ofertas.length} link(s) trocado(s)${removidos ? `, ${removidos} removido(s)` : ''}${imagem ? ', com imagem' : ''}${rw.amazon ? '; Amazon: sem preço e sem imagem, com o aviso de associado' : ''}`, resumo, agora, { agendamento: ag, hash });
+    registrar(c.db, conta, e.id, 'agendada', `${rw.ofertas.length} link(s) trocado(s)${removidos ? `, ${removidos} removido(s)` : ''}${imagem ? `, com ${deOnde}` : `, sem foto${falha ? `: ${falha}` : ''}`}${rw.amazon ? '; Amazon: sem preço e sem imagem, com o aviso de associado' : ''}`, resumo, agora, { agendamento: ag, hash });
     return 1;
   } catch (err) {
     registrar(c.db, conta, e.id, 'bloqueada', (err as Error).message, resumo, agora);
     return 0;
   }
+}
+
+/** Quantos envios ainda cabem hoje nos números conectados (limite do plano ou do aquecimento, menos enviados e na fila). */
+export function vagasHoje(db: DB, conta: number, agora: number): { vagas: number; texto: string } {
+  const ini = new Date(agora); ini.setHours(0, 0, 0, 0);
+  const fim = ini.getTime() + 86_400_000;
+  let vagas = 0;
+  const limites: string[] = [];
+  for (const i of db.prepare("SELECT id, nome FROM instancias WHERE conta_id = ? AND status = 'conectado'").all(conta) as any[]) {
+    const l = limiteDoNumero(db, conta, Number(i.id), agora);
+    const usados = (db.prepare("SELECT COUNT(*) AS n FROM envios WHERE instancia_id = ? AND ((status = 'enviado' AND enviado_em >= ?) OR (status = 'fila' AND enviar_em < ?))").get(i.id, ini.getTime(), fim) as any).n;
+    vagas += Math.max(0, l.limite - usados);
+    limites.push(`"${i.nome}" ${Math.min(usados, l.limite)} de ${l.limite}${l.aquecendo ? ` no aquecimento, dia ${l.dia}` : ''}`);
+  }
+  return { vagas, texto: limites.join('; ') || 'nenhum número conectado' };
 }
 
 export function registroEspelhos(db: DB, conta: number, limite = 40) {

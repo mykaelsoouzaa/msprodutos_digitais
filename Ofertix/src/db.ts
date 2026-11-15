@@ -361,6 +361,8 @@ const COLUNAS_V2: [string, string, string][] = [
   // 6.7.1: Instagram pelo Login do Facebook para Empresas
   ['insta_contas', 'modo', "TEXT NOT NULL DEFAULT 'ig'"],
   ['insta_contas', 'page_id', "TEXT NOT NULL DEFAULT ''"],
+  // 6.8.1: outros links de loja da mensagem copiada ([oferta, link, loja] em JSON)
+  ['agendamentos', 'extras', "TEXT NOT NULL DEFAULT ''"],
 ];
 
 export function abrirBanco(arquivo: string): DB {

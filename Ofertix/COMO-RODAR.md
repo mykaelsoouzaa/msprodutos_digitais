@@ -114,6 +114,18 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.8.1 (espelhamento: foto, limite do dia, assinatura)
+
+- Foto da cópia, nesta ordem: a foto original (do webhook, se vier em base64, ou baixada pela Evolution API), a foto do
+  produto, a miniatura que vem junto da mensagem (foto ou prévia do link) e, por último, a foto da página do produto.
+  O registro diz de onde veio a foto, ou por que saiu sem foto.
+- Mensagens de grupos com mensagens temporárias ou "ver uma vez" são lidas (vinham embrulhadas e perdiam a foto).
+- A oferta principal é a que tem foto (o produto), não o link de cupom.
+- Todos os links de loja da mensagem copiada contam clique (antes só o primeiro).
+- Linha com @ de outro perfil ("Time @achadinhos.imperdiveis") sai sozinha. E-mail não conta.
+- Limite do dia: se a cópia não cabe mais nos envios de hoje (plano ou aquecimento do número), ela fica "Ignorada"
+  com o motivo, em vez de entrar na fila e virar um erro por grupo.
+
 ## Atualizar para a 6.8 (TikTok Shop)
 
 Links do TikTok Shop entram como qualquer loja (Ofertas → colar o link). O link de afiliado do TikTok Shop só sai do app
