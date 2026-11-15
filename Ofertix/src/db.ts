@@ -363,6 +363,10 @@ const COLUNAS_V2: [string, string, string][] = [
   ['insta_contas', 'page_id', "TEXT NOT NULL DEFAULT ''"],
   // 6.8.1: outros links de loja da mensagem copiada ([oferta, link, loja] em JSON)
   ['agendamentos', 'extras', "TEXT NOT NULL DEFAULT ''"],
+  // 6.9: última leitura do relatório de comissões da Shopee
+  ['config_conta', 'shopee_sinc_em', 'INTEGER NOT NULL DEFAULT 0'],
+  ['config_conta', 'shopee_sinc_erro', "TEXT NOT NULL DEFAULT ''"],
+  ['config_conta', 'shopee_sinc_itens', 'INTEGER NOT NULL DEFAULT 0'],
 ];
 
 export function abrirBanco(arquivo: string): DB {

@@ -125,7 +125,8 @@ export function oferta(db: DB, conta: number, id: number) {
 
 /** Texto pronto da oferta, com o cupom ativo da loja (se houver). */
 export function textoOferta(db: DB, conta: number, o: any): string {
-  const cup = db.prepare('SELECT codigo FROM cupons WHERE conta_id = ? AND plataforma = ? AND ativo = 1 ORDER BY id DESC LIMIT 1').get(conta, o.plataforma) as any;
+  const hojeTxt = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+  const cup = db.prepare("SELECT codigo FROM cupons WHERE conta_id = ? AND plataforma = ? AND ativo = 1 AND (validade = '' OR validade >= ?) ORDER BY id DESC LIMIT 1").get(conta, o.plataforma, hojeTxt) as any;
   const cfg = config(db, conta);
   const amazon = o.plataforma === 'amazon';
   const texto = rodapeAfiliado(montarMensagem({
@@ -539,7 +540,13 @@ export async function sincronizarComissoes(c: Ctx, conta: number, dias = 30): Pr
   const cfg = config(c.db, conta);
   if (!cfg.shopee_app_id || !cfg.shopee_segredo) throw new ErroUso('Cadastre o AppID e a Senha da Open API da Shopee em Conectar plataformas');
   const fim = Math.floor(t(c) / 1000), inicio = fim - dias * 86400;
-  const itens = await comissoesShopee({ appId: cfg.shopee_app_id, segredo: cfg.shopee_segredo }, inicio, fim, c.f);
+  let itens;
+  try { itens = await comissoesShopee({ appId: cfg.shopee_app_id, segredo: cfg.shopee_segredo }, inicio, fim, c.f); }
+  catch (e) {
+    c.db.prepare('UPDATE config_conta SET shopee_sinc_em = ?, shopee_sinc_erro = ? WHERE conta_id = ?').run(t(c), (e as Error).message.slice(0, 300), conta);
+    throw new ErroUso(`A Shopee não devolveu o relatório: ${(e as Error).message}`);
+  }
+  c.db.prepare("UPDATE config_conta SET shopee_sinc_em = ?, shopee_sinc_erro = '', shopee_sinc_itens = ? WHERE conta_id = ?").run(t(c), itens.length, conta);
   for (const it of itens) {
     c.db.prepare(`INSERT INTO comissoes (conta_id, plataforma, pedido, produto, valor_centavos, comissao_centavos, status, em) VALUES (?, 'shopee', ?, ?, ?, ?, ?, ?)
       ON CONFLICT (conta_id, plataforma, pedido, produto) DO UPDATE SET valor_centavos = excluded.valor_centavos, comissao_centavos = excluded.comissao_centavos, status = excluded.status`)
@@ -663,6 +670,7 @@ export function resumoComissoes(c: Ctx, conta: number, nomePeriodo: string, stat
     pendentes: linhas.filter((l) => l.status === 'pendente').length,
     taxa: linhas.length ? Math.round((validos.length / linhas.length) * 1000) / 10 : 0,
     linhas: linhas.slice(0, 100),
+    shopee: (() => { const g = config(c.db, conta); return { conectada: !!(g.shopee_app_id && g.shopee_segredo), em: Number(g.shopee_sinc_em) || 0, erro: g.shopee_sinc_erro || '', itens: Number(g.shopee_sinc_itens) || 0 }; })(),
   };
 }
 

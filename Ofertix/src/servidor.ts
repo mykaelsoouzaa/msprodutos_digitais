@@ -15,6 +15,7 @@ import * as ent from './entradas.ts';
 import * as v6 from './v6.ts';
 import * as v10 from './v10.ts';
 import * as ig from './instagram.ts';
+import { campanhasShopee } from './shopee.ts';
 import { extrairAfiliado } from './regras.ts';
 import { resolverLink } from './links.ts';
 import { paginaVendas, paginaAnuncio, TEXTO_ZAP } from './vendas.ts';
@@ -87,6 +88,12 @@ const PRIVACIDADE = `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><me
 <h2>Para que</h2><p>Para enviar as ofertas e as respostas que o próprio cliente configurou. Não vendemos nem compartilhamos dados com terceiros. Os registros de comentários e mensagens ficam guardados por até 90 dias.</p>
 <h2 id="exclusao">Exclusão de dados</h2><p>O cliente pode desconectar o Instagram a qualquer momento na página Instagram do Ofertix; o token e a conexão são apagados na hora. Para apagar todos os dados da conta, ou se você comentou num perfil atendido pelo Ofertix e quer que seus dados sejam apagados, peça pelo WhatsApp (31) 99904-1748 ou pelo site mssolucoestech.com.br. Atendemos em até 15 dias.</p>
 <p style="color:#5c4a56">Atualizada em 13/11/2026.</p></body></html>`;
+
+const DEMO_CAMPANHAS = (agora: number) => [
+  { nome: 'Liquida 11.11: cupons de até R$ 50 off', imagem: '', link: 'https://s.shopee.com.br/demo1111', comissaoPct: 12, inicio: agora - 2 * 86400_000, fim: agora + 3 * 86400_000 },
+  { nome: 'Achadinhos até R$ 19,90 com frete grátis', imagem: '', link: 'https://s.shopee.com.br/demoachados', comissaoPct: 9, inicio: agora - 86400_000, fim: agora + 6 * 86400_000 },
+  { nome: 'Beleza em dobro: moedas extras', imagem: '', link: 'https://s.shopee.com.br/demobeleza', comissaoPct: 10, inicio: null, fim: null },
+];
 
 const cfgInsta = (app: App): ig.CfgInsta => ({ appId: app.cfg.instagramAppId ?? '', appSecret: app.cfg.instagramAppSecret ?? '', verifyToken: app.cfg.instagramVerifyToken ?? '', urlPublica: app.cfg.urlPublica, segredo: app.cfg.segredoSessao, configId: app.cfg.instagramConfigId ?? '' });
 
@@ -464,6 +471,13 @@ export function criarServidor(app: App) {
           return r({ ok: true });
         }
 
+        case 'GET /api/cupons/shopee': {
+          if (sess.demo) return r({ conectada: true, itens: DEMO_CAMPANHAS(Date.now()) });
+          const g = s.config(db, conta);
+          if (!g.shopee_app_id || !g.shopee_segredo) return r({ conectada: false, itens: [] });
+          try { return r({ conectada: true, itens: await campanhasShopee({ appId: g.shopee_app_id, segredo: g.shopee_segredo }, ctx.f) }); }
+          catch (e) { return r({ conectada: true, itens: [], erro: (e as Error).message }); }
+        }
         case 'GET /api/cupons': return r(db.prepare('SELECT * FROM cupons WHERE conta_id = ? ORDER BY ativo DESC, id DESC').all(conta));
         case 'POST /api/cupons': {
           const b = await lerJson(req);
@@ -645,11 +659,14 @@ export function iniciarRotinas(app: App, intervaloMs = 5000) {
     } catch (e) { console.error('fila', e); } finally { rodando = false; }
   };
   const fila = setInterval(rodada, intervaloMs);
-  // Comissões da Shopee: a cada 6 horas, para quem tem credenciais.
-  const comissoes = setInterval(async () => {
+  // Comissões da Shopee: 2 minutos depois de subir e a cada 3 horas, para quem tem credenciais
+  // (antes era só a cada 6 horas, e cada atualização do servidor zerava a contagem).
+  const lerComissoes = async () => {
     const contas = app.real.db.prepare("SELECT conta_id FROM config_conta WHERE shopee_app_id <> '' AND shopee_segredo <> ''").all() as any[];
     for (const c of contas) await s.sincronizarComissoes(app.real, Number(c.conta_id)).catch((e) => console.error('comissões', c.conta_id, e.message));
-  }, 6 * 3600_000);
+  };
+  const primeira = setTimeout(lerComissoes, 2 * 60_000);
+  const comissoes = setInterval(lerComissoes, 3 * 3600_000);
   // Resumo diário no WhatsApp: confere a cada minuto se chegou o horário de alguém.
   const resumos = setInterval(() => {
     s.rodarResumos(app.real).catch((e) => console.error('resumos', e));
@@ -673,5 +690,5 @@ export function iniciarRotinas(app: App, intervaloMs = 5000) {
     const lista = app.real.db.prepare("SELECT id, conta_id FROM instancias WHERE status = 'conectado'").all() as any[];
     for (const i of lista) await s.sincronizarGrupos(app.real, Number(i.conta_id), Number(i.id)).catch(() => {});
   }, 30 * 60_000);
-  return () => { clearInterval(fila); clearInterval(comissoes); clearInterval(resumos); clearInterval(estados); clearInterval(participantes); clearInterval(arquivo); clearInterval(abastecer); };
+  return () => { clearTimeout(primeira); clearInterval(fila); clearInterval(comissoes); clearInterval(resumos); clearInterval(estados); clearInterval(participantes); clearInterval(arquivo); clearInterval(abastecer); };
 }

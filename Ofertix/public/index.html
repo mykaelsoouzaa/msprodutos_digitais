@@ -109,6 +109,19 @@ h1,h2,h3{font-family:var(--fonte-titulo);letter-spacing:-.01em;margin:0}
 .linha .tit{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .linha .det{color:var(--mudo);font-size:12.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px}
 .loja{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.02em}
+.campanhas{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:12px}
+.campanha{display:flex;gap:12px;border:1px solid var(--borda);border-radius:14px;padding:12px;background:var(--surface)}
+.camp-img{flex:none;width:64px;height:64px;border-radius:12px;background:var(--laranja-suave);color:var(--laranja);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.camp-img img{width:100%;height:100%;object-fit:cover}
+.camp-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}.camp-txt .tit{font-weight:600;line-height:1.3}
+.camp-txt .det{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--mudo)}
+.camp-acoes{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+.nicho-topo{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+.nicho-resumo{padding:16px 18px}.nicho-resumo .tit-mini{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mudo);margin-bottom:8px}
+.abas{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--borda)}
+.aba{display:inline-flex;align-items:center;gap:8px;background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;font:inherit;font-weight:600;color:var(--mudo);cursor:pointer;margin-bottom:-1px}
+.aba:hover{color:var(--texto)}.aba.ativa{color:var(--verde);border-bottom-color:var(--verde)}
+.aba-oculta{display:none!important}
 .lojas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:6px}
 @media (min-width:1500px){.lojas{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:980px){.lojas{grid-template-columns:1fr}}
@@ -974,6 +987,9 @@ async function telaComissoes() {
     `<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="botao sec" href="${window.OFERTIX_MOCK ? '#comissoes' : '/api/exportar/comissoes.csv?periodo=' + E.periodo}" data-csv>${ico('baixar', 16)}Baixar CSV</a><button class="botao sec" id="sinc-com">${ico('sync', 16)}Atualizar da Shopee</button></div>`) + `
     <div style="margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between">${chipsPeriodo(['hoje', 'ontem', '7d', '30d', 'mes', 'mes-anterior'])}
       <div class="chips">${[['', 'Todos'], ['concluido', 'Concluídos'], ['pendente', 'Pendentes'], ['cancelado', 'Cancelados']].map(([v, n]) => `<button class="chip ${(E.filtroStatus || '') === v ? 'ativo' : ''}" data-status-com="${v}">${n}</button>`).join('')}</div></div>
+    ${E.eu?.demo ? '' : c.shopee && !c.shopee.conectada ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>Cadastre o AppID e a Senha da Open API da Shopee em <a href="#plataformas">Conectar plataformas</a> para puxar as comissões.</span></div>`
+      : c.shopee?.erro ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>A última leitura da Shopee deu erro: ${esc(c.shopee.erro)}. Confira o AppID e a Senha em <a href="#plataformas">Conectar plataformas</a> e clique em Atualizar da Shopee.</span></div>`
+      : c.shopee ? `<p class="sub" style="margin:0 0 12px">${ico('sync', 14)} ${c.shopee.em ? `Shopee lida ${quandoTxt(c.shopee.em)}: ${num(c.shopee.itens)} item(ns) nos últimos 30 dias. Atualiza sozinho a cada 3 horas.` : 'A Shopee ainda não foi lida. Clique em Atualizar da Shopee.'}</p>` : ''}
     <div class="kpis">
       ${kpi('comissoes', reais(c.comissao), 'Comissão total')}
       ${kpi('sacola', reais(c.gmv), 'Valor vendido (GMV)')}
@@ -984,30 +1000,62 @@ async function telaComissoes() {
     </div>
     <section class="cartao"><div class="rolagem"><table class="tabela"><thead><tr><th>Data</th><th>Loja</th><th>Produto</th><th>Pedido</th><th class="num">Valor</th><th class="num">Comissão</th><th>Status</th></tr></thead><tbody>
       ${c.linhas.map((l) => `<tr><td style="white-space:nowrap">${new Date(l.em).toLocaleDateString('pt-BR')}</td><td>${loja(l.plataforma)}</td><td>${esc(l.produto)}</td><td style="color:var(--mudo)">${esc(l.pedido)}</td><td class="num">${reais(l.valor_centavos)}</td><td class="num" style="font-weight:600">${reais(l.comissao_centavos)}</td><td>${status(l.status)}</td></tr>`).join('')
-        || `<tr><td colspan="7"><div class="vazio">Sem comissões no período. Cadastre a Open API da Shopee em <a href="#plataformas">Conectar plataformas</a> e clique em Atualizar.</div></td></tr>`}
+        || `<tr><td colspan="7"><div class="vazio">${c.shopee?.conectada ? 'Nenhuma venda registrada pela Shopee neste período. A Shopee leva alguns minutos (às vezes horas) para mostrar um pedido novo no relatório.' : 'Sem comissões no período. Cadastre a Open API da Shopee em <a href="#plataformas">Conectar plataformas</a> e clique em Atualizar.'}</div></td></tr>`}
     </tbody></table></div></section>`;
   $('#sinc-com').onclick = tentar(async () => { const r = await api('comissoes/sincronizar', { method: 'POST' }); aviso(`${r.itens} item(ns) atualizados`); telaComissoes(); });
   C().querySelectorAll('[data-status-com]').forEach((b) => (b.onclick = () => { E.filtroStatus = b.dataset.statusCom; telaComissoes(); }));
 }
 
 async function telaCupons() {
-  const lista = await api('cupons');
-  C().innerHTML = cabeca('cupons', 'Cupons', 'O cupom ativo de cada loja entra sozinho no texto das ofertas dessa loja.') + `
-    <form class="cartao secao-form" id="form-cupom"><h2>Novo cupom</h2><p>Use o campo {cupom} no modelo da mensagem.</p>
-      <div class="form-grade">
+  const [lista, camp] = await Promise.all([api('cupons'), api('cupons/shopee').catch(() => ({ conectada: false, itens: [] }))]);
+  const hoje = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+  const vencido = (c) => c.validade && c.validade < hoje;
+  const dataBR = (v) => v ? v.split('-').reverse().join('/') : '';
+  const periodoTxt = (x) => x.fim ? `até ${new Date(x.fim).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}` : '';
+  C().innerHTML = cabeca('cupons', 'Cupons e campanhas', 'O cupom ativo de cada loja entra sozinho no texto das ofertas dessa loja. As campanhas da Shopee aparecem aqui assim que lançam.') + `
+    <section class="cartao bloco" style="margin-bottom:16px"><div class="cab-reg"><div><h2>Campanhas da Shopee agora</h2><p class="sub">Datas, coleções e cupons do app da Shopee, puxados pela Open API, já com o seu link de afiliado.</p></div>
+      <button class="botao sec peq" type="button" id="camp-atualizar">${ico('sync', 14)}Atualizar</button></div>
+      ${!camp.conectada ? `<div class="vazio">Cadastre a Open API da Shopee em <a href="#plataformas">Conectar plataformas</a> para ver as campanhas aqui.</div>`
+        : camp.erro ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>A Shopee não devolveu as campanhas: ${esc(camp.erro)}</span></div>`
+        : camp.itens.length ? `<div class="campanhas">${camp.itens.map((x, i) => `<article class="campanha">
+            <div class="camp-img">${x.imagem ? `<img src="${esc(x.imagem)}" alt="" loading="lazy">` : ico('cupons', 26)}</div>
+            <div class="camp-txt"><div class="tit">${esc(x.nome)}</div><div class="det">${x.comissaoPct ? `<span class="selo">Comissão ${String(x.comissaoPct).replace('.', ',')}%</span>` : ''}${periodoTxt(x) ? `<span>${periodoTxt(x)}</span>` : ''}</div>
+              <div class="camp-acoes"><button class="botao sec peq" type="button" data-camp-copiar="${i}">Copiar link</button><button class="botao peq" type="button" data-camp-enviar="${i}">${ico('enviar', 14)}Mandar nos grupos</button></div></div>
+          </article>`).join('')}</div>`
+        : '<div class="vazio">Nenhuma campanha ativa da Shopee agora.</div>'}
+    </section>
+    <div class="grade-2" style="align-items:start">
+      <form class="cartao secao-form" id="form-cupom"><h2>Novo cupom</h2><p>Use o campo {cupom} no modelo da mensagem. Depois da validade, o cupom para de entrar sozinho.</p>
         <div class="campo"><label for="c-cod">Código</label><input id="c-cod" placeholder="PIPOCA10" required maxlength="40" style="text-transform:uppercase"></div>
-        <div class="campo"><label for="c-pl">Loja</label><select id="c-pl">${Object.entries(LOJAS).filter(([k]) => k !== 'outra').map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}</select></div>
-        <div class="campo"><label for="c-desc">Desconto</label><input id="c-desc" placeholder="10% até R$ 30" maxlength="120"></div>
-        <div class="campo" style="justify-content:flex-end"><button class="botao" type="submit" style="height:42px">${ico('mais', 16)}Cadastrar</button></div>
-      </div></form>
-    <section class="cartao"><div class="rolagem"><table class="tabela"><thead><tr><th>Código</th><th>Loja</th><th>Desconto</th><th>Ativo</th><th></th></tr></thead><tbody>
-      ${lista.map((c) => `<tr><td style="font:600 13px ui-monospace,Menlo,monospace">${esc(c.codigo)}</td><td>${loja(c.plataforma)}</td><td style="color:var(--texto-2)">${esc(c.descricao)}</td>
-        <td><label class="inter"><input type="checkbox" data-cupom="${c.id}" ${c.ativo ? 'checked' : ''} aria-label="Cupom ${esc(c.codigo)} ativo"><span></span></label></td>
-        <td class="num"><button class="botao sec peq" data-apagar-cupom="${c.id}" aria-label="Apagar cupom">${ico('lixo', 14)}</button></td></tr>`).join('') || '<tr><td colspan="5"><div class="vazio">Nenhum cupom cadastrado.</div></td></tr>'}
-    </tbody></table></div></section>`;
+        <div class="form-grade" style="margin-top:12px">
+          <div class="campo"><label for="c-pl">Loja</label><select id="c-pl">${Object.entries(LOJAS).filter(([k]) => k !== 'outra').map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}</select></div>
+          <div class="campo"><label for="c-val">Válido até (opcional)</label><input id="c-val" type="date" min="${hoje}"></div>
+        </div>
+        <div class="campo" style="margin-top:12px"><label for="c-desc">Desconto</label><input id="c-desc" placeholder="10% até R$ 30" maxlength="120"></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="botao" type="submit">${ico('mais', 16)}Cadastrar</button></div>
+      </form>
+      <section class="cartao bloco"><h2>Seus cupons</h2><p class="sub">Só um cupom ativo por loja entra no texto: o mais novo.</p>
+        <div class="linhas">${lista.map((c) => `<div class="linha"><div class="miniatura">${ico('cupons', 18)}</div>
+          <div class="meio"><div class="tit" style="font-family:ui-monospace,Menlo,monospace">${esc(c.codigo)}</div><div class="det">${loja(c.plataforma)}${c.descricao ? `<span>${esc(c.descricao)}</span>` : ''}${c.validade ? `<span>${vencido(c) ? '<b style="color:var(--vermelho)">Vencido</b> em' : 'até'} ${dataBR(c.validade)}</span>` : ''}</div></div>
+          <label class="inter" title="Ativo"><input type="checkbox" data-cupom="${c.id}" ${c.ativo ? 'checked' : ''} aria-label="Cupom ${esc(c.codigo)} ativo"><span></span></label>
+          <button class="botao sec peq" data-apagar-cupom="${c.id}" aria-label="Apagar cupom">${ico('lixo', 14)}</button></div>`).join('') || `<div class="vazio">${ico('cupons', 30)}<h3>Nenhum cupom</h3>Cadastre o primeiro ao lado.</div>`}</div>
+      </section>
+    </div>`;
+  $('#camp-atualizar').onclick = () => telaCupons();
+  C().querySelectorAll('[data-camp-copiar]').forEach((b) => (b.onclick = async () => {
+    const x = camp.itens[Number(b.dataset.campCopiar)];
+    try { await navigator.clipboard.writeText(x.link); aviso('Link copiado'); } catch { prompt('Copie o link:', x.link); }
+  }));
+  C().querySelectorAll('[data-camp-enviar]').forEach((b) => (b.onclick = tentar(async () => {
+    const x = camp.itens[Number(b.dataset.campEnviar)];
+    const texto = `🔥 *${x.nome}*${periodoTxt(x) ? `\n⏰ Válido ${periodoTxt(x)}` : ''}\n\n👉 ${x.link}`;
+    if (!confirm(`Mandar esta campanha em todos os grupos de envio?\n\n${texto}`)) return;
+    await api('agendamentos', { method: 'POST', body: { texto, imagem: /^https:\/\//.test(x.imagem) ? x.imagem : undefined, grupos: 'todos' } });
+    aviso('Campanha agendada para os grupos');
+  })));
   $('#form-cupom').onsubmit = tentar(async (e) => {
     e.preventDefault();
-    await api('cupons', { method: 'POST', body: { codigo: $('#c-cod').value, plataforma: $('#c-pl').value, descricao: $('#c-desc').value } });
+    await api('cupons', { method: 'POST', body: { codigo: $('#c-cod').value, plataforma: $('#c-pl').value, descricao: $('#c-desc').value, validade: $('#c-val').value } });
     aviso('Cupom cadastrado'); telaCupons();
   });
   C().querySelectorAll('[data-cupom]').forEach((i) => (i.onchange = tentar(async () => { await api('cupons/' + i.dataset.cupom, { method: 'POST', body: { ativo: i.checked } }); })));
@@ -1540,12 +1588,26 @@ const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'
 async function telaNicho() {
   const [d, ab] = await Promise.all([api('nicho'), api('abastecer').catch(() => null)]), n = d.nicho, r = n.regras;
   const opCat = (sel) => `<option value="">Qualquer categoria</option>` + d.categorias.filter((c) => c.id !== 'outros').map((c) => `<option value="${c.id}" ${sel === c.id ? 'selected' : ''}>${c.emoji} ${esc(c.nome)}${c.naVitrine ? ` (${c.naVitrine} na vitrine)` : ' (vitrine vazia)'}</option>`).join('');
+  const nomeCat = (id) => { const c = d.categorias.find((x) => x.id === id); return c ? `${c.emoji} ${c.nome}` : id; };
+  const resumo = [
+    r.categorias.length ? `${r.categorias.length === 1 ? nomeCat(r.categorias[0]) : r.categorias.length + ' categorias'}` : 'Todas as categorias',
+    r.precoMax ? `Até ${reais(r.precoMax)}` : 'Qualquer preço',
+    r.notaMin ? `Nota ${String(r.notaMin).replace('.', ',')}+` : '', r.vendasMin ? `${num(r.vendasMin)}+ vendas` : '',
+    r.excluir.length ? `${r.excluir.length} palavra(s) bloqueada(s)` : '',
+  ].filter(Boolean);
+  const hojeCol = n.colecoes[new Date().getDay()];
+  E.abaNicho ||= 'curadoria';
   C().innerHTML = cabeca('estrela', 'Nicho e curadoria', 'Escolha o que entra nos seus grupos, monte a rotina da semana e dê uma voz própria às mensagens.') + `
-    <section class="cartao secao-form pacote"><h2>✨ Pacote pronto: achadinhos femininos</h2>
+    <div class="nicho-topo">
+      <section class="cartao nicho-resumo"><div class="tit-mini">O que entra nos seus grupos</div><div class="chips">${resumo.map((x) => `<span class="chip ativo" style="cursor:default">${esc(x)}</span>`).join('')}</div>
+        <div class="ajuda" style="margin-top:8px">Coleção de hoje: <b>${hojeCol ? esc(nomeCat(hojeCol)) : 'qualquer categoria'}</b> · Horários: ${d.horarios ? esc(d.horarios) : 'nenhum'}${n.pacote ? ` · Pacote: ${esc(n.pacote)}` : ''}</div></section>
+      <div class="abas" role="tablist">${[['curadoria', 'filtro', 'Curadoria'], ['rotina', 'agenda', 'Rotina da semana'], ['mensagens', 'msg', 'Mensagens']].map(([id, ic, nome]) => `<button type="button" role="tab" class="aba ${E.abaNicho === id ? 'ativa' : ''}" data-aba-n="${id}" aria-selected="${E.abaNicho === id}">${ico(ic, 16)}${nome}</button>`).join('')}</div>
+    </div>
+    <section class="cartao secao-form pacote" data-aba="curadoria"><h2>✨ Pacote pronto: achadinhos femininos</h2>
       <p>Configura tudo de uma vez para um grupo de achadinhos de casa, cozinha, organização, beleza e moda: até R$ 50, nota mínima 4,7 e 100 vendas, coleções de segunda a sábado, modelo de mensagem com tom de amiga, rodapé de afiliado e cinco horários automáticos (9h, 12h, 15h, 19h e 21h).</p>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="botao" type="button" id="aplicar-pacote">${ico('estrela', 16)}Aplicar pacote</button>${n.pacote ? `<span class="selo">Em uso: ${esc(n.pacote)}</span>` : ''}<span class="ajuda" style="color:var(--mudo);font-size:12.5px">Substitui o modelo da mensagem e os horários atuais. Dá para ajustar tudo depois.</span></div></section>
     <form id="form-nicho">
-    <section class="cartao secao-form"><h2>Curadoria</h2><p>Vale para as ofertas capturadas dos grupos monitorados. As que não passam ficam de fora sem você precisar olhar uma por uma.</p>
+    <section class="cartao secao-form" data-aba="curadoria"><h2>Curadoria</h2><p>Vale para as ofertas capturadas dos grupos monitorados. As que não passam ficam de fora sem você precisar olhar uma por uma.</p>
       <div class="campo"><label>Categorias aceitas (nenhuma marcada = todas)</label><div class="chips" id="cats">${d.categorias.map((c) => `<button type="button" class="chip ${r.categorias.includes(c.id) ? 'ativo' : ''}" data-ncat="${c.id}">${c.emoji} ${esc(c.nome)}</button>`).join('')}</div></div>
       <div class="form-grade" style="margin-top:14px">
         <div class="campo"><label for="n-preco">Preço máximo (R$)</label><input id="n-preco" inputmode="decimal" value="${r.precoMax ? (r.precoMax / 100).toFixed(2).replace('.', ',') : ''}" placeholder="Sem limite"></div>
@@ -1556,15 +1618,15 @@ async function telaNicho() {
         <div class="campo"><label for="n-incluir">Precisa ter uma destas palavras</label><input id="n-incluir" value="${esc(r.incluir.join(', '))}" placeholder="ex.: feminino, kit, organizador"><span class="ajuda">Separe por vírgula. Vazio = sem exigência</span></div>
         <div class="campo"><label for="n-excluir">Não pode ter estas palavras</label><input id="n-excluir" value="${esc(r.excluir.join(', '))}" placeholder="ex.: réplica, usado, masculino"></div>
       </div></section>
-    <section class="cartao secao-form"><h2>Coleções da semana</h2><p>Nos horários automáticos, a vitrine publica primeiro a oferta da coleção do dia. Sem oferta dela na vitrine, vai a mais antiga, como antes.</p>
+    <section class="cartao secao-form" data-aba="rotina"><h2>Coleções da semana</h2><p>Nos horários automáticos, a vitrine publica primeiro a oferta da coleção do dia. Sem oferta dela na vitrine, vai a mais antiga, como antes.</p>
       <div class="form-grade">${DIAS_SEMANA.map((dia, i) => `<div class="campo"><label for="col-${i}">${dia}</label><select id="col-${i}">${opCat(n.colecoes[i])}</select></div>`).join('')}</div>
       <p class="ajuda" style="color:var(--mudo);font-size:12.5px;margin:10px 0 0">Horários automáticos atuais: ${d.horarios ? esc(d.horarios) : 'nenhum'} · <a href="#config">mudar em Configurações</a></p></section>
-    <section class="cartao secao-form"><h2>Rodapé de afiliado</h2><p>Entra no fim de cada oferta. Deixar claro que é link de afiliado passa confiança e segue a orientação do CONAR para publicidade.</p>
+    <section class="cartao secao-form" data-aba="mensagens"><h2>Rodapé de afiliado</h2><p>Entra no fim de cada oferta. Deixar claro que é link de afiliado passa confiança e segue a orientação do CONAR para publicidade.</p>
       <div class="linha-inter"><div><b>Acrescentar rodapé</b></div><label class="inter"><input type="checkbox" id="n-rod-on" ${n.rodape ? 'checked' : ''} aria-label="Acrescentar rodapé"><span></span></label></div>
       <div class="campo" style="margin-top:10px"><label for="n-rod">Texto do rodapé</label><input id="n-rod" maxlength="200" value="${esc(n.rodape || d.rodapePadrao)}"><span class="ajuda">_texto_ fica em itálico no WhatsApp</span></div></section>
-    <div style="display:flex;justify-content:flex-end;margin-bottom:16px"><button class="botao" type="submit">Salvar nicho e curadoria</button></div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px"><button class="botao" type="submit">Salvar alterações</button></div>
     </form>
-    ${ab ? `<form class="cartao secao-form" id="form-abastecer"><h2>Vitrine abastecida sozinha</h2><p>Todo dia, no horário escolhido, o Ofertix busca produtos na Shopee com as suas palavras e com a coleção do dia, aplica a curadoria acima e põe os melhores na vitrine. Os horários automáticos fazem o resto.</p>
+    ${ab ? `<form class="cartao secao-form" id="form-abastecer" data-aba="rotina"><h2>Vitrine abastecida sozinha</h2><p>Todo dia, no horário escolhido, o Ofertix busca produtos na Shopee com as suas palavras e com a coleção do dia, aplica a curadoria acima e põe os melhores na vitrine. Os horários automáticos fazem o resto.</p>
       ${ab.temShopee ? '' : '<div class="parecidas">Precisa do AppID e da Senha da Shopee em <a href="#plataformas">Conectar plataformas</a>.</div>'}
       <div class="linha-inter"><div><b>Abastecer a vitrine todo dia</b></div><label class="inter"><input type="checkbox" id="ab-on" ${ab.ativo ? 'checked' : ''} aria-label="Abastecer a vitrine todo dia"><span></span></label></div>
       <div class="form-grade" style="margin-top:12px">
@@ -1577,7 +1639,7 @@ async function telaNicho() {
       <p class="ajuda" style="color:var(--mudo);font-size:12.5px;margin:8px 0 12px">Buscas de hoje: ${ab.termosHoje.length ? ab.termosHoje.map(esc).join(', ') : 'nenhuma'}</p>
       <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="botao sec" type="button" id="ab-agora">${ico('raio', 16)}Abastecer agora</button><button class="botao" type="submit">Salvar</button></div>
     </form>` : ''}
-    <section class="cartao secao-form"><h2>Modelos de mensagem</h2><p>Escolha uma voz para as ofertas. Cada modelo já tem variações, sorteadas por grupo para as mensagens não ficarem iguais.</p>
+    <section class="cartao secao-form" data-aba="mensagens"><h2>Modelos de mensagem</h2><p>Escolha uma voz para as ofertas. Cada modelo já tem variações, sorteadas por grupo para as mensagens não ficarem iguais.</p>
       <div class="modelos">${d.modelos.map((m) => `<div class="cartao modelo"><b>${esc(m.nome)}</b><div class="zap"><div class="bolha"><span data-previa="${m.id}">…</span><span class="hora">12:00</span></div></div>
         <button class="botao sec peq" type="button" data-usar-modelo="${m.id}">Usar este modelo</button></div>`).join('')}</div></section>`;
   for (const m of d.modelos) api('previa', { method: 'POST', body: { modelo: m.texto } }).then((x) => { const el = C().querySelector(`[data-previa="${m.id}"]`); if (el) el.innerHTML = zapHtml(x.texto); }).catch(() => {});
@@ -1592,6 +1654,13 @@ async function telaNicho() {
       finally { telaNicho(); }
     });
   }
+  const mostrarAba = (a) => {
+    E.abaNicho = a;
+    C().querySelectorAll('[data-aba]').forEach((el) => el.classList.toggle('aba-oculta', el.dataset.aba !== a));
+    C().querySelectorAll('[data-aba-n]').forEach((b) => { b.classList.toggle('ativa', b.dataset.abaN === a); b.setAttribute('aria-selected', String(b.dataset.abaN === a)); });
+  };
+  C().querySelectorAll('[data-aba-n]').forEach((b) => (b.onclick = () => mostrarAba(b.dataset.abaN)));
+  mostrarAba(E.abaNicho);
   $('#aplicar-pacote').onclick = tentar(async () => { await api('nicho/achadinhos', { method: 'POST' }); aviso('Pacote de achadinhos aplicado'); telaNicho(); });
   const reaisC = (v) => { const x = Number(String(v).replace(/\./g, '').replace(',', '.')); return Number.isFinite(x) && x > 0 ? Math.round(x * 100) : 0; };
   $('#form-nicho').onsubmit = tentar(async (e) => {

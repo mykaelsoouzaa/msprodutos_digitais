@@ -77,21 +77,35 @@ export function statusShopee(s: string): ItemComissao['status'] {
   return 'pendente';
 }
 
-/** Relatório de conversões entre dois instantes (segundos). Pagina pelo scrollId. */
+/**
+ * Relatório de conversões entre dois instantes (segundos), em janelas de 7 dias (a Shopee limita o intervalo de cada
+ * consulta). Pagina pelo scrollId. Se os campos de valor mudarem de nome, tenta com o preço do item.
+ */
 export async function comissoesShopee(cred: CredShopee, inicio: number, fim: number, f: typeof fetch = fetch): Promise<ItemComissao[]> {
   const itens: ItemComissao[] = [];
+  for (let de = inicio; de < fim; de += 7 * 86400) itens.push(...await janelaComissoes(cred, de, Math.min(fim, de + 7 * 86400), f));
+  return itens;
+}
+async function janelaComissoes(cred: CredShopee, inicio: number, fim: number, f: typeof fetch): Promise<ItemComissao[]> {
+  const itens: ItemComissao[] = [];
   let scroll = '';
+  let campos = 'itemName actualAmount itemTotalCommission';
   for (let pagina = 0; pagina < 50; pagina++) {
-    const d = await gql(cred,
-      `{conversionReport(purchaseTimeStart:${inicio},purchaseTimeEnd:${fim},limit:500${scroll ? `,scrollId:${str(scroll)}` : ''})` +
-      `{nodes{purchaseTime orders{orderId orderStatus items{itemName actualAmount itemTotalCommission}}} pageInfo{hasNextPage scrollId}}}`, f);
+    const consulta = (c: string) => `{conversionReport(purchaseTimeStart:${inicio},purchaseTimeEnd:${fim},limit:500${scroll ? `,scrollId:${str(scroll)}` : ''})` +
+      `{nodes{purchaseTime orders{orderId orderStatus items{${c}}}} pageInfo{hasNextPage scrollId}}}`;
+    let d: any;
+    try { d = await gql(cred, consulta(campos), f); }
+    catch (e) {
+      if (campos.includes('actualAmount') && /field|campo|Cannot query/i.test((e as Error).message)) { campos = 'itemName itemPrice qty itemTotalCommission'; d = await gql(cred, consulta(campos), f); }
+      else throw e;
+    }
     const rel = d?.conversionReport;
     for (const n of rel?.nodes ?? []) {
       for (const o of n.orders ?? []) {
         for (const it of o.items ?? []) {
           itens.push({
             pedido: String(o.orderId), produto: String(it.itemName ?? '').slice(0, 200),
-            valor: centavos(it.actualAmount) ?? 0, comissao: centavos(it.itemTotalCommission) ?? 0,
+            valor: centavos(it.actualAmount ?? (Number(it.itemPrice) * (Number(it.qty) || 1))) ?? 0, comissao: centavos(it.itemTotalCommission) ?? 0,
             status: statusShopee(String(o.orderStatus ?? '')), em: Number(n.purchaseTime) * 1000,
           });
         }
@@ -134,4 +148,20 @@ export async function buscarProdutosShopee(cred: CredShopee, termo: string, orde
     };
   }).filter((x: ItemBusca) => x.titulo && x.link);
   return { itens, temMais: !!d?.productOfferV2?.pageInfo?.hasNextPage };
+}
+
+export interface CampanhaShopee { nome: string; imagem: string; link: string; comissaoPct: number | null; inicio: number | null; fim: number | null }
+
+/** Campanhas da própria Shopee (datas, coleções e cupons do app), mais novas primeiro, com o link de afiliado da conta. */
+export async function campanhasShopee(cred: CredShopee, f: typeof fetch = fetch, limite = 20): Promise<CampanhaShopee[]> {
+  const base = `sortType:1,page:1,limit:${Math.min(50, limite)}`;
+  let d: any;
+  try { d = await gql(cred, `{shopeeOfferV2(${base}){nodes{offerName commissionRate imageUrl offerLink periodStartTime periodEndTime}}}`, f); }
+  catch { d = await gql(cred, `{shopeeOfferV2(${base}){nodes{offerName commissionRate imageUrl offerLink}}}`, f); }
+  return (d?.shopeeOfferV2?.nodes ?? []).map((n: any): CampanhaShopee => {
+    const com = Number(n.commissionRate);
+    const seg = (v: unknown) => (Number(v) > 0 ? Number(v) * 1000 : null);
+    return { nome: String(n.offerName ?? '').slice(0, 160), imagem: String(n.imageUrl ?? ''), link: String(n.offerLink ?? ''),
+      comissaoPct: Number.isFinite(com) && com > 0 ? Math.round((com <= 1 ? com * 100 : com) * 10) / 10 : null, inicio: seg(n.periodStartTime), fim: seg(n.periodEndTime) };
+  }).filter((x: CampanhaShopee) => x.nome && x.link);
 }

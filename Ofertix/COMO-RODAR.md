@@ -114,6 +114,18 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.9 (layout e funções)
+
+- **Nicho e curadoria** em abas (Curadoria, Rotina da semana, Mensagens) com um resumo do que entra nos grupos no topo.
+- **Cupons e campanhas:** campanhas da própria Shopee (Open API, `shopeeOfferV2`) aparecem sozinhas, com o link de
+  afiliado da conta, "Copiar link" e "Mandar nos grupos". Cupom ganhou "Válido até": vencido não entra no texto.
+- **Comissões:** a Shopee é lida 2 minutos depois de o servidor subir e a cada 3 horas (antes só a cada 6 horas, e cada
+  atualização zerava a contagem). O relatório é pedido em janelas de 7 dias. A página mostra quando a Shopee foi lida e
+  o erro da última leitura, em vez de pedir para conectar de novo.
+- **Instagram:** a conta conectada fica num quadro próprio, com Conectar de novo e Desconectar.
+- **Foto das ofertas:** a página do produto é lida como navegador comum (o Mercado Livre manda uma página sem foto para
+  robôs) e aceita `og:image:secure_url` e `twitter:image`.
+
 ## Atualizar para a 6.8.1 (espelhamento: foto, limite do dia, assinatura)
 
 - Foto da cópia, nesta ordem: a foto original (do webhook, se vier em base64, ou baixada pela Evolution API), a foto do

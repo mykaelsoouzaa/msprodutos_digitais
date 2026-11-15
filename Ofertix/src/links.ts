@@ -150,7 +150,8 @@ const desescapar = (s: string) => s.replace(/&amp;/g, '&').replace(/&quot;/g, '"
 /** Dados básicos pela página (Open Graph). Funciona para a maioria das lojas; a Shopee usa a API. */
 export function lerPagina(html: string): DadosPagina {
   const titulo = desescapar(meta(html, 'og:title') || (html.match(/<title>([^<]*)<\/title>/i)?.[1] ?? '')).slice(0, 200);
-  const imagem = desescapar(meta(html, 'og:image'));
+  let imagem = desescapar(meta(html, 'og:image:secure_url') || meta(html, 'og:image') || meta(html, 'twitter:image'));
+  if (imagem.startsWith('//')) imagem = 'https:' + imagem;
   const precoTxt = meta(html, 'product:price:amount') || meta(html, 'og:price:amount');
   const preco = precoTxt ? Math.round(Number(precoTxt.replace(',', '.')) * 100) : null;
   return { titulo, imagem, preco: Number.isFinite(preco) ? preco : null };
@@ -158,7 +159,8 @@ export function lerPagina(html: string): DadosPagina {
 
 export async function buscarPagina(url: string, f: typeof fetch = fetch): Promise<DadosPagina> {
   try {
-    const r = await f(url, { headers: { 'user-agent': 'Mozilla/5.0 (compatible; Ofertix/1.0)', 'accept-language': 'pt-BR' }, signal: AbortSignal.timeout(8000) });
+    // Agente de navegador comum: algumas lojas (Mercado Livre) mandam uma página de verificação, sem a foto, para robôs.
+    const r = await f(url, { headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36', accept: 'text/html,application/xhtml+xml', 'accept-language': 'pt-BR,pt;q=0.9' }, signal: AbortSignal.timeout(10000) });
     if (!r.ok) return { titulo: '', imagem: '', preco: null };
     return lerPagina((await r.text()).slice(0, 400_000));
   } catch {
