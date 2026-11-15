@@ -172,3 +172,25 @@ test('apps novos: conexão pelo Login do Facebook para Empresas (Página + Insta
   assert.ok(chamadas.some((c) => c.url === 'https://graph.facebook.com/v22.0/pg1/messages' && c.corpo?.recipient?.comment_id === 'c1'));
   assert.ok(chamadas.some((c) => c.url === 'https://graph.facebook.com/v22.0/c1/replies'));
 });
+
+test('login do Facebook: Página no portfólio empresarial também vale; sem Página, o aviso diz o que veio', async () => {
+  const db = abrirBanco(':memory:');
+  let comPortfolio = true;
+  const f = (async (u: string) => {
+    const url = String(u);
+    if (url.includes('/oauth/access_token')) return Response.json({ access_token: 'tk' });
+    if (url.includes('/me/accounts')) return Response.json({ data: [{ id: 'p0', name: 'Pessoal', access_token: 'x' }] });
+    if (url.includes('/me/businesses')) return Response.json({ data: comPortfolio ? [{ id: 'b1', name: 'MS' }] : [] });
+    if (url.includes('/b1/owned_pages')) return Response.json({ data: [{ id: 'p1', name: 'Ofertix', access_token: 'tp', connected_instagram_account: { id: '1789', username: 'ofertix.cloud' } }] });
+    if (url.includes('/b1/client_pages')) return Response.json({ data: [] });
+    return Response.json({ success: true });
+  }) as any;
+  const ctx = { db, wpp: new WhatsAppSimulado(), f, urlPublica: 'https://ofertix.teste' };
+  const conta = contaPorEmail(db, 'ana@exemplo.com', 'Ana').id;
+  const cfg: ig.CfgInsta = { appId: '1', appSecret: SEGREDO, verifyToken: 'v', urlPublica: 'https://ofertix.teste', segredo: 'x'.repeat(32), configId: '9' };
+  const est = () => new URL(ig.linkConectar(cfg, conta)).searchParams.get('state')!;
+  assert.equal((await ig.concluirConexao(ctx, cfg, 'c', est())).usuario, 'ofertix.cloud');
+  assert.equal((db.prepare('SELECT page_id FROM insta_contas').get() as any).page_id, 'p1');
+  comPortfolio = false;
+  await assert.rejects(ig.concluirConexao(ctx, cfg, 'c', est()), /liberou a Página "Pessoal" \(sem Instagram ligado\)/);
+});

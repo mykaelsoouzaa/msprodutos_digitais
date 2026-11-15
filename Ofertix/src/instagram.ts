@@ -95,9 +95,31 @@ async function conectarPeloFacebook(c: Ctx, cfg: CfgInsta, conta: number, codigo
   const q = (o: Record<string, string>) => new URLSearchParams(o).toString();
   const curto = await jsonDe(await c.f(`${FB}/oauth/access_token?${q({ client_id: cfg.appId, client_secret: cfg.appSecret, redirect_uri: retornoUrl(cfg), code: String(codigo ?? '').replace(/#_$/, '') })}`), 'código');
   const longo = await jsonDe(await c.f(`${FB}/oauth/access_token?${q({ grant_type: 'fb_exchange_token', client_id: cfg.appId, client_secret: cfg.appSecret, fb_exchange_token: String(curto.access_token) })}`), 'token');
-  const pags = await jsonDe(await c.f(`${FB}/me/accounts?${q({ fields: 'id,name,access_token,instagram_business_account{id,username}', limit: '100', access_token: String(longo.access_token) })}`), 'páginas');
-  const pag = (Array.isArray(pags.data) ? pags.data : []).find((p: any) => p.instagram_business_account?.id && p.access_token);
-  if (!pag) throw new ErroUso('Nenhuma Página do Facebook com Instagram profissional foi autorizada. Ligue o Instagram a uma Página (no Instagram: Editar perfil → Página) e conecte de novo, marcando a Página e o Instagram.');
+  const tok = String(longo.access_token);
+  const CAMPOS = 'id,name,access_token,instagram_business_account{id,username},connected_instagram_account{id,username}';
+  // Páginas do perfil e, se não tiver nenhuma com Instagram, as dos portfólios empresariais que a pessoa autorizou.
+  const vistas: any[] = [];
+  const juntar = (j: any) => { for (const p of Array.isArray(j?.data) ? j.data : []) if (!vistas.some((v) => v.id === p.id)) vistas.push(p); };
+  juntar(await jsonDe(await c.f(`${FB}/me/accounts?${q({ fields: CAMPOS, limit: '100', access_token: tok })}`), 'páginas'));
+  const insta = (p: any) => p.instagram_business_account ?? p.connected_instagram_account;
+  if (!vistas.some((p) => insta(p)?.id && p.access_token)) {
+    try {
+      const bs = await jsonDe(await c.f(`${FB}/me/businesses?${q({ fields: 'id,name', limit: '50', access_token: tok })}`), 'portfólios');
+      for (const b of (Array.isArray(bs.data) ? bs.data : []).slice(0, 10)) {
+        for (const tipo of ['owned_pages', 'client_pages']) {
+          try { juntar(await jsonDe(await c.f(`${FB}/${b.id}/${tipo}?${q({ fields: CAMPOS, limit: '100', access_token: tok })}`), 'páginas do portfólio')); } catch { /* sem acesso */ }
+        }
+      }
+    } catch { /* sem portfólio */ }
+  }
+  let pag = vistas.find((p) => insta(p)?.id && p.access_token);
+  if (pag && !pag.instagram_business_account) pag = { ...pag, instagram_business_account: pag.connected_instagram_account };
+  if (!pag) {
+    const visto = vistas.length
+      ? `O Facebook liberou ${vistas.length === 1 ? 'a Página' : 'as Páginas'} ${vistas.map((p) => `"${p.name}"${insta(p)?.id ? ' (com Instagram, mas sem acesso de administrador)' : ' (sem Instagram ligado)'}`).join(', ')}.`
+      : 'O Facebook não liberou nenhuma Página.';
+    throw new ErroUso(`${visto} Ligue o Instagram profissional a uma Página (no Instagram: Editar perfil → Página) e conecte de novo, marcando a Página e o Instagram em "Editar acesso".`);
+  }
   const ig = pag.instagram_business_account;
   let erro = '';
   try { await jsonDe(await c.f(`${FB}/${pag.id}/subscribed_apps?${q({ subscribed_fields: 'feed,messages', access_token: pag.access_token })}`, { method: 'POST' }), 'webhook'); }
