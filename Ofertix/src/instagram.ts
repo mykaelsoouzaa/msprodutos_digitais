@@ -122,7 +122,7 @@ async function conectarPeloFacebook(c: Ctx, cfg: CfgInsta, conta: number, codigo
   }
   const ig = pag.instagram_business_account;
   let erro = '';
-  try { await jsonDe(await c.f(`${FB}/${pag.id}/subscribed_apps?${q({ subscribed_fields: 'feed,messages', access_token: pag.access_token })}`, { method: 'POST' }), 'webhook'); }
+  try { await jsonDe(await c.f(`${FB}/${pag.id}/subscribed_apps?${q({ subscribed_fields: 'feed', access_token: pag.access_token })}`, { method: 'POST' }), 'webhook'); }
   catch (e) { erro = (e as Error).message; }
   const agora = agoraDe(c);
   c.db.prepare(`INSERT INTO insta_contas (conta_id, ig_id, usuario, token, token_em, conectado_em, erro, modo, page_id) VALUES (?, ?, ?, ?, ?, ?, ?, 'fb', ?)
