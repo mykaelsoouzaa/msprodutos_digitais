@@ -1425,7 +1425,12 @@ async function telaInstagram() {
     </div>
     ${!con ? `<section class="cartao secao-form" style="margin-bottom:16px"><h2>Conectar o Instagram</h2>
       <p>O perfil precisa ser <b>profissional</b> (Comercial ou Criador de conteúdo) e estar ligado a uma <b>Página do Facebook</b>. Numa aba nova, você entra com o Facebook, marca a Página e o Instagram e autoriza o Ofertix a ler os comentários e responder no direct. O Ofertix nunca vê a sua senha.</p>
-      <div style="display:flex;justify-content:flex-end"><button class="botao" id="ig-conectar">${ico('insta', 16)}Conectar Instagram</button></div></section>` : ''}
+      <div style="display:flex;justify-content:flex-end"><button class="botao" id="ig-conectar">${ico('insta', 16)}Conectar Instagram</button></div></section>`
+    : `<section class="cartao secao-form" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div class="miniatura">${ico('insta', 18)}</div>
+        <div style="flex:1;min-width:200px"><h2 style="margin:0">Conta conectada: @${esc(con.usuario)}</h2><p style="margin:2px 0 0">Conectada ${quandoTxt(con.desde)}. Se mudar as permissões na Meta ou aparecer algum aviso, conecte de novo.</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="botao sec" type="button" id="ig-conectar">${ico('sync', 16)}Conectar de novo</button><button class="botao sec" type="button" id="ig-sair">Desconectar</button></div>
+      </div></section>`}
     ${novo ? `<form class="cartao secao-form" id="form-ig" style="margin-bottom:16px"><h2>${ed ? 'Editar palavra-chave' : 'Nova palavra-chave'}</h2>
       <div class="form-grade">
         <div class="campo"><label for="ig-nome">Nome (só para você)</label><input id="ig-nome" maxlength="60" value="${esc(ed?.nome || 'EU QUERO · teste grátis')}"></div>
@@ -1445,7 +1450,6 @@ async function telaInstagram() {
           <label class="inter" title="Ligada"><input type="checkbox" data-ig-ativo="${x.id}" ${x.ativo ? 'checked' : ''} aria-label="Ligada"><span></span></label>
           <button class="botao sec peq" data-ig-editar="${x.id}" aria-label="Editar">${ico('editar', 14)}</button><button class="botao sec peq" data-ig-apagar="${x.id}" aria-label="Apagar">${ico('lixo', 14)}</button></div>`).join('')
           : `<div class="vazio">${ico('insta', 30)}<h3>Nenhuma palavra-chave</h3>${con ? 'Crie a primeira: quem comentar recebe o link no direct.' : 'Conecte o Instagram para começar.'}</div>`}</div>
-        ${con ? `<p class="ajuda" style="margin-top:12px">Conectado desde ${quandoTxt(con.desde)} · <a href="#" id="ig-sair">Desconectar</a></p>` : ''}
       </section>
       <section class="cartao bloco"><h2>Testar um comentário</h2><p class="sub">Escreva um comentário e veja o que a pessoa recebe.</p>
         <div class="campo"><input id="ig-teste" value="Eu quero!! 😍"></div>
@@ -1465,7 +1469,7 @@ async function telaInstagram() {
     aviso('Termine a conexão na aba do Instagram e depois toque em Atualizar');
   });
   if ($('#ig-nova')) $('#ig-nova').onclick = () => { E.novoIg = true; E.editIg = null; telaInstagram(); };
-  if ($('#ig-sair')) $('#ig-sair').onclick = tentar(async (e) => { e.preventDefault(); if (!confirm('Desconectar o Instagram? As palavras-chave param de responder.')) return; await api('instagram/conexao', { method: 'DELETE' }); telaInstagram(); });
+  if ($('#ig-sair')) $('#ig-sair').onclick = tentar(async () => { if (!confirm('Desconectar o Instagram? As palavras-chave param de responder.')) return; await api('instagram/conexao', { method: 'DELETE' }); telaInstagram(); });
   $('#ig-atualizar').onclick = () => telaInstagram();
   if ($('#form-ig')) {
     $('#form-ig').scrollIntoView({ block: 'start', behavior: 'smooth' });
