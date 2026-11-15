@@ -7,6 +7,7 @@ import { CATEGORIAS, classificar, colecaoDoDia, motivoRecusa } from './nicho.ts'
 import { pausada } from './extras.ts';
 import { expandirVariacoes, reais } from './mensagem.ts';
 import { comAvisoAmazon } from './regras.ts';
+import { aceitaOferta, temaDoGrupo } from './v10.ts';
 
 const DIA = 86_400_000;
 const t = (c: Ctx) => (c.agora ?? Date.now)();
@@ -55,26 +56,78 @@ function buscaDemo(termo: string): ItemBusca[] {
   return achados.length ? achados : todos;
 }
 
-export async function buscarShopee(c: Ctx, conta: number, termo: string, ordem = 'vendidos', pagina = 1) {
+/** Palavra usada quando a busca é só por categoria (a Open API busca por palavra). */
+export const PALAVRAS_CATEGORIA: Record<string, string[]> = {
+  beleza: ['maquiagem', 'skincare', 'perfume', 'cabelo', 'unha', 'sérum'],
+  moda: ['vestido', 'blusa feminina', 'bolsa feminina', 'sandália', 'bijuteria', 'conjunto feminino'],
+  casa: ['decoração', 'jogo de cama', 'tapete', 'toalha', 'limpeza casa', 'luminária'],
+  cozinha: ['cozinha', 'panela', 'potes', 'air fryer', 'utensílios', 'garrafa térmica'],
+  organizacao: ['organizador', 'caixa organizadora', 'cabide', 'prateleira', 'porta treco', 'sapateira'],
+  infantil: ['bebê', 'infantil', 'brinquedo', 'fralda', 'roupa bebê', 'maternidade'],
+  eletronicos: ['fone bluetooth', 'carregador', 'smartwatch', 'caixa de som', 'ring light', 'power bank'],
+};
+
+export interface FiltrosBusca { categoria?: string; precoMax?: number; grupo?: number }
+
+/**
+ * Busca na Shopee (6.6): até 50 por página, por palavra e/ou categoria, com preço máximo e "para o grupo"
+ * (usa o tema do grupo: categorias e preço máximo). Produtos que já estão na vitrine não aparecem.
+ * Como os filtros tiram itens, lê até 3 páginas da Shopee para mostrar uma lista cheia.
+ */
+export async function buscarShopee(c: Ctx, conta: number, termo: string, ordem = 'vendidos', pagina = 1, filtros: FiltrosBusca = {}) {
   termo = String(termo ?? '').trim();
-  if (termo.length < 2) throw new ErroUso('Escreva o que você procura (ex.: organizador, sérum, air fryer)');
+  let categoria = CATEGORIAS.some((x) => x.id === filtros.categoria) ? String(filtros.categoria) : '';
+  let precoMax = Math.max(0, Math.round(Number(filtros.precoMax) || 0));
+  let tema: any = null;
+  if (filtros.grupo) {
+    tema = c.db.prepare('SELECT id, nome, categorias, preco_max FROM grupos WHERE id = ? AND conta_id = ? AND enviar = 1').get(filtros.grupo, conta);
+    if (!tema) throw new ErroUso('Grupo de envio não encontrado');
+    const t = temaDoGrupo(tema);
+    if (!categoria && t.categorias.length === 1) categoria = t.categorias[0]!;
+    if (t.precoMax && (!precoMax || t.precoMax < precoMax)) precoMax = t.precoMax;
+  }
+  // Sem palavra: usa as palavras da categoria (ou do tema do grupo), uma por leitura, para variar os produtos.
+  const catBase = categoria || (tema ? temaDoGrupo(tema).categorias[0] ?? '' : '');
+  const palavras = termo ? [termo] : catBase ? PALAVRAS_CATEGORIA[catBase] ?? [] : precoMax ? ['achadinhos', 'utilidades', 'presente'] : [];
+  const palavra = palavras[0] ?? '';
+  if (palavra.length < 2) throw new ErroUso('Escreva o que você procura ou escolha uma categoria (ex.: organizador, sérum, air fryer)');
   const cred = credDe(c.db, conta);
-  let r: { itens: ItemBusca[]; temMais: boolean };
-  if (cred.appId && cred.segredo) r = await buscarProdutosShopee(cred, termo, ordem, pagina, 20, c.f);
-  else if (c.demo) {
-    const itens = buscaDemo(termo);
-    if (ordem === 'comissao') itens.sort((a, b) => (b.comissaoPct ?? 0) - (a.comissaoPct ?? 0));
-    else if (ordem === 'preco') itens.sort((a, b) => (a.precoPor ?? 0) - (b.precoPor ?? 0));
-    else if (ordem === 'vendidos') itens.sort((a, b) => (b.vendas ?? 0) - (a.vendas ?? 0));
-    r = { itens, temMais: false };
-  } else throw new ErroUso('Cadastre o AppID e a Senha da Shopee em Configurações para buscar produtos');
+  if (!(cred.appId && cred.segredo) && !c.demo) throw new ErroUso('Cadastre o AppID e a Senha da Shopee em Conectar plataformas para buscar produtos');
   const regras = nichoDa(c.db, conta).regras;
-  const itens = r.itens.map((x) => {
-    const ja = c.db.prepare('SELECT id, vitrine FROM ofertas WHERE conta_id = ? AND url_original = ?').get(conta, x.link) as any;
-    const categoria = classificar(x.titulo);
-    return { ...x, categoria, motivo: motivoRecusa(regras, { titulo: x.titulo, categoria, precoPor: x.precoPor, nota: x.nota, vendas: x.vendas }), ja: ja ? { id: Number(ja.id), vitrine: !!ja.vitrine } : null };
-  });
-  return { itens, temMais: r.temMais, pagina };
+  const passa = (x: any) => {
+    if (x.ja?.vitrine) return false; // já está na vitrine: não aparece
+    if (categoria && termo === '' && x.categoria !== categoria && x.categoria !== 'outros') return false;
+    if (categoria && termo !== '' && x.categoria !== categoria) return false;
+    if (precoMax && !(x.precoPor && x.precoPor <= precoMax)) return false;
+    if (tema && !aceitaOferta(tema, { categoria: x.categoria, preco_por: x.precoPor })) return false;
+    return true;
+  };
+  const itens: any[] = [];
+  let pag = Math.max(1, Math.floor(pagina)), temMais = false, lidas = 0;
+  do {
+    // Com uma palavra só, avança as páginas da Shopee; com várias (categoria), cada leitura usa a próxima palavra.
+    const n = palavras.length;
+    const pal = palavras[(pag - 1) % n]!, pagShopee = Math.floor((pag - 1) / n) + 1;
+    let r: { itens: ItemBusca[]; temMais: boolean };
+    if (cred.appId && cred.segredo) r = await buscarProdutosShopee(cred, pal, ordem, pagShopee, 50, c.f);
+    else {
+      const lista = buscaDemo(pal);
+      if (ordem === 'comissao') lista.sort((a, b) => (b.comissaoPct ?? 0) - (a.comissaoPct ?? 0));
+      else if (ordem === 'preco') lista.sort((a, b) => (a.precoPor ?? 0) - (b.precoPor ?? 0));
+      else if (ordem === 'vendidos') lista.sort((a, b) => (b.vendas ?? 0) - (a.vendas ?? 0));
+      r = { itens: lista, temMais: false };
+    }
+    for (const x of r.itens) {
+      const ja = c.db.prepare('SELECT id, vitrine FROM ofertas WHERE conta_id = ? AND url_original = ?').get(conta, x.link) as any;
+      const cat = classificar(x.titulo);
+      const item = { ...x, categoria: cat, motivo: motivoRecusa(regras, { titulo: x.titulo, categoria: cat, precoPor: x.precoPor, nota: x.nota, vendas: x.vendas }), ja: ja ? { id: Number(ja.id), vitrine: !!ja.vitrine } : null };
+      if (passa(item) && !itens.some((y) => y.link === item.link)) itens.push(item);
+    }
+    temMais = r.temMais || (n > 1 && pag < n * 3); lidas++;
+    if (itens.length >= 30 || !temMais || lidas >= 3) break;
+    pag++;
+  } while (true);
+  return { itens, temMais, pagina: pag, palavra, categoria, precoMax, grupo: tema ? { id: Number(tema.id), nome: tema.nome } : null };
 }
 
 /** Item da busca vira oferta (com link de afiliado). O link precisa ser da Shopee. */
@@ -84,7 +137,7 @@ export async function adicionarDaBusca(c: Ctx, conta: number, item: any, vitrine
   let afiliado = String(item?.linkAfiliado ?? '');
   if (!/^https:\/\/(s\.shopee\.com\.br|shope\.ee)\//.test(afiliado)) {
     const cred = credDe(c.db, conta);
-    if (!cred.appId || !cred.segredo) throw new ErroUso('Cadastre o AppID e a Senha da Shopee em Configurações');
+    if (!cred.appId || !cred.segredo) throw new ErroUso('Cadastre o AppID e a Senha da Shopee em Conectar plataformas');
     afiliado = await linkCurtoShopee(cred, link, 'ofertix', c.f);
   }
   const cent = (v: unknown) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v)) : null);

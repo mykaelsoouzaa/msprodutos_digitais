@@ -20,7 +20,7 @@ export function primeirosPassos(db: DB, conta: number) {
   const passos = [
     { id: 'numero', texto: 'Conectar um número de WhatsApp', link: '#whatsapp', feito: n(db, "SELECT COUNT(*) AS n FROM instancias WHERE conta_id = ? AND status = 'conectado'", conta) > 0 },
     { id: 'grupos', texto: 'Ligar o envio em pelo menos um grupo', link: '#grupos', feito: n(db, 'SELECT COUNT(*) AS n FROM grupos WHERE conta_id = ? AND enviar = 1', conta) > 0 },
-    { id: 'afiliado', texto: 'Cadastrar seu link de afiliado (Shopee, Amazon ou Mercado Livre)', link: '#config', feito: !!(cfg.shopee_app_id || cfg.amazon_tag || cfg.ml_modelo) },
+    { id: 'afiliado', texto: 'Cadastrar seu link de afiliado (Shopee, Amazon ou Mercado Livre)', link: '#plataformas', feito: !!(cfg.shopee_app_id || cfg.amazon_tag || cfg.ml_modelo) },
     { id: 'nicho', texto: 'Escolher o nicho e a curadoria', link: '#nicho', feito: !!String(cfg.nicho ?? '').trim() },
     { id: 'entrada', texto: 'Criar o link de entrada para a bio', link: '#entradas', feito: n(db, 'SELECT COUNT(*) AS n FROM entradas WHERE conta_id = ?', conta) > 0 },
     { id: 'envio', texto: 'Publicar a primeira oferta', link: '#ofertas', feito: n(db, "SELECT COUNT(*) AS n FROM envios WHERE conta_id = ? AND status = 'enviado'", conta) > 0 },
@@ -243,8 +243,9 @@ export function textoResumoSemana(c: Ctx, conta: number): string {
   const env = n(db, "SELECT COUNT(*) AS n FROM envios WHERE conta_id = ? AND status = 'enviado' AND enviado_em >= ? AND enviado_em < ?", conta, de, ate);
   const cli = n(db, 'SELECT COUNT(*) AS n FROM cliques WHERE conta_id = ? AND em >= ? AND em < ?', conta, de, ate);
   const com = n(db, "SELECT COALESCE(SUM(comissao_centavos),0) AS n FROM comissoes WHERE conta_id = ? AND status <> 'cancelado' AND em >= ? AND em < ?", conta, de, ate);
-  const ent = n(db, "SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'entrou' AND em >= ? AND em < ?", conta, de, ate);
-  const sai = n(db, "SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'saiu' AND em >= ? AND em < ?", conta, de, ate);
+  const SO = 'grupo_id NOT IN (SELECT id FROM grupos WHERE monitorar = 1 UNION SELECT origem_grupo_id FROM espelhos)';
+  const ent = n(db, `SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'entrou' AND em >= ? AND em < ? AND ${SO}`, conta, de, ate);
+  const sai = n(db, `SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'saiu' AND em >= ? AND em < ? AND ${SO}`, conta, de, ate);
   const top = db.prepare(`SELECT o.titulo, COUNT(k.id) AS n FROM cliques k JOIN links l ON l.codigo = k.codigo JOIN ofertas o ON o.id = l.oferta_id
     WHERE k.conta_id = ? AND k.em >= ? AND k.em < ? GROUP BY o.id ORDER BY n DESC LIMIT 3`).all(conta, de, ate) as any[];
   const h = melhoresHorarios(c, conta).sugestao;
@@ -286,6 +287,8 @@ export function vitrinePublica(c: Ctx, slug: string) {
   const lista = ofertas.map((o) => {
     // Amazon: link direto, sem preço e sem foto (regras do Programa de Associados, src/regras.ts).
     if (o.plataforma === 'amazon') return { titulo: o.titulo, imagem: 'emoji:🛒', preco_de: null, preco_por: null, categoria: o.categoria, link: o.url_afiliado };
+    // TikTok Shop: só o link oficial do app leva a comissão; sai direto, sem /r/.
+    if (o.plataforma === 'tiktok') return { titulo: o.titulo, imagem: o.imagem, preco_de: o.preco_de, preco_por: o.preco_por, categoria: o.categoria, link: o.url_afiliado };
     let l = c.db.prepare("SELECT codigo FROM links WHERE conta_id = ? AND oferta_id = ? AND grupo_id IS NULL AND agendamento_id IS NULL AND destino = ?").get(e.conta_id, o.id, o.url_afiliado) as any;
     if (!l) {
       l = { codigo: novoCodigo() };

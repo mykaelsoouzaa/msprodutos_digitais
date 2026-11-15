@@ -114,7 +114,7 @@ test('espelhamento: copia texto, imagem e cupom, troca o link, tira convite e as
   assert.match(ag.texto, /De ~R\$ 199~ por \*R\$ 99\*/);
   assert.match(ag.texto, /https:\/\/produto\.mercadolivre\.com\.br\/MLB-123-fone\?matt_tool=11223344&matt_word=ana/);
   assert.doesNotMatch(ag.texto, /99887766|matt_word=ze|tracking_id|chat\.whatsapp|zezinho|bit\.ly/, 'nada do afiliado da origem fica no link');
-  assert.match(ag.texto, /Mais no nosso site:/, 'link que não é de loja sai, a frase fica');
+  assert.doesNotMatch(ag.texto, /Mais no nosso site/, 'link que não é de loja sai; a chamada para ele ("…:") sai junto');
   assert.match(ag.imagem, /^https:\/\/ofertix\.teste\/m\/[\w-]{16}$/);
   const midia = v10.lerMidia(e.db, ag.imagem.split('/m/')[1]);
   assert.equal(midia!.tipo, 'image/png');
@@ -127,13 +127,26 @@ test('espelhamento: copia texto, imagem e cupom, troca o link, tira convite e as
   assert.equal(enviados.length, 3);
   assert.match(enviados[0]!.texto, /https:\/\/ofertix\.teste\/r\/\w+/);
   assert.equal(enviados[0]!.imagem, ag.imagem);
+  // Mensagem só de texto com prévia do link: a cópia sai com a foto (a miniatura da prévia, se a página não tiver foto).
+  const so = ['AIR FRYER POR MENOS DE 150 REAIS!!!', '', 'por R$ 145 à vista', '', '👉COMPRE AGORA: https://produto.mercadolivre.com.br/MLB-777-air-fryer?matt_word=ze', '',
+    '🛍️ Convide seus amigos para o grupo: https://promodeamiga.com.br/grupos?r=1', '', '#Anúncio'].join('\n');
+  assert.equal(await s.eventoWhatsApp(e.ctx, p.chave.chave, p.chave.token_webhook, evento(p.jidOrigem, { extendedTextMessage: { text: so, jpegThumbnail: Buffer.from('jpeg-mini').toString('base64') } })), 1);
+  const ag2 = e.db.prepare("SELECT * FROM agendamentos WHERE origem = 'espelho' ORDER BY id DESC").get() as any;
+  assert.match(ag2.imagem, /^https:\/\//, 'saiu com imagem');
+  assert.doesNotMatch(ag2.texto, /Convide seus amigos|promodeamiga/);
+  assert.match(ag2.texto, /COMPRE AGORA: https:\/\/produto\.mercadolivre\.com\.br\/MLB-777-air-fryer\?matt_tool=11223344&matt_word=ana/);
   // A mesma mensagem de novo: ignorada como repetida.
   assert.equal(await s.eventoWhatsApp(e.ctx, p.chave.chave, p.chave.token_webhook, evento(p.jidOrigem, { conversation: texto })), 0);
   const reg = v10.registroEspelhos(e.db, e.conta) as any[];
   assert.equal(reg[0].status, 'ignorada');
   assert.match(reg[0].motivo, /Repetida/);
   assert.equal(reg[1].status, 'agendada');
-  assert.equal((e.db.prepare('SELECT copiadas FROM espelhos WHERE id = ?').get(id) as any).copiadas, 1);
+  assert.equal((e.db.prepare('SELECT copiadas FROM espelhos WHERE id = ?').get(id) as any).copiadas, 2);
+  // Outro grupo manda o mesmo produto com outro texto e outro link: não sai de novo.
+  assert.equal(await s.eventoWhatsApp(e.ctx, p.chave.chave, p.chave.token_webhook, evento(p.jidOrigem, { conversation: 'CORRE! Fone com estojo baratinho https://www.mercadolivre.com.br/fone-estojo/MLB-123?matt_word=outra' })), 0);
+  assert.match((v10.registroEspelhos(e.db, e.conta) as any[])[0].motivo, /mesmo produto/);
+  assert.equal(v10.chaveProduto('https://shopee.com.br/Serum-i.123.456?x=1'), 'shopee:123.456');
+  assert.equal(v10.chaveProduto('https://www.amazon.com.br/Kindle/dp/b0abc12345?tag=x'), 'amazon:B0ABC12345');
 });
 
 test('regras da Amazon: link direto, sem preço, sem foto e com o aviso de associado (oferta, espelho, vitrine e lista)', async () => {
@@ -267,4 +280,30 @@ test('prévia do espelhamento e rotas da página Automação', async () => {
     v10.limparMidias(db, Date.now() + 4 * 86_400_000);
     assert.equal((await fetch(base + '/m/' + cod)).status, 404);
   } finally { srv.close(); }
+});
+
+test('6.8.1: assinatura @ sai, foto pela miniatura quando o download falha, mensagem temporária, limite do dia e todos os links contam clique', async () => {
+  const e = ambiente();
+  const p = await preparar(e);
+  v10.salvarEspelho(e.db, e.conta, { origem: p.origem, destino: 'todos', curadoria: false });
+  // A foto da mensagem não baixa; a página do produto não tem foto; sobra a miniatura que veio junto.
+  (e.wpp as any).midia = async () => { throw new Error('timeout'); };
+  e.ctx.f = (async () => new Response('<meta property="og:title" content="Shampoo Wella 1L">', { status: 200 })) as any;
+  const txt = ['🧴 Shampoo Wella 1L por R$ 109', 'Cupom: https://produto.mercadolivre.com.br/MLB-111-cupom', 'Compre: https://produto.mercadolivre.com.br/MLB-222-shampoo', '', 'Time @achadinhos.imperdiveis', 'contato: ze@exemplo.com'].join('\n');
+  const ev = evento(p.jidOrigem, { ephemeralMessage: { message: { imageMessage: { caption: txt, mimetype: 'image/jpeg', jpegThumbnail: Buffer.from('mini').toString('base64') } } } });
+  assert.equal(await s.eventoWhatsApp(e.ctx, p.chave.chave, p.chave.token_webhook, ev), 1);
+  const ag = e.db.prepare("SELECT * FROM agendamentos WHERE origem = 'espelho' ORDER BY id DESC").get() as any;
+  assert.doesNotMatch(ag.texto, /achadinhos\.imperdiveis/, 'assinatura de outro perfil sai');
+  assert.match(ag.texto, /ze@exemplo\.com/, 'e-mail não é assinatura');
+  assert.match(ag.imagem, /^https:\/\/ofertix\.teste\/m\//, 'foto pela miniatura');
+  assert.match((v10.registroEspelhos(e.db, e.conta) as any[])[0].motivo, /com a miniatura da mensagem/);
+  await esvaziarFila(e);
+  const enviados = e.wpp.enviados.filter((m) => /Shampoo/.test(m.texto));
+  assert.equal(enviados.length, 3);
+  assert.equal((enviados[0].texto.match(/ofertix\.teste\/r\//g) ?? []).length, 2, 'os dois links contam clique');
+  // Limite do dia: com o limite do plano Pro (800 por dia) usado, a cópia nem entra na fila.
+  const inst = e.db.prepare('SELECT id FROM instancias').get() as any;
+  for (let i = 0; i < 800; i++) e.db.prepare("INSERT INTO envios (conta_id, agendamento_id, instancia_id, grupo_id, enviar_em, status, enviado_em) VALUES (?, ?, ?, ?, ?, 'enviado', ?)").run(e.conta, ag.id, inst.id, p.envio[0], e.ctx.agora!(), e.ctx.agora!());
+  assert.equal(await s.eventoWhatsApp(e.ctx, p.chave.chave, p.chave.token_webhook, evento(p.jidOrigem, { conversation: 'Outra https://produto.mercadolivre.com.br/MLB-333-x' })), 0);
+  assert.match((v10.registroEspelhos(e.db, e.conta) as any[])[0].motivo, /Limite de envios de hoje atingido/);
 });

@@ -144,3 +144,36 @@ export const PACOTE_ACHADINHOS = {
   modelo: MODELOS.find((m) => m.id === 'achadinhos')!.texto,
   horarios: '09:00, 12:00, 15:00, 19:00, 21:00',
 };
+
+// ------------------------------------------------------------------ pacotes prontos (6.11)
+export interface Pacote { id: string; nome: string; emoji: string; descricao: string; nicho: Nicho; modelo: string; horarios: string }
+const modelo = (id: string) => MODELOS.find((m) => m.id === id)!.texto;
+const SEM = ['replica', 'similar', 'usado', 'falsificado'];
+const pacote = (id: string, nome: string, emoji: string, descricao: string, regras: Partial<Nicho['regras']>, colecoes: string[], mod: string, horarios: string): Pacote => ({
+  id, nome, emoji, descricao, modelo: modelo(mod), horarios,
+  nicho: limparNicho({ pacote: nome, regras: { categorias: [], incluir: [], excluir: SEM, precoMax: 0, notaMin: 0, vendasMin: 0, ...regras }, colecoes, rodape: RODAPE_PADRAO }),
+});
+//                                                                                                   dom seg ter qua qui sex sáb
+export const PACOTES: Pacote[] = [
+  { id: 'achadinhos', nome: PACOTE_ACHADINHOS.nicho.pacote, emoji: '🛍️', descricao: 'Casa, cozinha, organização, beleza e moda até R$ 50, com tom de amiga.', ...PACOTE_ACHADINHOS },
+  pacote('ate-50', 'Achados até R$ 50', '💸', 'Qualquer categoria até R$ 50, bem avaliado e vendido. Mensagem de urgência.',
+    { precoMax: 5000, notaMin: 4.5, vendasMin: 100 }, ['', 'casa', 'beleza', 'cozinha', 'moda', 'eletronicos', 'organizacao'], 'relampago', '09:00, 12:00, 15:00, 18:00, 21:00'),
+  pacote('ate-20', 'Tudo até R$ 20', '🪙', 'Utilidades baratinhas que vendem muito. Bom para grupo grande e de impulso.',
+    { precoMax: 2000, notaMin: 4.5, vendasMin: 200 }, ['', 'organizacao', 'beleza', 'cozinha', 'casa', 'moda', 'infantil'], 'relampago', '08:30, 12:30, 18:30, 21:00'),
+  pacote('casa-cozinha', 'Casa e cozinha', '🏠', 'Cozinha, organização e decoração até R$ 150, com tom de indicação.',
+    { categorias: ['casa', 'cozinha', 'organizacao'], precoMax: 15000, notaMin: 4.6, vendasMin: 50 }, ['', 'cozinha', 'organizacao', 'casa', 'cozinha', 'casa', 'organizacao'], 'vale-a-pena', '08:00, 11:30, 17:00, 20:00'),
+  pacote('beleza', 'Beleza e skincare', '💄', 'Skincare, maquiagem, cabelo e perfumes até R$ 120, só produto bem avaliado.',
+    { categorias: ['beleza'], precoMax: 12000, notaMin: 4.7, vendasMin: 100 }, ['', 'beleza', 'beleza', 'beleza', 'beleza', 'beleza', 'beleza'], 'achadinhos', '10:00, 13:00, 19:00, 21:30'),
+  pacote('moda', 'Moda e acessórios', '👗', 'Roupas, calçados, bolsas e bijuterias até R$ 100.',
+    { categorias: ['moda'], precoMax: 10000, notaMin: 4.5, vendasMin: 50 }, ['', 'moda', 'moda', 'moda', 'moda', 'moda', 'moda'], 'achadinhos', '11:00, 14:00, 20:00, 22:00'),
+  pacote('maes-bebes', 'Mães e bebês', '🍼', 'Enxoval, higiene, brinquedos e maternidade até R$ 150, com indicação.',
+    { categorias: ['infantil'], precoMax: 15000, notaMin: 4.7, vendasMin: 50 }, ['', 'infantil', 'infantil', 'infantil', 'infantil', 'infantil', 'infantil'], 'vale-a-pena', '09:00, 14:00, 20:30'),
+  pacote('tech', 'Tech e eletrônicos', '🎧', 'Fones, smartwatch, carregadores e acessórios até R$ 500, sem recondicionado.',
+    { categorias: ['eletronicos'], precoMax: 50000, notaMin: 4.6, vendasMin: 50, excluir: [...SEM, 'recondicionado', 'vitrine'] }, ['', '', '', '', '', '', ''], 'vale-a-pena', '12:00, 18:00, 21:00'),
+  pacote('masculino', 'Achadinhos masculinos', '🧔', 'Tech, ferramentas e moda masculina até R$ 150.',
+    { categorias: ['eletronicos', 'moda', 'casa', 'outros'], precoMax: 15000, notaMin: 4.5, vendasMin: 50,
+      incluir: ['masculino', 'homem', 'barba', 'barbeador', 'camisa', 'bermuda', 'cueca', 'tenis', 'relogio', 'carteira', 'fone', 'ferramenta', 'parafusadeira', 'chave', 'bone', 'perfume masculino', 'mochila'] },
+    ['', 'eletronicos', 'moda', 'casa', 'eletronicos', 'moda', ''], 'vale-a-pena', '07:30, 12:30, 19:00'),
+  pacote('black-friday', 'Black Friday', '🖤', 'Qualquer categoria, bem avaliada, com contagem regressiva e mais horários. Use na semana da Black Friday.',
+    { notaMin: 4.5, vendasMin: 100 }, ['', '', '', '', '', '', ''], 'black-friday', '08:00, 10:00, 12:00, 14:00, 17:00, 19:00, 21:00'),
+];

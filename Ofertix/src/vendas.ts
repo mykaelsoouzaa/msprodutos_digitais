@@ -277,7 +277,7 @@ export function paginaVendas(o: OpcoesVendas): string {
 <main>
 <section class="heroi"><div class="envolve">
   <div>
-    <span class="selo"><i></i>Para afiliados da Shopee, Mercado Livre, Amazon e Magalu</span>
+    <span class="selo"><i></i>Para afiliados da Shopee, Mercado Livre, Amazon e TikTok Shop</span>
     <h1>Seus grupos de ofertas no <span class="grad-txt">piloto automático</span>.</h1>
     <p class="lead">Cole o link do produto e o Ofertix troca pelo seu link de afiliado, monta a mensagem e publica em todos os seus grupos de WhatsApp, um de cada vez, com o intervalo certo para proteger o seu número.</p>
     <div class="ctas"><a class="botao pri" href="${teste()}">Testar 7 dias grátis</a><a class="botao sec" href="${demo}">Ver o painel por dentro</a></div>
@@ -451,7 +451,7 @@ export function paginaAnuncio(o: OpcoesVendas): string {
     <h1>${GRUPOS_CENA.length} grupos recebendo a mesma oferta. <span class="grad-txt">Sem você copiar e colar.</span></h1>
     <p class="lead">Cole o link do produto uma vez. O Ofertix troca pelo seu link de afiliado e publica em todos os seus grupos de WhatsApp, um de cada vez, no ritmo certo para proteger o seu número.</p>
     <div class="ctas"><a class="botao pri" href="${teste}">Quero testar 7 dias grátis</a><a class="botao sec" href="${demo}">Ver o painel por dentro</a></div>
-    <div class="miudo"><span>${ico('check', 16)}Sem cartão no teste</span><span>${ico('check', 16)}Shopee, Mercado Livre, Amazon e Magalu</span></div>
+    <div class="miudo"><span>${ico('check', 16)}Sem cartão no teste</span><span>${ico('check', 16)}Shopee, Mercado Livre, Amazon e TikTok Shop</span></div>
   </div>
   ${cenaHtml()}
 </div></section>

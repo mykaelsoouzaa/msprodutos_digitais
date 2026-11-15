@@ -109,7 +109,50 @@ h1,h2,h3{font-family:var(--fonte-titulo);letter-spacing:-.01em;margin:0}
 .linha .tit{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .linha .det{color:var(--mudo);font-size:12.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px}
 .loja{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.02em}
-.loja.shopee{background:#ee4d2d;color:#fff}.loja.mercadolivre{background:#ffe600;color:#2d3277}.loja.amazon{background:#232f3e;color:#ff9900}.loja.magalu{background:#0086ff;color:#fff}.loja.outra{background:var(--surface-2);color:var(--texto-2)}
+.item .cont.alerta{background:var(--vermelho-suave);color:var(--vermelho)}.item .cont.bom{background:var(--verde-suave);color:var(--verde)}
+.envios-hoje{margin:16px 0}.eh-linha{display:grid;grid-template-columns:minmax(160px,260px) 1fr;gap:14px;align-items:center;margin-top:10px}
+.eh-nome{display:flex;flex-direction:column;font-size:13px}.eh-nome span{color:var(--mudo);font-size:12.5px}
+.meta-barra.quase i{background:var(--amarelo)}.meta-barra.cheia i{background:var(--vermelho)}
+.alerta button.icone-btn{margin-left:4px}.alerta a{text-decoration:none;color:inherit;white-space:nowrap}
+.barra-filtros{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.busca-ag{min-width:240px;flex:0 1 320px}.n-aba{display:inline-block;min-width:18px;padding:0 6px;border-radius:9px;background:var(--surface-2);color:var(--texto-2);font-size:11px;font-weight:700;margin-left:4px}
+.chip.ativo .n-aba{background:rgba(255,255,255,.25);color:inherit}.n-aba.ruim{background:var(--vermelho-suave);color:var(--vermelho)}
+.tag-origem.sem-foto{background:var(--amarelo-suave);color:var(--amarelo)}
+.lotacao{display:inline-flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:90px}
+.lotacao i{display:block;width:90px;height:5px;border-radius:3px;background:linear-gradient(90deg,var(--verde) var(--p),var(--surface-2) var(--p))}
+.lotacao i.quase{background:linear-gradient(90deg,var(--amarelo) var(--p),var(--surface-2) var(--p))}.lotacao i.cheia{background:linear-gradient(90deg,var(--vermelho) var(--p),var(--surface-2) var(--p))}
+@media (max-width:640px){.eh-linha{grid-template-columns:1fr}.busca-ag{flex:1 1 100%}}
+.pacotes{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:12px}
+.pacote-card{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--borda);border-radius:14px;padding:14px}
+.pacote-card.em-uso{border-color:var(--verde);box-shadow:0 0 0 1px var(--verde) inset}
+.pc-topo{display:flex;gap:10px;align-items:center}.pc-topo .tit{font-weight:700}.pc-emoji{font-size:26px;line-height:1}
+.pc-desc{margin:0;font-size:13px;color:var(--texto-2);flex:1}
+.pc-chips{display:flex;flex-wrap:wrap;gap:4px}.pc-chips span{font-size:11.5px;background:var(--surface-2);color:var(--texto-2);border-radius:99px;padding:2px 8px}
+.pacote-card .botao{align-self:flex-start}
+.campanhas{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:12px}
+.campanha{display:flex;gap:12px;border:1px solid var(--borda);border-radius:14px;padding:12px;background:var(--surface)}
+.camp-img{flex:none;width:64px;height:64px;border-radius:12px;background:var(--laranja-suave);color:var(--laranja);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.camp-img img{width:100%;height:100%;object-fit:cover}
+.camp-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}.camp-txt .tit{font-weight:600;line-height:1.3}
+.camp-txt .det{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--mudo)}
+.camp-acoes{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+.nicho-topo{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+.nicho-resumo{padding:16px 18px}.nicho-resumo .tit-mini{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mudo);margin-bottom:8px}
+.abas{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--borda)}
+.aba{display:inline-flex;align-items:center;gap:8px;background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;font:inherit;font-weight:600;color:var(--mudo);cursor:pointer;margin-bottom:-1px}
+.aba:hover{color:var(--texto)}.aba.ativa{color:var(--verde);border-bottom-color:var(--verde)}
+.aba-oculta{display:none!important}
+.lojas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:6px}
+@media (min-width:1500px){.lojas{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:980px){.lojas{grid-template-columns:1fr}}
+.loja-col{border:1px solid var(--borda);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--surface)}
+.loja-cab{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.loja-cab .loja{font-size:13px;padding:4px 10px}
+.passos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px;font-size:13.5px;color:var(--texto-2);line-height:1.45}
+.passos a{color:var(--verde-forte)}
+.loja-nota{margin:0;font-size:12.5px;color:var(--mudo);line-height:1.45}
+.linha-campo{display:flex;gap:6px;flex-wrap:wrap}.linha-campo input{flex:1 1 200px;min-width:0}.linha-campo .botao{flex:1 0 auto}
+.loja.shopee{background:#ee4d2d;color:#fff}.loja.mercadolivre{background:#ffe600;color:#2d3277}.loja.amazon{background:#232f3e;color:#ff9900}.loja.magalu{background:#0086ff;color:#fff}.loja.tiktok{background:#111;color:#fff;box-shadow:inset 3px 0 #25f4ee,inset -3px 0 #fe2c55}.loja.outra{background:var(--surface-2);color:var(--texto-2)}
 .status{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .status::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .status.pendente{background:var(--amarelo-suave);color:var(--amarelo)}
@@ -117,6 +160,7 @@ h1,h2,h3{font-family:var(--fonte-titulo);letter-spacing:-.01em;margin:0}
 .status.enviado,.status.conectado,.status.concluido,.status.ativo{background:var(--verde-suave);color:var(--verde)}
 .status.erro,.status.desconectado,.status.cancelado{background:var(--vermelho-suave);color:var(--vermelho)}
 .status.conectando{background:var(--amarelo-suave);color:var(--amarelo)}
+.status.enviada{background:var(--verde-suave);color:var(--verde)}
 .status.agendada{background:var(--verde-suave);color:var(--verde)}
 .status.bloqueada{background:var(--vermelho-suave);color:var(--vermelho)}
 .status.ignorada{background:var(--surface-2);color:var(--texto-2)}
@@ -128,7 +172,13 @@ h1,h2,h3{font-family:var(--fonte-titulo);letter-spacing:-.01em;margin:0}
 .troca .mot{color:var(--texto-2)}
 .troca.erro{border-color:var(--vermelho)}
 .troca .tag-origem{align-self:flex-start}
+.cab-reg{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.atualizado{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--mudo)}
+.busca-shopee{display:flex;flex-direction:column;gap:12px;padding:18px;margin-bottom:18px}
+.busca-linha{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
 .tema-grupo{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
+tr.monit td{color:var(--mudo)}tr.monit td:first-child{opacity:.75}
+.tag-monit{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--surface-2);color:var(--texto-2);margin-left:6px;vertical-align:1px;text-transform:uppercase;letter-spacing:.03em}
 .tema-grupo small{color:var(--mudo)}
 /* Ofertas */
 .grade-ofertas{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
@@ -299,7 +349,7 @@ h1,h2,h3{font-family:var(--fonte-titulo);letter-spacing:-.01em;margin:0}
       <button class="icone-btn so-celular" id="abrir-menu" aria-label="Abrir menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
       <form class="colar" id="form-colar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
-        <input id="link-topo" placeholder="Cole o link do produto (Shopee, Mercado Livre, Amazon, Magalu)" autocomplete="off" aria-label="Link do produto">
+        <input id="link-topo" placeholder="Cole o link do produto (Shopee, Mercado Livre, Amazon, TikTok Shop)" autocomplete="off" aria-label="Link do produto">
         <button class="botao peq" type="submit">Gerar<span class="txt-btn"> oferta</span></button>
       </form>
       <button class="icone-btn" id="pausa" aria-label="Pausar todos os envios" title="Pausar todos os envios"></button>
@@ -324,7 +374,7 @@ const reais = (c) => c == null ? '—' : 'R$ ' + (c / 100).toLocaleString('pt-BR
 const reaisCurto = (c) => 'R$ ' + (c / 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 const num = (n) => Number(n || 0).toLocaleString('pt-BR');
 const pct = (de, por) => (de && por && de > por ? Math.round((1 - por / de) * 100) : 0);
-const LOJAS = { shopee: 'Shopee', mercadolivre: 'Mercado Livre', amazon: 'Amazon', magalu: 'Magalu', outra: 'Loja' };
+const LOJAS = { shopee: 'Shopee', mercadolivre: 'Mercado Livre', amazon: 'Amazon', magalu: 'Magalu', tiktok: 'TikTok Shop', outra: 'Loja' };
 const loja = (p) => `<span class="loja ${esc(p || 'outra')}">${esc(LOJAS[p] || 'Loja')}</span>`;
 const hora = (ms) => new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 const quandoTxt = (ms) => {
@@ -336,7 +386,7 @@ const quandoTxt = (ms) => {
 const foto = (img, cls = '') => img && /^https?:/.test(img)
   ? `<img src="${esc(img)}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('🛍️'))">`
   : esc(String(img || '').startsWith('emoji:') ? img.slice(6) : '🛍️');
-const STATUS = { pendente: 'Pendente', enviando: 'Enviando', enviado: 'Enviado', erro: 'Erro', cancelado: 'Cancelado', conectado: 'Conectado', conectando: 'Conectando', desconectado: 'Desconectado', concluido: 'Concluído', ativo: 'Ativo', agendada: 'Copiada', bloqueada: 'Bloqueada', ignorada: 'Ignorada' };
+const STATUS = { pendente: 'Pendente', enviando: 'Enviando', enviado: 'Enviado', erro: 'Erro', cancelado: 'Cancelado', conectado: 'Conectado', conectando: 'Conectando', desconectado: 'Desconectado', concluido: 'Concluído', ativo: 'Ativo', agendada: 'Copiada', bloqueada: 'Bloqueada', ignorada: 'Ignorada', enviada: 'Enviada' };
 const status = (s) => `<span class="status ${esc(s)}">${esc(STATUS[s] || s)}</span>`;
 
 function aviso(msg, erro = false) {
@@ -409,6 +459,7 @@ const I = {
   calendario: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
   espelho: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V5a2 2 0 0 1 2-2h11"/>',
   filtro: '<path d="M22 3H2l8 9.46V19l4 2v-8.54z"/>',
+  insta: '<rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/>',
   carrinho: '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/>',
 };
 const ico = (n, t = 18) => `<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg>`;
@@ -417,9 +468,9 @@ const ico = (n, t = 18) => `<svg width="${t}" height="${t}" viewBox="0 0 24 24" 
 const E = { eu: null, periodo: '7d', filtroOfertas: '', filtroCat: '', filtroStatus: '', grupoMembros: '' };
 const TELAS = [
   ['visao', 'Visão geral', 'Painel'], ['ofertas', 'Ofertas'], ['agendamentos', 'Agendamentos', null, 'agenda'],
-  ['grupos', 'Grupos de envio', 'Grupos'], ['entradas', 'Links de entrada', null, 'link'], ['automacao', 'Automação', null, 'espelho'], ['automaticas', 'Mensagens automáticas', null, 'raio'], ['membros', 'Membros'],
+  ['grupos', 'Grupos de envio', 'Grupos'], ['entradas', 'Links de entrada', null, 'link'], ['automacao', 'Automação', null, 'espelho'], ['instagram', 'Instagram', null, 'insta'], ['automaticas', 'Mensagens automáticas', null, 'raio'], ['membros', 'Membros'],
   ['comissoes', 'Comissões', 'Resultados'], ['cupons', 'Cupons'],
-  ['nicho', 'Nicho e curadoria', 'Conta', 'estrela'], ['whatsapp', 'WhatsApp'], ['config', 'Configurações'],
+  ['nicho', 'Nicho e curadoria', 'Conta', 'estrela'], ['whatsapp', 'WhatsApp'], ['plataformas', 'Conectar plataformas', null, 'link'], ['config', 'Configurações'],
 ];
 
 function montarMenu() {
@@ -427,7 +478,10 @@ function montarMenu() {
   let h = '';
   for (const [id, nome, grupo, icn] of TELAS) {
     if (grupo) h += `<div class="grupo-menu">${grupo}</div>`;
-    h += `<a class="item ${atual === id ? 'ativo' : ''}" href="#${id}">${ico(icn || id)}${nome}${id === 'agendamentos' && E.pendentes ? `<span class="cont">${E.pendentes}</span>` : ''}</a>`;
+    const cont = id === 'agendamentos' ? E.pendentes : id === 'automacao' ? E.cont?.espelhoBloqueadas : id === 'instagram' ? E.cont?.instagram : 0;
+    const tipoCont = id === 'automacao' ? ' alerta' : id === 'instagram' ? ' bom' : '';
+    const dicaCont = id === 'automacao' ? ' title="Mensagens bloqueadas hoje"' : id === 'instagram' ? ' title="Links enviados no direct hoje"' : '';
+    h += `<a class="item ${atual === id ? 'ativo' : ''}" href="#${id}">${ico(icn || id)}${nome}${cont ? `<span class="cont${tipoCont}"${dicaCont}>${cont}</span>` : ''}</a>`;
   }
   if (E.eu?.admin) h += `<div class="grupo-menu">MS Soluções</div><a class="item ${atual === 'admin' ? 'ativo' : ''}" href="#admin">${ico('admin')}Administração</a>`;
   $('#menu').innerHTML = h;
@@ -472,7 +526,7 @@ function graficoLinha(serie) {
   if (max - min < 10) { min -= 5; max += 5; }
   const folga = (max - min) * 0.15; min = Math.max(0, Math.floor(min - folga)); max = Math.ceil(max + folga);
   const x = (i) => m.l + (serie.length < 2 ? 0 : (i * (L - m.l - m.r)) / (serie.length - 1));
-  const y = (v) => m.t + (A - m.t - m.b) * (1 - (v - min) / (max - min));
+  const y = (v) => Math.min(A - m.b, Math.max(m.t, m.t + (A - m.t - m.b) * (1 - (v - min) / (max - min))));
   let g = '';
   for (let k = 0; k <= 4; k++) { const v = Math.round(min + ((max - min) * k) / 4); g += `<line x1="${m.l}" x2="${L - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grade)"/><text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end">${num(v)}</text>`; }
   const pts = serie.map((s, i) => `${x(i)},${y(s.total)}`).join(' ');
@@ -487,7 +541,7 @@ function graficoLinha(serie) {
   const ult = serie[serie.length - 1];
   g += `<circle cx="${x(serie.length - 1)}" cy="${y(ult.total)}" r="4" fill="var(--serie-a)" stroke="var(--surface)" stroke-width="2"/>`;
   g += `<circle class="marcador" r="5" fill="var(--serie-a)" stroke="var(--surface)" stroke-width="2" style="display:none"/>`;
-  return `<div class="grafico"><svg viewBox="0 0 ${L} ${A}" role="img" aria-label="Total de participantes por dia">${g}</svg><div class="dica"></div></div>`;
+  return `<div class="grafico"><svg viewBox="0 0 ${L} ${A}" role="img" aria-label="Total de participantes por dia" style="overflow:hidden">${g}</svg><div class="dica"></div></div>`;
 }
 
 /** Entradas para cima, saídas para baixo da linha zero. */
@@ -536,8 +590,8 @@ function ligarDicas(raiz) {
 const C = () => $('#conteudo');
 
 async function telaVisao() {
-  const [v, av, pp, res, hor, datas] = await Promise.all([api('visao?periodo=' + E.periodo), api('avisos').catch(() => []), api('primeiros-passos').catch(() => null),
-    api('resultados?periodo=' + E.periodo).catch(() => null), api('horarios').catch(() => null), api('datas').catch(() => [])]);
+  const [v, av, pp, res, hor, datas, cont] = await Promise.all([api('visao?periodo=' + E.periodo), api('avisos').catch(() => []), api('primeiros-passos').catch(() => null),
+    api('resultados?periodo=' + E.periodo).catch(() => null), api('horarios').catch(() => null), api('datas').catch(() => []), atualizarContadores(true)]);
   E.pendentes = v.pendentes; montarMenu();
   const maxO = Math.max(1, ...v.topOfertas.map((x) => x.cliques)), maxG = Math.max(1, ...v.topGrupos.map((x) => x.cliques));
   const porEnvio = (c, e) => (e ? (c / e).toFixed(1).replace('.', ',') + ' por envio' : '');
@@ -555,6 +609,7 @@ async function telaVisao() {
       ${kpi('ima', num(v.capturadas), 'Ofertas capturadas', 'l')}
       ${kpi('comissoes', reaisCurto(v.comissao), 'Comissão no período')}
     </div>
+    ${barraEnvios(cont?.numeros)}
     <div class="grade-2">
       <section class="cartao bloco"><h2>Envio de mensagens</h2><p class="sub">Mensagens enviadas por dia para ${v.gruposEnvio} grupo(s) de envio${v.erros ? ` · <span style="color:var(--vermelho)">${v.erros} com erro</span>` : ''}</p>
         ${v.serie.length > 1 ? graficoBarras(v.serie, 'enviados', 'mensagens enviadas') : `<div class="kpi"><div class="valor">${num(v.enviados)}</div><div class="rot">mensagens ${rotPer}</div></div>`}
@@ -603,6 +658,7 @@ async function telaVisao() {
         return `<div class="calor" role="img" aria-label="Mapa de cliques por dia e hora"><span class="rt"></span>${Array.from({ length: 24 }, (_, h) => `<span class="rt" style="justify-content:center">${h % 3 === 0 ? h : ''}</span>`).join('')}
           ${hor.grade.map((l, d) => `<span class="rt">${dias[d]}</span>${l.map((t, h) => `<span title="${dias[d]} ${h}h: ${String(t).replace('.', ',')} cliques por mensagem" style="background:${t ? `color-mix(in srgb,var(--verde) ${Math.round(15 + (t / max) * 85)}%,transparent)` : 'var(--surface-2)'}"></span>`).join('')}`).join('')}</div>`; })()
         : '<div class="vazio">O mapa aparece depois dos primeiros envios com contagem de cliques.</div>'}</section>` : ''}`;
+  ligarDispensar();
   if ($('#usar-horarios')) $('#usar-horarios').onclick = tentar(async () => { const r = await api('horarios/usar', { method: 'POST', body: { horarios: $('#usar-horarios').dataset.h.split(',') } }); aviso('Horários automáticos: ' + r.horarios.join(', ')); });
   if ($('#editar-meta')) $('#editar-meta').onclick = tentar(async () => {
     const atual = res.meta.valor ? (res.meta.valor / 100).toFixed(2).replace('.', ',') : '';
@@ -613,9 +669,18 @@ async function telaVisao() {
   ligarDicas(C());
 }
 
+// Aviso dispensado some por 24 horas neste navegador (a chave é o texto sem os números, que mudam).
+const chaveAviso = (t) => String(t).replace(/\d+/g, '#').slice(0, 120);
+function lerDispensados() { try { return JSON.parse(localStorage.getItem('ofx-avisos') || '{}'); } catch { return {}; } }
+function dispensarAviso(t) { try { const d = lerDispensados(); d[chaveAviso(t)] = Date.now(); localStorage.setItem('ofx-avisos', JSON.stringify(d)); } catch { /* sem armazenamento */ } }
 function avisosHtml(lista) {
-  if (!lista?.length) return '';
-  return `<div class="avisos">${lista.map((a) => `<a class="alerta ${esc(a.nivel)}" href="${esc(a.link)}">${ico('alerta', 17)}<span>${esc(a.texto)}</span><b>Resolver →</b></a>`).join('')}</div>`;
+  const d = lerDispensados();
+  const vis = (lista ?? []).filter((a) => !(d[chaveAviso(a.texto)] > Date.now() - 86_400_000));
+  if (!vis.length) return '';
+  return `<div class="avisos">${vis.map((a) => `<div class="alerta ${esc(a.nivel)}">${ico('alerta', 17)}<span>${esc(a.texto)}</span><a href="${esc(a.link)}"><b>Resolver →</b></a><button class="icone-btn peq" data-dispensar="${esc(a.texto)}" title="Dispensar por 24 horas" aria-label="Dispensar aviso">${ico('x', 14)}</button></div>`).join('')}</div>`;
+}
+function ligarDispensar(refazer) {
+  C().querySelectorAll('[data-dispensar]').forEach((b) => (b.onclick = () => { dispensarAviso(b.dataset.dispensar); b.closest('.alerta')?.remove(); }));
 }
 
 const CATS = [['', 'Todas as categorias'], ['casa', '🏠 Casa'], ['cozinha', '🍳 Cozinha'], ['organizacao', '🗂️ Organização'], ['beleza', '💄 Beleza'], ['moda', '👗 Moda'], ['infantil', '🧸 Infantil'], ['eletronicos', '🎧 Eletrônicos'], ['outros', '🛍️ Outros']];
@@ -693,23 +758,42 @@ function htmlBuscaShopee() {
           : `<button class="botao peq" data-add-busca="${i}" data-vit="1">${ico('estrela', 14)}Pôr na vitrine</button><button class="botao sec peq" data-add-busca="${i}" data-vit="0">${ico('enviar', 14)}Enviar</button>`}</div>
       </div></article>`;
   };
-  return `<form class="cartao colar-grande" id="form-busca">
-      <div class="campo"><label for="termo-busca">O que você procura?</label><input id="termo-busca" placeholder="Ex.: organizador de gaveta, sérum, air fryer" value="${esc(E.termoBusca || '')}" autocomplete="off"></div>
-      <div class="campo" style="min-width:150px"><label for="ordem-busca">Ordenar por</label><select id="ordem-busca" class="sel-cat" style="height:42px">${[['vendidos', 'Mais vendidos'], ['comissao', 'Maior comissão'], ['preco', 'Menor preço'], ['relevancia', 'Relevância']].map(([v, n]) => `<option value="${v}" ${(E.ordemBusca || 'vendidos') === v ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
-      <button class="botao" type="submit" style="align-self:flex-end;height:42px">${ico('busca', 16)}Buscar</button>
+  const fb = E.filtroBusca || {};
+  const gruposEnvio = (E.gruposBusca || []);
+  return `<form class="cartao busca-shopee" id="form-busca">
+      <div class="busca-linha">
+        <div class="campo" style="flex:2 1 260px"><label for="termo-busca">O que você procura?</label><input id="termo-busca" placeholder="Ex.: organizador, sérum, air fryer (ou só escolha a categoria)" value="${esc(E.termoBusca || '')}" autocomplete="off"></div>
+        <div class="campo" style="flex:1 1 150px"><label for="ordem-busca">Ordenar por</label><select id="ordem-busca" class="sel-cat" style="height:42px">${[['vendidos', 'Mais vendidos'], ['comissao', 'Maior comissão'], ['preco', 'Menor preço'], ['relevancia', 'Relevância']].map(([v, n]) => `<option value="${v}" ${(E.ordemBusca || 'vendidos') === v ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+      </div>
+      <div class="busca-linha">
+        <div class="campo" style="flex:1 1 170px"><label for="cat-busca">Categoria</label><select id="cat-busca" class="sel-cat" style="height:42px"><option value="">Todas</option>${CATS_TEMA.filter(([c]) => c !== 'outros').map(([c, n]) => `<option value="${c}" ${fb.cat === c ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+        <div class="campo" style="flex:1 1 140px"><label for="max-busca">Preço até</label><select id="max-busca" class="sel-cat" style="height:42px">${[[0, 'Sem limite'], [2000, 'R$ 20'], [3000, 'R$ 30'], [5000, 'R$ 50'], [10000, 'R$ 100'], [20000, 'R$ 200']].map(([v, n]) => `<option value="${v}" ${Number(fb.max || 0) === v ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+        <div class="campo" style="flex:1 1 200px"><label for="grupo-busca">Para o grupo</label><select id="grupo-busca" class="sel-cat" style="height:42px"><option value="">Qualquer grupo</option>${gruposEnvio.map((g) => `<option value="${g.id}" ${Number(fb.grupo) === g.id ? 'selected' : ''}>${esc(g.nome)}${nomeTema(g) ? ` · ${esc(nomeTema(g))}` : ''}</option>`).join('')}</select></div>
+        <button class="botao" type="submit" style="align-self:flex-end;height:42px">${ico('busca', 16)}Buscar</button>
+      </div>
+      <p class="ajuda" style="margin:0;color:var(--mudo);font-size:12.5px">Até 50 produtos por vez. Os que já estão na vitrine não aparecem. "Para o grupo" usa o tema do grupo (categorias e preço máximo) e já deixa só ele marcado na hora de enviar.</p>
     </form>
-    ${r ? `<p style="color:var(--texto-2);margin:0 0 12px">${r.itens.length} produto(s) para "<b>${esc(E.termoBusca)}</b>". ${r.itens.some((x) => x.motivo) ? 'Os que não passam na sua curadoria aparecem apagados, com o motivo.' : ''}</p>
+    ${r ? `<p style="color:var(--texto-2);margin:0 0 12px">${r.itens.length} produto(s)${E.termoBusca ? ` para "<b>${esc(E.termoBusca)}</b>"` : r.palavra ? ` (busca por "<b>${esc(r.palavra)}</b>")` : ''}${r.categoria ? ` em ${esc(nomeCat(r.categoria))}` : ''}${r.precoMax ? ` até ${reais(r.precoMax)}` : ''}${r.grupo ? ` para <b>${esc(r.grupo.nome)}</b>` : ''}. ${r.itens.some((x) => x.motivo) ? 'Os que não passam na sua curadoria aparecem apagados, com o motivo.' : ''}</p>
       ${r.itens.length ? `<div class="grade-ofertas" style="margin-bottom:12px">${r.itens.map(card).join('')}</div>` : '<div class="cartao vazio">Nada encontrado. Tente outra palavra.</div>'}
       ${r.temMais ? `<div style="text-align:center;margin-bottom:22px"><button class="botao sec" data-mais-busca>Ver mais resultados</button></div>` : ''}
-      <hr style="border:0;border-top:1px solid var(--borda);margin:10px 0 18px"><h2 style="font-size:17px;margin-bottom:12px">Suas ofertas</h2>` : `<p class="ajuda" style="color:var(--mudo);font-size:13px;margin:-4px 0 18px">Usa a API de afiliados da Shopee (AppID e Senha em Configurações). Você vê preço, nota, vendas e comissão antes de escolher.</p>`}`;
+      <hr style="border:0;border-top:1px solid var(--borda);margin:10px 0 18px"><h2 style="font-size:17px;margin-bottom:12px">Suas ofertas</h2>` : `<p class="ajuda" style="color:var(--mudo);font-size:13px;margin:-4px 0 18px">Usa a API de afiliados da Shopee (AppID e Senha em <a href="#plataformas">Conectar plataformas</a>). Você vê preço, nota, vendas e comissão antes de escolher.</p>`}`;
 }
 function ligarBuscaShopee() {
+  // Grupos de envio para o filtro "Para o grupo" (carrega uma vez e completa a lista).
+  if (!E.gruposBusca) api('grupos').then((g) => {
+    E.gruposBusca = g.lista.filter((x) => x.enviar);
+    const sel = $('#grupo-busca'); if (!sel) return;
+    sel.insertAdjacentHTML('beforeend', E.gruposBusca.map((x) => `<option value="${x.id}">${esc(x.nome)}${nomeTema(x) ? ` · ${esc(nomeTema(x))}` : ''}</option>`).join(''));
+  }).catch(() => {});
   const buscar = tentar(async (pagina = 1) => {
-    const termo = $('#termo-busca').value.trim(); if (!termo) return aviso('Escreva o que você procura', true);
-    E.termoBusca = termo; E.ordemBusca = $('#ordem-busca').value;
+    const termo = $('#termo-busca').value.trim();
+    E.filtroBusca = { cat: $('#cat-busca').value, max: Number($('#max-busca').value), grupo: Number($('#grupo-busca').value) || 0 };
+    if (!termo && !E.filtroBusca.cat && !E.filtroBusca.grupo && !E.filtroBusca.max) return aviso('Escreva o que você procura ou escolha uma categoria', true);
+    E.termoBusca = termo; E.ordemBusca = $('#ordem-busca').value; E.grupoAlvo = E.filtroBusca.grupo || null;
     const b = $('#form-busca button[type=submit]'); b.disabled = true; b.textContent = 'Buscando…';
     try {
-      const r = await api(`shopee/busca?q=${encodeURIComponent(termo)}&ordem=${E.ordemBusca}&pagina=${pagina}`);
+      const f = E.filtroBusca;
+      const r = await api(`shopee/busca?q=${encodeURIComponent(termo)}&ordem=${E.ordemBusca}&pagina=${pagina}&cat=${f.cat}&max=${f.max}&grupo=${f.grupo || ''}`);
       E.resBusca = pagina > 1 && E.resBusca ? { ...r, itens: [...E.resBusca.itens, ...r.itens] } : r;
       await telaOfertas();
     } finally { if (b.isConnected) b.disabled = false; }
@@ -750,6 +834,8 @@ const zapHtml = (t) => esc(t).replace(/\*([^*\n]+)\*/g, '<b>$1</b>').replace(/~(
 async function abrirCompositor(o, texto, parecidas = []) {
   const g = await api('grupos');
   const envio = g.lista.filter((x) => x.enviar);
+  // Busca na Shopee com "Para o grupo": só esse grupo vem marcado.
+  const alvo = E.buscaShopee && (location.hash.slice(1) || 'visao') === 'ofertas' && envio.some((x) => x.id === E.grupoAlvo) ? E.grupoAlvo : null;
   const amanha = new Date(Date.now() + 3600_000); amanha.setMinutes(0, 0, 0);
   const local = new Date(amanha.getTime() - amanha.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   $('#camada').innerHTML = `<div class="fundo" id="fundo"><div class="cartao modal" role="dialog" aria-modal="true" aria-labelledby="tit-modal">
@@ -762,14 +848,14 @@ async function abrirCompositor(o, texto, parecidas = []) {
         ${parecidas.length ? `<div class="parecidas"><b>Parece repetida:</b> ${parecidas.map((x) => esc(x.titulo)).join(' · ')}. Confira antes de enviar para não mandar o mesmo produto duas vezes.</div>` : ''}
         <div class="campo"><label for="txt">Texto da mensagem</label><textarea id="txt" rows="8">${esc(texto)}</textarea><span class="ajuda">*negrito* · ~riscado~ · _itálico_ · {opção 1|opção 2} sorteia uma por grupo</span><div class="dica-var oculto" id="dica-var">Este texto tem variações: cada grupo recebe uma versão sorteada. A prévia mostra a primeira.</div></div>
         <div class="campo"><label>Grupos (${envio.length} com envio ligado)</label>
-          ${envio.length ? `<div class="lista-grupos">${envio.map((x) => `<label><input type="checkbox" value="${x.id}" ${aceitaTema(x, o) ? 'checked' : ''}>${esc(x.nome)}<small>${nomeTema(x) && !aceitaTema(x, o) ? 'outro tema · ' : ''}${num(x.participantes)}</small></label>`).join('')}</div>`
+          ${envio.length ? `<div class="lista-grupos">${envio.map((x) => `<label><input type="checkbox" value="${x.id}" ${(alvo ? x.id === alvo : aceitaTema(x, o)) ? 'checked' : ''}>${esc(x.nome)}<small>${nomeTema(x) && !aceitaTema(x, o) ? 'outro tema · ' : ''}${num(x.participantes)}</small></label>`).join('')}</div>`
             : `<div class="vazio" style="padding:14px;border:1px dashed var(--borda);border-radius:10px">Nenhum grupo com envio ligado. <a href="#grupos" id="ir-grupos">Ligar grupos</a></div>`}
         </div>
         <div class="campo"><label>Quando</label>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><div class="segmento"><button class="ativo" data-q="agora">Agora</button><button data-q="depois">Agendar</button></div>
           <input type="datetime-local" id="quando" value="${local}" class="oculto" style="flex:1;min-width:180px"></div>
           <span class="ajuda">Os envios saem com intervalo aleatório entre os grupos, para proteger o seu número.</span></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="botao" id="confirmar" ${envio.filter((x) => aceitaTema(x, o)).length ? '' : 'disabled'} style="flex:1">${ico('enviar', 16)}Enviar para ${envio.filter((x) => aceitaTema(x, o)).length} grupo(s)</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="botao" id="confirmar" ${envio.filter((x) => (alvo ? x.id === alvo : aceitaTema(x, o))).length ? '' : 'disabled'} style="flex:1">${ico('enviar', 16)}Enviar para ${envio.filter((x) => (alvo ? x.id === alvo : aceitaTema(x, o))).length} grupo(s)</button>
           <button class="botao sec" id="teste-envio" type="button" title="Manda só para o seu WhatsApp (número do resumo diário)">${ico('cel', 16)}Teste para mim</button></div>
       </div>
     </div></div></div>`;
@@ -829,20 +915,25 @@ async function abrirEdicao(o) {
 }
 
 async function telaAgendamentos() {
-  const lista = await api('agendamentos' + (E.filtroStatus ? '?status=' + E.filtroStatus : ''));
-  E.pendentes = lista.filter((a) => a.status === 'pendente' || a.status === 'enviando').length; montarMenu();
+  const [todos, cont] = await Promise.all([api('agendamentos' + (E.filtroStatus ? '?status=' + E.filtroStatus : '')), atualizarContadores(true)]);
+  const termo = (E.buscaAg || '').toLowerCase().trim();
+  const lista = termo ? todos.filter((a) => `${a.titulo || ''} ${a.texto || ''}`.toLowerCase().includes(termo)) : todos;
+  const nAba = (v) => { const c = cont?.agendamentos || {}; return v === 'pendente' ? (c.pendente || 0) + (c.enviando || 0) : c[v] || 0; };
   const enviando = lista.filter((a) => a.status === 'enviando');
   C().innerHTML = cabeca('agenda', 'Agendamentos', 'Fila de publicações. Cada oferta vai para os grupos com um intervalo aleatório entre um e outro.',
     `<a class="botao sec" href="${window.OFERTIX_MOCK ? '#agendamentos' : '/api/exportar/envios.csv?periodo=30d'}" data-csv>${ico('baixar', 16)}Envios dos últimos 30 dias (CSV)</a>`) + `
-    <div class="chips" style="margin-bottom:14px">${[['', 'Próximos e recentes'], ['pendente', 'Pendentes'], ['enviado', 'Enviados'], ['erro', 'Com erro'], ['cancelado', 'Cancelados']].map(([v, n]) => `<button class="chip ${E.filtroStatus === v ? 'ativo' : ''}" data-status="${v}">${n}</button>`).join('')}</div>
+    <div class="barra-filtros"><div class="chips">${[['', 'Próximos e recentes'], ['pendente', 'Pendentes'], ['enviado', 'Enviados'], ['erro', 'Com erro'], ['cancelado', 'Cancelados']].map(([v, n]) => `<button class="chip ${E.filtroStatus === v ? 'ativo' : ''}" data-status="${v}">${n}${v && nAba(v) ? ` <small class="n-aba ${v === 'erro' ? 'ruim' : ''}">${num(nAba(v))}</small>` : ''}</button>`).join('')}</div>
+      <div class="campo busca-ag"><input id="busca-ag" type="search" placeholder="Buscar pelo produto ou texto" value="${esc(E.buscaAg || '')}" aria-label="Buscar agendamentos"></div></div>
     <section class="cartao bloco">${lista.length ? `<div class="linhas">${lista.map((a) => {
       const grupos = a.grupos === '"todos"' ? 'todos os grupos de envio' : `${JSON.parse(a.grupos).length} grupo(s)`;
       return `<div class="linha"><div class="miniatura">${foto(a.foto || a.imagem)}</div>
         <div class="meio"><div class="tit">${esc(a.titulo || a.texto.split('\n')[0].replace(/[*~_]/g, ''))}</div>
-          <div class="det">${a.plataforma ? loja(a.plataforma) : ''}${a.origem && a.origem !== 'manual' ? `<span class="tag-origem">${esc({ vitrine: 'vitrine', lote: 'lote', captura: 'capturada', enquete: 'enquete', lista: 'lista do dia', repetido: 'enviado de novo', recorrente: 'recorrente', 'boas-vindas': 'boas-vindas', espelho: 'espelhada' }[a.origem] || a.origem)}</span>` : ''}<span>${grupos}</span><span>· ${quandoTxt(a.quando)}</span>${a.total ? `<span>· ${a.enviados}/${a.total} enviados${a.erros ? `, ${a.erros} erro(s)` : ''}</span>` : ''}${a.pulados ? `<span>· ${a.pulados} grupo(s) pulado(s) por repetição</span>` : ''}${a.cliques ? `<span>· ${ico('clique', 12)} ${num(a.cliques)} cliques</span>` : ''}</div>
+          <div class="det">${a.plataforma ? loja(a.plataforma) : ''}${a.origem && a.origem !== 'manual' ? `<span class="tag-origem">${esc({ vitrine: 'vitrine', lote: 'lote', captura: 'capturada', enquete: 'enquete', lista: 'lista do dia', repetido: 'enviado de novo', recorrente: 'recorrente', 'boas-vindas': 'boas-vindas', espelho: 'espelhada' }[a.origem] || a.origem)}</span>` : ''}${a.origem === 'espelho' && !a.imagem && !a.foto ? '<span class="tag-origem sem-foto" title="A cópia saiu sem foto: veja o motivo em Automação → Últimas mensagens">sem foto</span>' : ''}<span>${grupos}</span><span>· ${quandoTxt(a.quando)}</span>${a.total ? `<span>· ${a.enviados}/${a.total} enviados${a.erros ? `, ${a.erros} erro(s)` : ''}</span>` : ''}${a.pulados ? `<span>· ${a.pulados} grupo(s) pulado(s) por repetição</span>` : ''}${a.cliques ? `<span>· ${ico('clique', 12)} ${num(a.cliques)} cliques</span>` : ''}</div>
           ${a.obs ? `<div class="motivo">${esc(a.obs)}</div>` : ''}</div>
         ${status(a.status)}${a.status === 'pendente' || a.status === 'enviando' ? `<button class="botao sec peq" data-cancelar="${a.id}">Cancelar</button>` : `<button class="botao sec peq" data-repetir="${a.id}" title="Enviar de novo">${ico('repetir', 14)}<span class="so-largo">De novo</span></button>`}</div>`;
     }).join('')}</div>` : `<div class="vazio">${ico('agenda', 34)}<h3>Nada por aqui</h3><a href="#ofertas">Gere uma oferta</a> e envie ou agende para seus grupos.</div>`}</section>`;
+  const ba = $('#busca-ag');
+  ba.oninput = () => { clearTimeout(E.tBusca); E.tBusca = setTimeout(() => { E.buscaAg = ba.value; telaAgendamentos().then(() => { const n = $('#busca-ag'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }); }, 300); };
   clearTimeout(E.timerAg);
   if (enviando.length && location.hash === '#agendamentos') E.timerAg = setTimeout(() => location.hash === '#agendamentos' && telaAgendamentos().catch(() => {}), 8000);
 }
@@ -866,6 +957,9 @@ function enviarDeNovo(id) {
   });
 }
 
+/** Participantes com a barra de lotação do grupo (o WhatsApp aceita até 1.024 pessoas). */
+const lotacao = (p) => { const pct = Math.min(100, Math.round((p / 1024) * 100)); return `<div class="lotacao" title="${pct}% da lotação (máximo 1.024)"><span>${num(p)}</span><i class="${pct >= 95 ? 'cheia' : pct >= 80 ? 'quase' : ''}" style="--p:${pct}%"></i></div>`; };
+
 async function telaGrupos() {
   const g = await api('grupos');
   const env = g.lista.filter((x) => x.enviar).length, mon = g.lista.filter((x) => x.monitorar).length;
@@ -878,10 +972,10 @@ async function telaGrupos() {
       ${kpi('pessoas', num(g.lista.filter((x) => x.enviar).reduce((s, x) => s + x.participantes, 0)), 'Pessoas alcançadas')}
     </div>
     <section class="cartao">${g.lista.length ? `<div class="rolagem"><table class="tabela"><thead><tr><th>Nome do grupo</th><th>Número</th><th class="num">Participantes</th><th>Enviar ofertas</th><th>Recebe</th><th>Capturar ofertas</th></tr></thead><tbody>
-      ${g.lista.map((x) => `<tr><td style="font-weight:500">${esc(x.nome)}</td><td style="color:var(--mudo)">${esc(x.numero_nome)}</td><td class="num">${num(x.participantes)}</td>
-        <td><label class="inter"><input type="checkbox" data-grupo="${x.id}" data-campo="enviar" ${x.enviar ? 'checked' : ''} aria-label="Enviar ofertas em ${esc(x.nome)}"><span></span></label></td>
+      ${g.lista.map((x) => { const monit = !x.enviar && (x.monitorar || x.espelho); return `<tr class="${monit ? 'monit' : ''}"><td style="font-weight:500">${esc(x.nome)}${monit ? ` <span class="tag-monit">${x.espelho ? 'monitoramento · espelho' : 'monitoramento'}</span>` : ''}</td><td style="color:var(--mudo)">${esc(x.numero_nome)}</td><td class="num">${x.enviar ? lotacao(x.participantes) : num(x.participantes)}</td>
+        <td><label class="inter" ${monit ? 'title="Grupo de monitoramento: desligue o monitoramento para enviar"' : ''}><input type="checkbox" data-grupo="${x.id}" data-campo="enviar" ${x.enviar ? 'checked' : ''} ${monit ? 'disabled' : ''} aria-label="Enviar ofertas em ${esc(x.nome)}"><span></span></label></td>
         <td>${x.enviar ? `<span class="tema-grupo"><small>${esc(nomeTema(x) || 'Todas as ofertas')}</small><button class="botao sec peq" data-tema="${x.id}">${ico('editar', 13)}Tema</button></span>` : '<small style="color:var(--mudo)">—</small>'}</td>
-        <td><label class="inter"><input type="checkbox" data-grupo="${x.id}" data-campo="monitorar" ${x.monitorar ? 'checked' : ''} ${g.limites.captura ? '' : 'disabled'} aria-label="Capturar ofertas de ${esc(x.nome)}"><span></span></label></td></tr>`).join('')}
+        <td><label class="inter"><input type="checkbox" data-grupo="${x.id}" data-campo="monitorar" ${x.monitorar ? 'checked' : ''} ${g.limites.captura && !x.enviar ? '' : 'disabled'} aria-label="Capturar ofertas de ${esc(x.nome)}"><span></span></label></td></tr>`; }).join('')}
     </tbody></table></div>` : `<div class="vazio">${ico('whatsapp', 34)}<h3>Nenhum grupo ainda</h3><a href="#whatsapp">Conecte um número de WhatsApp</a> para os grupos aparecerem aqui.</div>`}</section>
     <p style="color:var(--mudo);font-size:12.5px;margin-top:12px">Tema: escolha as categorias e o preço máximo de cada grupo (ex.: Beleza só recebe beleza; "Achados até R$ 50" recebe qualquer categoria até R$ 50). A vitrine, os horários automáticos, a captura e o espelhamento respeitam o tema. Grupo sem tema recebe tudo.</p>
     <p style="color:var(--mudo);font-size:12.5px;margin-top:6px">Para copiar as mensagens de um grupo inteiras, com os seus links, use <a href="#automacao">Automação</a>.</p>
@@ -902,9 +996,9 @@ async function telaGrupos() {
 
 async function telaMembros() {
   const [m, g, cans] = await Promise.all([api(`membros?periodo=${E.periodo}${E.grupoMembros ? '&grupo=' + E.grupoMembros : ''}`), api('grupos'), api('cansados?periodo=' + E.periodo).catch(() => [])]);
-  const opcoes = g.lista.filter((x) => x.enviar || x.monitorar);
+  const opcoes = g.lista.filter((x) => x.enviar);
   const ent = m.serie.reduce((s, d) => s + d.entrou, 0), sai = m.serie.reduce((s, d) => s + d.saiu, 0);
-  C().innerHTML = cabeca('membros', 'Monitoramento de membros', 'Acompanhe o crescimento e a saída de pessoas dos seus grupos.',
+  C().innerHTML = cabeca('membros', 'Membros', 'Crescimento e saída de pessoas dos seus grupos de envio. Grupos monitorados (de outras pessoas) não entram nestes números.',
     `<div class="campo" style="min-width:200px"><select id="grupo-membros" aria-label="Grupo"><option value="">Todos os grupos</option>${opcoes.map((x) => `<option value="${x.id}" ${String(x.id) === E.grupoMembros ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}</select></div>`) + `
     <div style="margin-bottom:14px">${chipsPeriodo(['7d', '30d', 'mes', 'mes-anterior'])}</div>
     <div class="kpis">
@@ -917,8 +1011,8 @@ async function telaMembros() {
       <section class="cartao bloco"><h2>Evolução de membros</h2><p class="sub">Total de participantes no fim de cada dia</p>${m.serie.length > 1 ? graficoLinha(m.serie) : '<div class="vazio">Escolha um período maior</div>'}</section>
       <section class="cartao bloco"><h2>Entradas e saídas</h2><p class="sub">${num(ent)} entraram · ${num(sai)} saíram no período</p>${m.serie.length > 1 ? graficoEntradasSaidas(m.serie) : ''}</section>
     </div>
-    <section class="cartao" style="margin-top:16px"><div class="rolagem"><table class="tabela"><thead><tr><th>Grupo</th><th class="num">Participantes</th></tr></thead><tbody>
-      ${m.lista.map((x) => `<tr><td>${esc(x.nome)}</td><td class="num">${num(x.participantes)}</td></tr>`).join('') || '<tr><td colspan="2" class="vazio">Nenhum grupo com envio ou captura ligado.</td></tr>'}
+    <section class="cartao" style="margin-top:16px"><div class="rolagem"><table class="tabela"><thead><tr><th>Grupo</th><th class="num">Entraram</th><th class="num">Saíram</th><th class="num">Saldo</th><th class="num">Participantes</th></tr></thead><tbody>
+      ${m.lista.map((x) => { const sd = (x.entrou || 0) - (x.saiu || 0); return `<tr><td>${esc(x.nome)}</td><td class="num" style="color:var(--verde)">+${num(x.entrou || 0)}</td><td class="num" style="color:var(--laranja)">−${num(x.saiu || 0)}</td><td class="num" style="font-weight:600">${sd >= 0 ? '+' : '−'}${num(Math.abs(sd))}</td><td class="num">${lotacao(x.participantes)}</td></tr>`; }).join('') || '<tr><td colspan="5" class="vazio">Nenhum grupo de envio ligado.</td></tr>'}
     </tbody></table></div></section>
     <section class="cartao bloco" style="margin-top:16px"><h2>Grupos cansados</h2><p class="sub">Saídas a cada 100 mensagens enviadas no período. Acima de 2, o grupo pode estar recebendo ofertas demais; acima de 4, vale reduzir.</p>
       <div class="rolagem"><table class="tabela"><thead><tr><th>Grupo</th><th class="num">Mensagens</th><th class="num">Saídas</th><th class="num">Saídas por 100</th><th>Situação</th></tr></thead><tbody>
@@ -935,6 +1029,9 @@ async function telaComissoes() {
     `<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="botao sec" href="${window.OFERTIX_MOCK ? '#comissoes' : '/api/exportar/comissoes.csv?periodo=' + E.periodo}" data-csv>${ico('baixar', 16)}Baixar CSV</a><button class="botao sec" id="sinc-com">${ico('sync', 16)}Atualizar da Shopee</button></div>`) + `
     <div style="margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between">${chipsPeriodo(['hoje', 'ontem', '7d', '30d', 'mes', 'mes-anterior'])}
       <div class="chips">${[['', 'Todos'], ['concluido', 'Concluídos'], ['pendente', 'Pendentes'], ['cancelado', 'Cancelados']].map(([v, n]) => `<button class="chip ${(E.filtroStatus || '') === v ? 'ativo' : ''}" data-status-com="${v}">${n}</button>`).join('')}</div></div>
+    ${E.eu?.demo ? '' : c.shopee && !c.shopee.conectada ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>Cadastre o AppID e a Senha da Open API da Shopee em <a href="#plataformas">Conectar plataformas</a> para puxar as comissões.</span></div>`
+      : c.shopee?.erro ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>A última leitura da Shopee deu erro: ${esc(c.shopee.erro)}. Confira o AppID e a Senha em <a href="#plataformas">Conectar plataformas</a> e clique em Atualizar da Shopee.</span></div>`
+      : c.shopee ? `<p class="sub" style="margin:0 0 12px">${ico('sync', 14)} ${c.shopee.em ? `Shopee lida ${quandoTxt(c.shopee.em)}: ${num(c.shopee.itens)} item(ns) nos últimos 30 dias. Atualiza sozinho a cada 3 horas.` : 'A Shopee ainda não foi lida. Clique em Atualizar da Shopee.'}</p>` : ''}
     <div class="kpis">
       ${kpi('comissoes', reais(c.comissao), 'Comissão total')}
       ${kpi('sacola', reais(c.gmv), 'Valor vendido (GMV)')}
@@ -945,30 +1042,62 @@ async function telaComissoes() {
     </div>
     <section class="cartao"><div class="rolagem"><table class="tabela"><thead><tr><th>Data</th><th>Loja</th><th>Produto</th><th>Pedido</th><th class="num">Valor</th><th class="num">Comissão</th><th>Status</th></tr></thead><tbody>
       ${c.linhas.map((l) => `<tr><td style="white-space:nowrap">${new Date(l.em).toLocaleDateString('pt-BR')}</td><td>${loja(l.plataforma)}</td><td>${esc(l.produto)}</td><td style="color:var(--mudo)">${esc(l.pedido)}</td><td class="num">${reais(l.valor_centavos)}</td><td class="num" style="font-weight:600">${reais(l.comissao_centavos)}</td><td>${status(l.status)}</td></tr>`).join('')
-        || `<tr><td colspan="7"><div class="vazio">Sem comissões no período. Cadastre a Open API da Shopee em <a href="#config">Configurações</a> e clique em Atualizar.</div></td></tr>`}
+        || `<tr><td colspan="7"><div class="vazio">${c.shopee?.conectada ? 'Nenhuma venda registrada pela Shopee neste período. A Shopee leva alguns minutos (às vezes horas) para mostrar um pedido novo no relatório.' : 'Sem comissões no período. Cadastre a Open API da Shopee em <a href="#plataformas">Conectar plataformas</a> e clique em Atualizar.'}</div></td></tr>`}
     </tbody></table></div></section>`;
   $('#sinc-com').onclick = tentar(async () => { const r = await api('comissoes/sincronizar', { method: 'POST' }); aviso(`${r.itens} item(ns) atualizados`); telaComissoes(); });
   C().querySelectorAll('[data-status-com]').forEach((b) => (b.onclick = () => { E.filtroStatus = b.dataset.statusCom; telaComissoes(); }));
 }
 
 async function telaCupons() {
-  const lista = await api('cupons');
-  C().innerHTML = cabeca('cupons', 'Cupons', 'O cupom ativo de cada loja entra sozinho no texto das ofertas dessa loja.') + `
-    <form class="cartao secao-form" id="form-cupom"><h2>Novo cupom</h2><p>Use o campo {cupom} no modelo da mensagem.</p>
-      <div class="form-grade">
+  const [lista, camp] = await Promise.all([api('cupons'), api('cupons/shopee').catch(() => ({ conectada: false, itens: [] }))]);
+  const hoje = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+  const vencido = (c) => c.validade && c.validade < hoje;
+  const dataBR = (v) => v ? v.split('-').reverse().join('/') : '';
+  const periodoTxt = (x) => x.fim ? `até ${new Date(x.fim).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}` : '';
+  C().innerHTML = cabeca('cupons', 'Cupons e campanhas', 'O cupom ativo de cada loja entra sozinho no texto das ofertas dessa loja. As campanhas da Shopee aparecem aqui assim que lançam.') + `
+    <section class="cartao bloco" style="margin-bottom:16px"><div class="cab-reg"><div><h2>Campanhas da Shopee agora</h2><p class="sub">Datas, coleções e cupons do app da Shopee, puxados pela Open API, já com o seu link de afiliado.</p></div>
+      <button class="botao sec peq" type="button" id="camp-atualizar">${ico('sync', 14)}Atualizar</button></div>
+      ${!camp.conectada ? `<div class="vazio">Cadastre a Open API da Shopee em <a href="#plataformas">Conectar plataformas</a> para ver as campanhas aqui.</div>`
+        : camp.erro ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>A Shopee não devolveu as campanhas: ${esc(camp.erro)}</span></div>`
+        : camp.itens.length ? `<div class="campanhas">${camp.itens.map((x, i) => `<article class="campanha">
+            <div class="camp-img">${x.imagem ? `<img src="${esc(x.imagem)}" alt="" loading="lazy">` : ico('cupons', 26)}</div>
+            <div class="camp-txt"><div class="tit">${esc(x.nome)}</div><div class="det">${x.comissaoPct ? `<span class="selo">Comissão ${String(x.comissaoPct).replace('.', ',')}%</span>` : ''}${periodoTxt(x) ? `<span>${periodoTxt(x)}</span>` : ''}</div>
+              <div class="camp-acoes"><button class="botao sec peq" type="button" data-camp-copiar="${i}">Copiar link</button><button class="botao peq" type="button" data-camp-enviar="${i}">${ico('enviar', 14)}Mandar nos grupos</button></div></div>
+          </article>`).join('')}</div>`
+        : '<div class="vazio">Nenhuma campanha ativa da Shopee agora.</div>'}
+    </section>
+    <div class="grade-2" style="align-items:start">
+      <form class="cartao secao-form" id="form-cupom"><h2>Novo cupom</h2><p>Use o campo {cupom} no modelo da mensagem. Depois da validade, o cupom para de entrar sozinho.</p>
         <div class="campo"><label for="c-cod">Código</label><input id="c-cod" placeholder="PIPOCA10" required maxlength="40" style="text-transform:uppercase"></div>
-        <div class="campo"><label for="c-pl">Loja</label><select id="c-pl">${Object.entries(LOJAS).filter(([k]) => k !== 'outra').map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}</select></div>
-        <div class="campo"><label for="c-desc">Desconto</label><input id="c-desc" placeholder="10% até R$ 30" maxlength="120"></div>
-        <div class="campo" style="justify-content:flex-end"><button class="botao" type="submit" style="height:42px">${ico('mais', 16)}Cadastrar</button></div>
-      </div></form>
-    <section class="cartao"><div class="rolagem"><table class="tabela"><thead><tr><th>Código</th><th>Loja</th><th>Desconto</th><th>Ativo</th><th></th></tr></thead><tbody>
-      ${lista.map((c) => `<tr><td style="font:600 13px ui-monospace,Menlo,monospace">${esc(c.codigo)}</td><td>${loja(c.plataforma)}</td><td style="color:var(--texto-2)">${esc(c.descricao)}</td>
-        <td><label class="inter"><input type="checkbox" data-cupom="${c.id}" ${c.ativo ? 'checked' : ''} aria-label="Cupom ${esc(c.codigo)} ativo"><span></span></label></td>
-        <td class="num"><button class="botao sec peq" data-apagar-cupom="${c.id}" aria-label="Apagar cupom">${ico('lixo', 14)}</button></td></tr>`).join('') || '<tr><td colspan="5"><div class="vazio">Nenhum cupom cadastrado.</div></td></tr>'}
-    </tbody></table></div></section>`;
+        <div class="form-grade" style="margin-top:12px">
+          <div class="campo"><label for="c-pl">Loja</label><select id="c-pl">${Object.entries(LOJAS).filter(([k]) => k !== 'outra').map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}</select></div>
+          <div class="campo"><label for="c-val">Válido até (opcional)</label><input id="c-val" type="date" min="${hoje}"></div>
+        </div>
+        <div class="campo" style="margin-top:12px"><label for="c-desc">Desconto</label><input id="c-desc" placeholder="10% até R$ 30" maxlength="120"></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="botao" type="submit">${ico('mais', 16)}Cadastrar</button></div>
+      </form>
+      <section class="cartao bloco"><h2>Seus cupons</h2><p class="sub">Só um cupom ativo por loja entra no texto: o mais novo.</p>
+        <div class="linhas">${lista.map((c) => `<div class="linha"><div class="miniatura">${ico('cupons', 18)}</div>
+          <div class="meio"><div class="tit" style="font-family:ui-monospace,Menlo,monospace">${esc(c.codigo)}</div><div class="det">${loja(c.plataforma)}${c.descricao ? `<span>${esc(c.descricao)}</span>` : ''}${c.validade ? `<span>${vencido(c) ? '<b style="color:var(--vermelho)">Vencido</b> em' : 'até'} ${dataBR(c.validade)}</span>` : ''}</div></div>
+          <label class="inter" title="Ativo"><input type="checkbox" data-cupom="${c.id}" ${c.ativo ? 'checked' : ''} aria-label="Cupom ${esc(c.codigo)} ativo"><span></span></label>
+          <button class="botao sec peq" data-apagar-cupom="${c.id}" aria-label="Apagar cupom">${ico('lixo', 14)}</button></div>`).join('') || `<div class="vazio">${ico('cupons', 30)}<h3>Nenhum cupom</h3>Cadastre o primeiro ao lado.</div>`}</div>
+      </section>
+    </div>`;
+  $('#camp-atualizar').onclick = () => telaCupons();
+  C().querySelectorAll('[data-camp-copiar]').forEach((b) => (b.onclick = async () => {
+    const x = camp.itens[Number(b.dataset.campCopiar)];
+    try { await navigator.clipboard.writeText(x.link); aviso('Link copiado'); } catch { prompt('Copie o link:', x.link); }
+  }));
+  C().querySelectorAll('[data-camp-enviar]').forEach((b) => (b.onclick = tentar(async () => {
+    const x = camp.itens[Number(b.dataset.campEnviar)];
+    const texto = `🔥 *${x.nome}*${periodoTxt(x) ? `\n⏰ Válido ${periodoTxt(x)}` : ''}\n\n👉 ${x.link}`;
+    if (!confirm(`Mandar esta campanha em todos os grupos de envio?\n\n${texto}`)) return;
+    await api('agendamentos', { method: 'POST', body: { texto, imagem: /^https:\/\//.test(x.imagem) ? x.imagem : undefined, grupos: 'todos' } });
+    aviso('Campanha agendada para os grupos');
+  })));
   $('#form-cupom').onsubmit = tentar(async (e) => {
     e.preventDefault();
-    await api('cupons', { method: 'POST', body: { codigo: $('#c-cod').value, plataforma: $('#c-pl').value, descricao: $('#c-desc').value } });
+    await api('cupons', { method: 'POST', body: { codigo: $('#c-cod').value, plataforma: $('#c-pl').value, descricao: $('#c-desc').value, validade: $('#c-val').value } });
     aviso('Cupom cadastrado'); telaCupons();
   });
   C().querySelectorAll('[data-cupom]').forEach((i) => (i.onchange = tentar(async () => { await api('cupons/' + i.dataset.cupom, { method: 'POST', body: { ativo: i.checked } }); })));
@@ -1018,18 +1147,79 @@ async function mostrarQr(id) {
 
 const opHoras = (sel) => Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${Number(sel) === h ? 'selected' : ''}>${String(h).padStart(2, '0')}:00</option>`).join('');
 
+async function telaPlataformas() {
+  const c = await api('config');
+  C().innerHTML = cabeca('link', 'Conectar plataformas', 'As lojas em que você é afiliado. Só as lojas conectadas têm os links trocados pelos seus.') + `
+    <form id="form-plat">
+    <section class="cartao secao-form"><h2>Lojas de afiliado</h2><p>Siga o passo a passo de cada loja e toque em Salvar. Só as lojas configuradas têm os links trocados pelos seus; mensagem com link de loja sem configuração não sai no espelhamento.</p>
+      <div class="lojas">
+        <div class="loja-col">
+          <div class="loja-cab"><span class="loja shopee">Shopee</span>${c.shopee_app_id ? '<span class="status ativo">Configurada</span>' : '<span class="status pendente">Falta configurar</span>'}</div>
+          <ol class="passos">
+            <li>Entre em <a href="https://affiliate.shopee.com.br" target="_blank" rel="noopener">affiliate.shopee.com.br</a> e faça o cadastro de afiliado (pede CPF).</li>
+            <li>Depois da aprovação, abra a área <b>Open API</b> no painel de afiliados e peça o acesso.</li>
+            <li>Copie o <b>AppID</b> e a <b>Senha</b> (Secret) e cole aqui.</li>
+            <li>Salve e teste em Ofertas → Buscar na Shopee.</li>
+          </ol>
+          <div class="campo"><label for="sh-id">AppID</label><input id="sh-id" value="${esc(c.shopee_app_id)}" autocomplete="off"></div>
+          <div class="campo"><label for="sh-seg">Senha (Secret)</label><input id="sh-seg" type="password" value="${esc(c.shopee_segredo)}" autocomplete="new-password"></div>
+          <p class="loja-nota">Com a Open API, o Ofertix gera os seus links curtos, busca preço, nota e comissão, confere o preço antes de enviar e puxa o relatório de vendas.</p>
+        </div>
+        <div class="loja-col">
+          <div class="loja-cab"><span class="loja amazon">Amazon</span>${c.amazon_tag ? '<span class="status ativo">Configurada</span>' : '<span class="status pendente">Falta configurar</span>'}</div>
+          <ol class="passos">
+            <li>Entre em <a href="https://associados.amazon.com.br" target="_blank" rel="noopener">associados.amazon.com.br</a> e faça o cadastro.</li>
+            <li>No perfil, cadastre os seus grupos de WhatsApp como canal de divulgação.</li>
+            <li>Copie a sua <b>tag</b> (ID de rastreamento, termina em -20) e cole aqui, ou cole um link seu da Amazon que o Ofertix acha a tag.</li>
+            <li>Ponha o aviso de associado na descrição dos grupos.</li>
+          </ol>
+          <div class="campo"><label for="amz">Tag da Amazon</label><input id="amz" value="${esc(c.amazon_tag)}" placeholder="seunome-20"></div>
+          <div class="campo"><label for="amz-link">Ou cole um link seu da Amazon</label><div class="linha-campo"><input id="amz-link" placeholder="https://amzn.to/... ou link com ?tag="><button class="botao sec peq" type="button" data-extrair="amazon">Achar a tag</button></div></div>
+          <p class="loja-nota"><b>Regras da Amazon:</b> a oferta sai sem preço e sem foto, com o link direto da Amazon (não conta clique) e o aviso "Como participante do Programa de Associados da Amazon, sou remunerado pelas compras qualificadas efetuadas". A Amazon pede 3 vendas nos primeiros 180 dias para manter a conta.</p>
+        </div>
+        <div class="loja-col">
+          <div class="loja-cab"><span class="loja mercadolivre">Mercado Livre</span>${c.ml_modelo ? '<span class="status ativo">Configurado</span>' : '<span class="status pendente">Falta configurar</span>'}</div>
+          <ol class="passos">
+            <li>Entre em <a href="https://afiliados.mercadolivre.com.br" target="_blank" rel="noopener">afiliados.mercadolivre.com.br</a> e faça o cadastro.</li>
+            <li>Abra <b>Ferramentas → Gerador de links</b> e gere o link de qualquer produto.</li>
+            <li>Cole o link gerado aqui e toque em <b>Achar meus parâmetros</b>.</li>
+            <li>Faça uma compra de teste e confira se a comissão aparece no painel.</li>
+          </ol>
+          <div class="campo"><label for="ml-link">Link gerado no seu painel</label><div class="linha-campo"><input id="ml-link" placeholder="https://mercadolivre.com/sec/..."><button class="botao sec peq" type="button" data-extrair="mercadolivre">Achar meus parâmetros</button></div></div>
+          <div class="campo"><label for="ml">Seus parâmetros de afiliado</label><input id="ml" value="${esc(c.ml_modelo)}" placeholder="matt_tool=...&matt_word=..."></div>
+          <p class="loja-nota">O Ofertix tira os parâmetros de outros afiliados de qualquer link do Mercado Livre e põe os seus. Também aceita um endereço com {url}.</p>
+        </div>
+        <div class="loja-col">
+          <div class="loja-cab"><span class="loja tiktok">TikTok Shop</span><span class="status ativo">Pronto para usar</span></div>
+          <ol class="passos">
+            <li>No app do TikTok, entre na <b>Central de Criadores → TikTok Shop</b> e ative o afiliado.</li>
+            <li>Faça a <b>verificação de identidade</b> e cadastre a conta bancária. Sem a verificação, o link não paga comissão.</li>
+            <li>Abra o produto, toque em <b>Compartilhar → Copiar link</b>.</li>
+            <li>Cole o link em <b>Ofertas → Nova oferta</b>, como um link de qualquer loja.</li>
+          </ol>
+          <p class="loja-nota"><b>Como funciona:</b> o link de afiliado do TikTok Shop só sai do app, então o Ofertix manda o seu link exatamente como você colou, com foto e preço (não conta clique). Vale <b>100 dias</b>: depois disso a oferta para de sair e é só gerar um novo. Comissão de quem comprar em até 14 dias. No espelhamento, link do TikTok Shop de outra pessoa não tem como virar o seu: a mensagem fica bloqueada.</p>
+        </div>
+      </div></section>
+    <div style="display:flex;justify-content:flex-end"><button class="botao" type="submit">Salvar plataformas</button></div>
+    </form>`;
+  C().querySelectorAll('[data-extrair]').forEach((b) => (b.onclick = tentar(async () => {
+    const loja = b.dataset.extrair, campo = loja === 'amazon' ? '#amz-link' : '#ml-link';
+    const r = await api('lojas/extrair', { method: 'POST', body: { loja, url: $(campo).value } });
+    if (loja === 'amazon') $('#amz').value = r.valor; else $('#ml').value = r.valor;
+    aviso(loja === 'amazon' ? `Tag encontrada: ${r.valor}. Toque em Salvar plataformas.` : 'Parâmetros encontrados. Toque em Salvar plataformas.');
+  })));
+  $('#form-plat').onsubmit = tentar(async (e) => {
+    e.preventDefault();
+    await api('plataformas', { method: 'POST', body: { shopee_app_id: $('#sh-id').value, shopee_segredo: $('#sh-seg').value, amazon_tag: $('#amz').value, ml_modelo: $('#ml').value } });
+    aviso('Plataformas salvas'); telaPlataformas();
+  });
+}
+
 async function telaConfig() {
   const c = await api('config');
-  C().innerHTML = cabeca('config', 'Configurações', 'Seus links de afiliado, o modelo da mensagem e o ritmo dos envios.') + `
+  C().innerHTML = cabeca('config', 'Configurações', 'O modelo da mensagem, o ritmo dos envios e o resumo diário.') + `
     <form id="form-config">
-    <section class="cartao secao-form"><h2>Shopee</h2><p>No painel de afiliados da Shopee, abra Open API e copie o AppID e a Senha. Com isso o Ofertix gera seus links curtos, busca preço e comissão e puxa o relatório de vendas.</p>
-      <div class="form-grade"><div class="campo"><label for="sh-id">AppID</label><input id="sh-id" value="${esc(c.shopee_app_id)}" autocomplete="off"></div>
-      <div class="campo"><label for="sh-seg">Senha (Secret)</label><input id="sh-seg" type="password" value="${esc(c.shopee_segredo)}" autocomplete="new-password"></div></div></section>
-    <section class="cartao secao-form"><h2>Amazon e Mercado Livre</h2><p>Amazon: sua tag de associado entra em todo link. Mercado Livre: cole os parâmetros do seu link de afiliado (ex.: <code>matt_tool=123&amp;matt_word=nome</code>) ou um endereço com {url}.</p>
-      <div class="form-grade"><div class="campo"><label for="amz">Tag da Amazon</label><input id="amz" value="${esc(c.amazon_tag)}" placeholder="seunome-20">
-        <span class="ajuda">Regras do Programa de Associados: oferta da Amazon sai sem preço, sem foto, com o link direto da Amazon (não conta clique) e com o aviso "Como participante do Programa de Associados da Amazon, sou remunerado pelas compras qualificadas efetuadas". Cadastre os seus grupos de WhatsApp como canal no painel de Associados.</span></div>
-      <div class="campo"><label for="ml">Mercado Livre</label><input id="ml" value="${esc(c.ml_modelo)}" placeholder="matt_tool=...&matt_word=...">
-        <span class="ajuda">Gere um link no Gerador de links do painel de afiliados do Mercado Livre, abra no navegador e copie do endereço final os parâmetros de afiliado (ex.: matt_tool=…&matt_word=…). O Ofertix tira os parâmetros de outros afiliados antes de pôr os seus. Faça uma compra de teste para conferir que a comissão aparece.</span></div></div></section>
+    <section class="cartao secao-form"><h2>Lojas de afiliado</h2><p>A Shopee, a Amazon e o Mercado Livre agora ficam em <a href="#plataformas">Conectar plataformas</a>, com o passo a passo de cada uma.</p></section>
     <section class="cartao secao-form"><h2>Modelo da mensagem</h2><p>Campos: {titulo} {de} {por} {desconto} {cupom} {link} {loja} {contagem} (contagem para a Black Friday, como "· faltam 15 dias"; fora da época fica vazio). Variações: escreva {opção 1|opção 2|opção 3} e cada grupo recebe uma, sorteada. Deixe em branco para usar o padrão, que já tem variações.</p>
       <div class="modal-corpo"><div class="campo"><label for="modelo">Modelo</label><textarea id="modelo" rows="9" placeholder="{🔥|⚡|🚨} *{titulo}*&#10;&#10;{de}Por *{por}* {desconto}&#10;{cupom}&#10;🛒 {Compre aqui|Link da oferta}: {link}">${esc(c.modelo_mensagem)}</textarea></div>
       <div><label style="font-size:12.5px;font-weight:600;color:var(--texto-2);display:block;margin-bottom:6px">Prévia</label><div class="zap"><div class="bolha"><div class="img">🍟</div><span id="previa-modelo"></span><span class="hora">12:00</span></div></div>
@@ -1084,7 +1274,6 @@ async function telaConfig() {
   } catch {} }, 250); };
   $('#sortear').onclick = () => { ex = (ex + 1) % exemplos.length; $('#previa-modelo').innerHTML = zapHtml(exemplos[ex]); };
   const salvar = () => api('config', { method: 'POST', body: {
-    shopee_app_id: $('#sh-id').value, shopee_segredo: $('#sh-seg').value, amazon_tag: $('#amz').value, ml_modelo: $('#ml').value,
     modelo_mensagem: $('#modelo').value, intervalo_min: $('#imin').value, intervalo_max: $('#imax').value, desconto_minimo: $('#dmin').value, auto_publicar: $('#auto').checked,
     janela_inicio: Number($('#j-ini').value), janela_fim: Number($('#j-fim').value), repeticao_horas: Number($('#rep').value), horarios_auto: $('#horarios').value,
     conferir_preco: $('#conferir').checked, contar_cliques: $('#cliques').checked, resumo_numero: $('#r-num').value, resumo_hora: Number($('#r-hora').value),
@@ -1192,7 +1381,7 @@ async function telaAutomaticas() {
 // ------------------------------------------------------------------ Automação: espelhamento de grupos (v10)
 const DESTINOS = { tema: 'Todos os grupos de envio, pelo tema de cada um', todos: 'Todos os grupos de envio, sem olhar o tema', grupos: 'Só os grupos que eu escolher' };
 async function telaAutomacao() {
-  const d = await api('automacao');
+  const [d] = await Promise.all([api('automacao'), atualizarContadores(true)]);
   const ed = E.editEsp ? d.lista.find((x) => x.id === E.editEsp) : null;
   const novo = E.novoEsp || !!ed;
   const envio = d.grupos.filter((g) => g.enviar);
@@ -1204,18 +1393,19 @@ async function telaAutomacao() {
   C().innerHTML = cabeca('espelho', 'Automação', 'Espelhamento: cada mensagem nova de um grupo de ofertas sai nos seus grupos igualzinha (texto, imagem, cupom e chamada), só que com o seu link de afiliado.',
     d.permitido ? `<button class="botao" id="esp-novo">${ico('mais', 16)}Novo espelhamento</button>` : '') + `
     ${!d.permitido ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>O espelhamento vem nos planos <b>Pro</b> e <b>Escala</b>. Fale com a MS Soluções para mudar de plano.</span></div>` : ''}
-    ${d.permitido && faltaLoja ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>Cadastre a Open API da Shopee em <a href="#config">Configurações</a>. Sem ela, mensagens com link da Shopee ficam bloqueadas (o Ofertix nunca manda o link de outra pessoa).</span></div>` : ''}
+    ${d.permitido && faltaLoja ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>Cadastre a Open API da Shopee em <a href="#plataformas">Conectar plataformas</a>. Sem ela, mensagens com link da Shopee ficam bloqueadas (o Ofertix nunca manda o link de outra pessoa).</span></div>` : ''}
     <div class="kpis">
       ${kpi('espelho', `${ativos}<small>/${d.limite}</small>`, 'Grupos copiados / limite')}
       ${kpi('enviar', num(d.hoje.agendadas), 'Copiadas hoje')}
       ${kpi('alerta', num(d.hoje.bloqueadas), 'Bloqueadas hoje (link sem troca)', 'l')}
       ${kpi('filtro', num(d.hoje.ignoradas), 'Ignoradas hoje (sem link, repetidas)')}
     </div>
+    ${barraEnvios(E.cont?.numeros)}
     ${novo ? `<form class="cartao secao-form" id="form-esp" style="margin-bottom:16px"><h2>${ed ? 'Editar espelhamento' : 'Novo espelhamento'}</h2>
       <p>O seu número precisa estar no grupo de origem. Ele só lê as mensagens; quem publica são os seus grupos de envio, com o intervalo e a janela de sempre. O limite do plano (${d.limite}) conta os grupos de origem copiados; os grupos para onde a cópia vai não entram na conta.</p>
       <div class="form-grade">
-        <div class="campo"><label for="esp-origem">Grupo de origem (copiar de)</label><select id="esp-origem">${origens.length ? origens.map((g) => `<option value="${g.id}" ${ed?.origem_grupo_id === g.id ? 'selected' : ''}>${esc(g.nome)} (${num(g.participantes)})</option>`).join('') : '<option value="">Nenhum grupo disponível</option>'}</select>
-          <span class="ajuda">Aparecem os grupos em que o seu número está e que não são de envio.</span></div>
+        <div class="campo"><label for="esp-origem">Grupo de origem (copiar de)</label><div class="linha-campo"><select id="esp-origem" style="flex:1 1 200px;min-width:0">${origens.length ? origens.map((g) => `<option value="${g.id}" ${ed?.origem_grupo_id === g.id ? 'selected' : ''}>${esc(g.nome)} (${num(g.participantes)})</option>`).join('') : '<option value="">Nenhum grupo disponível</option>'}</select><button class="botao sec peq" type="button" id="esp-sync">${ico('sync', 14)}Sincronizar grupos</button></div>
+          <span class="ajuda">Aparecem os grupos em que o seu número está e que não são de envio. Entrou num grupo agora? Toque em Sincronizar grupos.</span></div>
         <div class="campo"><label for="esp-atraso">Esperar antes de copiar</label><select id="esp-atraso">${[[0, 'Nada (logo em seguida)'], [2, '2 minutos'], [5, '5 minutos'], [10, '10 minutos'], [30, '30 minutos'], [60, '1 hora']].map(([v, n]) => `<option value="${v}" ${(ed?.atraso_min ?? 0) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>
           <span class="ajuda">Um pequeno atraso deixa a cópia menos óbvia.</span></div>
       </div>
@@ -1245,11 +1435,32 @@ async function telaAutomacao() {
         <div id="esp-res"></div>
       </section>
     </div>
-    <section class="cartao bloco" style="margin-top:16px"><h2>Últimas mensagens</h2><p class="sub">O que chegou nos grupos de origem e o que o Ofertix fez com cada uma.</p>
-      ${d.registro.length ? `<div class="rolagem"><table class="tabela"><thead><tr><th>Quando</th><th>Origem</th><th>Mensagem</th><th>Situação</th><th>Detalhe</th></tr></thead><tbody>
-        ${d.registro.map((l) => `<tr><td style="white-space:nowrap">${quandoTxt(l.em)}</td><td>${esc(l.origem_nome)}</td><td>${esc(l.resumo)}</td><td>${status(l.status)}</td><td style="color:var(--mudo)">${esc(l.motivo)}${l.envio_status ? ` · envio: ${esc(STATUS[l.envio_status] || l.envio_status)}` : ''}</td></tr>`).join('')}
-      </tbody></table></div>` : '<div class="vazio">Assim que chegar uma mensagem num grupo de origem, ela aparece aqui.</div>'}
+    <section class="cartao bloco" style="margin-top:16px"><div class="cab-reg"><div><h2>Últimas mensagens</h2><p class="sub">O que chegou nos grupos de origem e o que o Ofertix fez com cada uma.</p></div>
+      <div class="atualizado"><span id="esp-quando">Atualizado agora</span><button class="botao sec peq" type="button" id="esp-atualizar">${ico('sync', 14)}Atualizar</button></div></div>
+      <div id="esp-reg">${htmlRegistro(d.registro)}</div>
     </section>`;
+  // "Atualizado há…": conta o tempo desde a última leitura e lê de novo sozinho a cada 30 segundos (só o registro).
+  E.espLido = Date.now();
+  clearInterval(E.espTimer);
+  const recarregar = async () => {
+    try { const n = await api('automacao'); if (!$('#esp-reg')) return; $('#esp-reg').innerHTML = htmlRegistro(n.registro); E.espLido = Date.now(); marcar(); } catch {}
+  };
+  const marcar = () => {
+    if (!$('#esp-quando')) return clearInterval(E.espTimer);
+    const s = Math.round((Date.now() - E.espLido) / 1000);
+    $('#esp-quando').textContent = s < 5 ? 'Atualizado agora' : s < 60 ? `Atualizado há ${s} s` : `Atualizado há ${Math.floor(s / 60)} min`;
+    if (s >= 30 && !document.hidden) recarregar();
+  };
+  E.espTimer = setInterval(marcar, 5000);
+  $('#esp-atualizar').onclick = tentar(recarregar);
+  if ($('#esp-sync')) $('#esp-sync').onclick = tentar(async () => {
+    const n = await api('numeros');
+    const lig = n.lista.filter((x) => x.status === 'conectado');
+    if (!lig.length) return aviso('Conecte um número de WhatsApp primeiro', true);
+    let total = 0;
+    for (const i of lig) total += (await api(`numeros/${i.id}/sincronizar`, { method: 'POST' })).grupos;
+    aviso(`${total} grupo(s) sincronizados`); telaAutomacao();
+  });
   if ($('#esp-novo')) $('#esp-novo').onclick = () => { E.novoEsp = true; E.editEsp = null; telaAutomacao(); };
   if ($('#form-esp')) {
     $('#form-esp').scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -1285,6 +1496,100 @@ async function telaAutomacao() {
       ${r.trocas.length ? `<div class="trocas">${r.trocas.map((x) => `<div class="troca ${x.status}"><span class="tag-origem">${esc(x.loja)} · ${rot[x.status]}</span><span class="de">${esc(x.de)}</span>${x.para ? `<span class="para">→ ${esc(x.para)}</span>` : ''}${x.motivo ? `<span class="mot">${esc(x.motivo)}</span>` : ''}</div>`).join('')}</div>` : '<p class="ajuda" style="margin-top:8px">Nenhum link na mensagem.</p>'}`;
   });
 }
+
+// ------------------------------------------------------------------ Instagram (6.7): comentou a palavra → link no direct
+const MSG_INSTA = 'Oi, {nome}! 👋 Aqui está o link que você pediu:\nhttps://ofertix.cloud/?o=insta\n\nQualquer dúvida, é só responder aqui 😉';
+async function telaInstagram() {
+  const d = await api('instagram');
+  const ed = E.editIg ? d.regras.find((x) => x.id === E.editIg) : null;
+  const novo = E.novoIg || !!ed;
+  const con = d.conectado;
+  C().innerHTML = cabeca('insta', 'Instagram', 'Quem comenta a palavra-chave no seu post (ou manda no direct) recebe o seu link no direct na hora, sozinho.',
+    con ? `<button class="botao" id="ig-nova">${ico('mais', 16)}Nova palavra-chave</button>` : '') + `
+    ${!d.disponivel && !E.eu?.demo ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>O app do Instagram ainda não foi configurado no servidor. Fale com a MS Soluções.</span></div>` : ''}
+    ${con?.erro ? `<div class="aviso-faixa">${ico('alerta', 16)}<span>Problema com o acesso ao Instagram: ${esc(con.erro)}. Conecte de novo.</span></div>` : ''}
+    <div class="kpis">
+      ${kpi('insta', con ? `<span style="font-size:20px;word-break:break-all">@${esc(con.usuario)}</span>` : '—', con ? 'Conectado' : 'Instagram não conectado', con ? '' : 'l')}
+      ${kpi('enviar', num(d.hoje.enviadas), 'Links enviados hoje')}
+      ${kpi('filtro', num(d.hoje.ignoradas), 'Ignorados hoje (já tinham recebido)')}
+      ${kpi('alerta', num(d.hoje.erros), 'Erros hoje', 'l')}
+    </div>
+    ${!con ? `<section class="cartao secao-form" style="margin-bottom:16px"><h2>Conectar o Instagram</h2>
+      <p>O perfil precisa ser <b>profissional</b> (Comercial ou Criador de conteúdo) e estar ligado a uma <b>Página do Facebook</b>. Numa aba nova, você entra com o Facebook, marca a Página e o Instagram e autoriza o Ofertix a ler os comentários e responder no direct. O Ofertix nunca vê a sua senha.</p>
+      <div style="display:flex;justify-content:flex-end"><button class="botao" id="ig-conectar">${ico('insta', 16)}Conectar Instagram</button></div></section>`
+    : `<section class="cartao secao-form" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div class="miniatura">${ico('insta', 18)}</div>
+        <div style="flex:1;min-width:200px"><h2 style="margin:0">Conta conectada: @${esc(con.usuario)}</h2><p style="margin:2px 0 0">Conectada ${quandoTxt(con.desde)}. Se mudar as permissões na Meta ou aparecer algum aviso, conecte de novo.</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="botao sec" type="button" id="ig-conectar">${ico('sync', 16)}Conectar de novo</button><button class="botao sec" type="button" id="ig-sair">Desconectar</button></div>
+      </div></section>`}
+    ${novo ? `<form class="cartao secao-form" id="form-ig" style="margin-bottom:16px"><h2>${ed ? 'Editar palavra-chave' : 'Nova palavra-chave'}</h2>
+      <div class="form-grade">
+        <div class="campo"><label for="ig-nome">Nome (só para você)</label><input id="ig-nome" maxlength="60" value="${esc(ed?.nome || 'EU QUERO · teste grátis')}"></div>
+        <div class="campo"><label for="ig-pal">Palavras-chave (separe por vírgula)</label><input id="ig-pal" value="${esc(ed?.palavras || 'eu quero, quero')}">
+          <span class="ajuda">Maiúscula, acento e pontuação não importam: "Eu quero!!" também vale.</span></div>
+      </div>
+      <div class="campo" style="margin-top:12px"><label for="ig-msg">Mensagem no direct</label><textarea id="ig-msg" rows="5">${esc(ed?.mensagem || MSG_INSTA)}</textarea>
+        <span class="ajuda">{nome} vira o @ da pessoa. Ponha o link logo no começo: a pessoa vê sem abrir a conversa.</span></div>
+      <div class="campo" style="margin-top:12px"><label for="ig-pub">Resposta no comentário (opcional, uma por linha; o Ofertix sorteia)</label><textarea id="ig-pub" rows="3" placeholder="Te mandei no direct! 💌&#10;Enviado, confere o direct 😉&#10;Já está no seu direct!">${esc(ed?.publica ?? 'Te mandei no direct! 💌\nEnviado, confere o direct 😉\nJá está no seu direct! 🚀')}</textarea>
+        <span class="ajuda">Responder no post mostra para todo mundo que funciona e anima mais gente a comentar.</span></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px"><button class="botao sec" type="button" id="ig-cancelar">Cancelar</button><button class="botao" type="submit">${ed ? 'Salvar' : 'Ligar'}</button></div>
+    </form>` : ''}
+    <div class="grade-2" style="align-items:start">
+      <section class="cartao bloco"><h2>Palavras-chave</h2><p class="sub">Valem para todos os posts, reels e para o direct. A mesma pessoa recebe uma vez por post a cada 24 horas.</p>
+        <div class="linhas">${d.regras.length ? d.regras.map((x) => `<div class="linha"><div class="miniatura">${ico('insta', 18)}</div>
+          <div class="meio"><div class="tit">${esc(x.nome)}</div><div class="det"><span>${esc(x.palavras)}</span><span>· ${num(x.respondidas)} enviada(s)</span></div></div>
+          <label class="inter" title="Ligada"><input type="checkbox" data-ig-ativo="${x.id}" ${x.ativo ? 'checked' : ''} aria-label="Ligada"><span></span></label>
+          <button class="botao sec peq" data-ig-editar="${x.id}" aria-label="Editar">${ico('editar', 14)}</button><button class="botao sec peq" data-ig-apagar="${x.id}" aria-label="Apagar">${ico('lixo', 14)}</button></div>`).join('')
+          : `<div class="vazio">${ico('insta', 30)}<h3>Nenhuma palavra-chave</h3>${con ? 'Crie a primeira: quem comentar recebe o link no direct.' : 'Conecte o Instagram para começar.'}</div>`}</div>
+      </section>
+      <section class="cartao bloco"><h2>Testar um comentário</h2><p class="sub">Escreva um comentário e veja o que a pessoa recebe.</p>
+        <div class="campo"><input id="ig-teste" value="Eu quero!! 😍"></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="botao sec" type="button" id="ig-testar">${ico('insta', 16)}Ver resposta</button></div>
+        <div id="ig-res"></div>
+      </section>
+    </div>
+    <section class="cartao bloco" style="margin-top:16px"><div class="cab-reg"><div><h2>Últimos pedidos</h2><p class="sub">Comentários e mensagens com a palavra-chave e o que o Ofertix fez.</p></div>
+      <button class="botao sec peq" type="button" id="ig-atualizar">${ico('sync', 14)}Atualizar</button></div>
+      ${d.registro.length ? `<div class="rolagem"><table class="tabela"><thead><tr><th>Quando</th><th>De</th><th>Onde</th><th>Texto</th><th>Situação</th><th>Detalhe</th></tr></thead><tbody>
+        ${d.registro.map((l) => `<tr><td style="white-space:nowrap">${quandoTxt(l.em)}</td><td>${l.de_usuario ? '@' + esc(l.de_usuario) : 'direct'}</td><td>${l.tipo === 'direct' ? 'Direct' : 'Comentário'}</td><td>${esc(l.texto)}</td><td>${status(l.status)}</td><td style="color:var(--mudo)">${esc(l.motivo)}</td></tr>`).join('')}
+      </tbody></table></div>` : '<div class="vazio">Assim que alguém comentar a palavra-chave, aparece aqui.</div>'}
+    </section>`;
+  if ($('#ig-conectar')) $('#ig-conectar').onclick = tentar(async () => {
+    const r = await api('instagram/conectar', { method: 'POST' });
+    window.open(r.url, '_blank', 'noopener');
+    aviso('Termine a conexão na aba do Instagram e depois toque em Atualizar');
+  });
+  if ($('#ig-nova')) $('#ig-nova').onclick = () => { E.novoIg = true; E.editIg = null; telaInstagram(); };
+  if ($('#ig-sair')) $('#ig-sair').onclick = tentar(async () => { if (!confirm('Desconectar o Instagram? As palavras-chave param de responder.')) return; await api('instagram/conexao', { method: 'DELETE' }); telaInstagram(); });
+  $('#ig-atualizar').onclick = () => telaInstagram();
+  if ($('#form-ig')) {
+    $('#form-ig').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    $('#ig-cancelar').onclick = () => { E.novoIg = false; E.editIg = null; telaInstagram(); };
+    $('#form-ig').onsubmit = tentar(async (e) => {
+      e.preventDefault();
+      const corpo = { nome: $('#ig-nome').value, palavras: $('#ig-pal').value, mensagem: $('#ig-msg').value, publica: $('#ig-pub').value, ativo: ed ? ed.ativo : true };
+      if (ed) await api('instagram/regras/' + ed.id, { method: 'PUT', body: corpo }); else await api('instagram/regras', { method: 'POST', body: corpo });
+      E.novoIg = false; E.editIg = null; aviso('Palavra-chave salva'); telaInstagram();
+    });
+  }
+  C().querySelectorAll('[data-ig-ativo]').forEach((i) => (i.onchange = async () => {
+    const x = d.regras.find((r) => r.id === Number(i.dataset.igAtivo));
+    try { await api('instagram/regras/' + x.id, { method: 'PUT', body: { ...x, ativo: i.checked } }); aviso(i.checked ? 'Ligada' : 'Desligada'); }
+    catch (e) { i.checked = !i.checked; aviso(e.message, true); }
+  }));
+  C().querySelectorAll('[data-ig-editar]').forEach((b) => (b.onclick = () => { E.editIg = Number(b.dataset.igEditar); E.novoIg = false; telaInstagram(); }));
+  C().querySelectorAll('[data-ig-apagar]').forEach((b) => (b.onclick = tentar(async () => { if (!confirm('Apagar esta palavra-chave?')) return; await api('instagram/regras/' + b.dataset.igApagar, { method: 'DELETE' }); telaInstagram(); })));
+  $('#ig-testar').onclick = tentar(async () => {
+    const r = await api('instagram/simular', { method: 'POST', body: { texto: $('#ig-teste').value } });
+    $('#ig-res').innerHTML = r.regra
+      ? `<p class="ajuda" style="margin-top:10px">Pega na palavra-chave <b>${esc(r.regra)}</b>. No direct:</p><div class="zap" style="margin-top:8px"><div class="bolha"><span>${zapHtml(r.mensagem)}</span><span class="hora">${hora(Date.now())}</span></div></div>${r.publica.length ? `<p class="ajuda" style="margin-top:8px">No comentário, uma destas: ${r.publica.map(esc).join(' · ')}</p>` : ''}`
+      : '<p class="ajuda" style="margin-top:10px">Nenhuma palavra-chave ligada pega esse comentário: nada é enviado.</p>';
+  });
+}
+
+const htmlRegistro = (registro) => registro.length ? `<div class="rolagem"><table class="tabela"><thead><tr><th>Quando</th><th>Origem</th><th>Mensagem</th><th>Situação</th><th>Detalhe</th></tr></thead><tbody>
+  ${registro.map((l) => `<tr><td style="white-space:nowrap">${quandoTxt(l.em)}</td><td>${esc(l.origem_nome)}</td><td>${esc(l.resumo)}</td><td>${status(l.status)}</td><td style="color:var(--mudo)">${esc(l.motivo)}${l.envio_status ? ` · envio: ${esc(STATUS[l.envio_status] || l.envio_status)}` : ''}</td></tr>`).join('')}
+  </tbody></table></div>` : '<div class="vazio">Assim que chegar uma mensagem num grupo de origem, ela aparece aqui.</div>';
 
 // Tema de cada grupo de envio (v10): categorias que ele recebe e preço máximo.
 const CATS_TEMA = [['beleza', '💄 Beleza'], ['moda', '👗 Moda'], ['casa', '🏠 Casa'], ['cozinha', '🍳 Cozinha'], ['organizacao', '🗂️ Organização'], ['infantil', '🧸 Infantil e bebê'], ['eletronicos', '🎧 Eletrônicos'], ['outros', '🛍️ Outros']];
@@ -1324,14 +1629,34 @@ function editarTema(g) {
 
 const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 async function telaNicho() {
-  const [d, ab] = await Promise.all([api('nicho'), api('abastecer').catch(() => null)]), n = d.nicho, r = n.regras;
+  const [d, ab, pacotes] = await Promise.all([api('nicho'), api('abastecer').catch(() => null), api('nicho/pacotes').catch(() => [])]), n = d.nicho, r = n.regras;
   const opCat = (sel) => `<option value="">Qualquer categoria</option>` + d.categorias.filter((c) => c.id !== 'outros').map((c) => `<option value="${c.id}" ${sel === c.id ? 'selected' : ''}>${c.emoji} ${esc(c.nome)}${c.naVitrine ? ` (${c.naVitrine} na vitrine)` : ' (vitrine vazia)'}</option>`).join('');
+  const nomeCat = (id) => { const c = d.categorias.find((x) => x.id === id); return c ? `${c.emoji} ${c.nome}` : id; };
+  const resumo = [
+    r.categorias.length ? `${r.categorias.length === 1 ? nomeCat(r.categorias[0]) : r.categorias.length + ' categorias'}` : 'Todas as categorias',
+    r.precoMax ? `Até ${reais(r.precoMax)}` : 'Qualquer preço',
+    r.notaMin ? `Nota ${String(r.notaMin).replace('.', ',')}+` : '', r.vendasMin ? `${num(r.vendasMin)}+ vendas` : '',
+    r.excluir.length ? `${r.excluir.length} palavra(s) bloqueada(s)` : '',
+  ].filter(Boolean);
+  const hojeCol = n.colecoes[new Date().getDay()];
+  E.abaNicho ||= 'curadoria';
   C().innerHTML = cabeca('estrela', 'Nicho e curadoria', 'Escolha o que entra nos seus grupos, monte a rotina da semana e dê uma voz própria às mensagens.') + `
-    <section class="cartao secao-form pacote"><h2>✨ Pacote pronto: achadinhos femininos</h2>
-      <p>Configura tudo de uma vez para um grupo de achadinhos de casa, cozinha, organização, beleza e moda: até R$ 50, nota mínima 4,7 e 100 vendas, coleções de segunda a sábado, modelo de mensagem com tom de amiga, rodapé de afiliado e cinco horários automáticos (9h, 12h, 15h, 19h e 21h).</p>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="botao" type="button" id="aplicar-pacote">${ico('estrela', 16)}Aplicar pacote</button>${n.pacote ? `<span class="selo">Em uso: ${esc(n.pacote)}</span>` : ''}<span class="ajuda" style="color:var(--mudo);font-size:12.5px">Substitui o modelo da mensagem e os horários atuais. Dá para ajustar tudo depois.</span></div></section>
+    <div class="nicho-topo">
+      <section class="cartao nicho-resumo"><div class="tit-mini">O que entra nos seus grupos</div><div class="chips">${resumo.map((x) => `<span class="chip ativo" style="cursor:default">${esc(x)}</span>`).join('')}</div>
+        <div class="ajuda" style="margin-top:8px">Coleção de hoje: <b>${hojeCol ? esc(nomeCat(hojeCol)) : 'qualquer categoria'}</b> · Horários: ${d.horarios ? esc(d.horarios) : 'nenhum'}${n.pacote ? ` · Pacote: ${esc(n.pacote)}` : ''}</div></section>
+      <div class="abas" role="tablist">${[['curadoria', 'filtro', 'Curadoria'], ['rotina', 'agenda', 'Rotina da semana'], ['mensagens', 'msg', 'Mensagens']].map(([id, ic, nome]) => `<button type="button" role="tab" class="aba ${E.abaNicho === id ? 'ativa' : ''}" data-aba-n="${id}" aria-selected="${E.abaNicho === id}">${ico(ic, 16)}${nome}</button>`).join('')}</div>
+    </div>
+    <section class="cartao secao-form pacote" data-aba="curadoria"><h2>✨ Pacotes prontos</h2>
+      <p>Cada pacote configura a curadoria, as coleções da semana, o modelo da mensagem, o rodapé e os horários automáticos de uma vez. Dá para ajustar tudo depois. Escolha o que tem a cara do seu grupo.</p>
+      <div class="pacotes">${pacotes.map((p) => { const emUso = n.pacote === p.nome; const rg = p.regras; return `<article class="pacote-card ${emUso ? 'em-uso' : ''}">
+        <div class="pc-topo"><span class="pc-emoji">${p.emoji}</span><div><div class="tit">${esc(p.nome)}</div>${emUso ? '<span class="selo">Em uso</span>' : ''}</div></div>
+        <p class="pc-desc">${esc(p.descricao)}</p>
+        <div class="pc-chips">${[rg.precoMax ? `até ${reais(rg.precoMax)}` : 'qualquer preço', rg.notaMin ? `nota ${String(rg.notaMin).replace('.', ',')}+` : '', rg.vendasMin ? `${num(rg.vendasMin)}+ vendas` : '', `${p.horarios.split(',').length} horários`, p.modelo].filter(Boolean).map((x) => `<span>${esc(x)}</span>`).join('')}</div>
+        <button class="botao ${emUso ? 'sec' : ''} peq" type="button" data-pacote="${esc(p.id)}" data-pacote-nome="${esc(p.nome)}">${emUso ? 'Aplicar de novo' : 'Aplicar'}</button>
+      </article>`; }).join('')}</div>
+      <p class="ajuda" style="margin-top:10px">Aplicar substitui a curadoria, as coleções, o modelo da mensagem e os horários atuais. Tem vários grupos de temas diferentes? Use o pacote mais geral aqui e o <b>Tema</b> de cada grupo em Grupos de envio.</p></section>
     <form id="form-nicho">
-    <section class="cartao secao-form"><h2>Curadoria</h2><p>Vale para as ofertas capturadas dos grupos monitorados. As que não passam ficam de fora sem você precisar olhar uma por uma.</p>
+    <section class="cartao secao-form" data-aba="curadoria"><h2>Curadoria</h2><p>Vale para as ofertas capturadas dos grupos monitorados. As que não passam ficam de fora sem você precisar olhar uma por uma.</p>
       <div class="campo"><label>Categorias aceitas (nenhuma marcada = todas)</label><div class="chips" id="cats">${d.categorias.map((c) => `<button type="button" class="chip ${r.categorias.includes(c.id) ? 'ativo' : ''}" data-ncat="${c.id}">${c.emoji} ${esc(c.nome)}</button>`).join('')}</div></div>
       <div class="form-grade" style="margin-top:14px">
         <div class="campo"><label for="n-preco">Preço máximo (R$)</label><input id="n-preco" inputmode="decimal" value="${r.precoMax ? (r.precoMax / 100).toFixed(2).replace('.', ',') : ''}" placeholder="Sem limite"></div>
@@ -1342,16 +1667,16 @@ async function telaNicho() {
         <div class="campo"><label for="n-incluir">Precisa ter uma destas palavras</label><input id="n-incluir" value="${esc(r.incluir.join(', '))}" placeholder="ex.: feminino, kit, organizador"><span class="ajuda">Separe por vírgula. Vazio = sem exigência</span></div>
         <div class="campo"><label for="n-excluir">Não pode ter estas palavras</label><input id="n-excluir" value="${esc(r.excluir.join(', '))}" placeholder="ex.: réplica, usado, masculino"></div>
       </div></section>
-    <section class="cartao secao-form"><h2>Coleções da semana</h2><p>Nos horários automáticos, a vitrine publica primeiro a oferta da coleção do dia. Sem oferta dela na vitrine, vai a mais antiga, como antes.</p>
+    <section class="cartao secao-form" data-aba="rotina"><h2>Coleções da semana</h2><p>Nos horários automáticos, a vitrine publica primeiro a oferta da coleção do dia. Sem oferta dela na vitrine, vai a mais antiga, como antes.</p>
       <div class="form-grade">${DIAS_SEMANA.map((dia, i) => `<div class="campo"><label for="col-${i}">${dia}</label><select id="col-${i}">${opCat(n.colecoes[i])}</select></div>`).join('')}</div>
       <p class="ajuda" style="color:var(--mudo);font-size:12.5px;margin:10px 0 0">Horários automáticos atuais: ${d.horarios ? esc(d.horarios) : 'nenhum'} · <a href="#config">mudar em Configurações</a></p></section>
-    <section class="cartao secao-form"><h2>Rodapé de afiliado</h2><p>Entra no fim de cada oferta. Deixar claro que é link de afiliado passa confiança e segue a orientação do CONAR para publicidade.</p>
+    <section class="cartao secao-form" data-aba="mensagens"><h2>Rodapé de afiliado</h2><p>Entra no fim de cada oferta. Deixar claro que é link de afiliado passa confiança e segue a orientação do CONAR para publicidade.</p>
       <div class="linha-inter"><div><b>Acrescentar rodapé</b></div><label class="inter"><input type="checkbox" id="n-rod-on" ${n.rodape ? 'checked' : ''} aria-label="Acrescentar rodapé"><span></span></label></div>
       <div class="campo" style="margin-top:10px"><label for="n-rod">Texto do rodapé</label><input id="n-rod" maxlength="200" value="${esc(n.rodape || d.rodapePadrao)}"><span class="ajuda">_texto_ fica em itálico no WhatsApp</span></div></section>
-    <div style="display:flex;justify-content:flex-end;margin-bottom:16px"><button class="botao" type="submit">Salvar nicho e curadoria</button></div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px"><button class="botao" type="submit">Salvar alterações</button></div>
     </form>
-    ${ab ? `<form class="cartao secao-form" id="form-abastecer"><h2>Vitrine abastecida sozinha</h2><p>Todo dia, no horário escolhido, o Ofertix busca produtos na Shopee com as suas palavras e com a coleção do dia, aplica a curadoria acima e põe os melhores na vitrine. Os horários automáticos fazem o resto.</p>
-      ${ab.temShopee ? '' : '<div class="parecidas">Precisa do AppID e da Senha da Shopee em <a href="#config">Configurações</a>.</div>'}
+    ${ab ? `<form class="cartao secao-form" id="form-abastecer" data-aba="rotina"><h2>Vitrine abastecida sozinha</h2><p>Todo dia, no horário escolhido, o Ofertix busca produtos na Shopee com as suas palavras e com a coleção do dia, aplica a curadoria acima e põe os melhores na vitrine. Os horários automáticos fazem o resto.</p>
+      ${ab.temShopee ? '' : '<div class="parecidas">Precisa do AppID e da Senha da Shopee em <a href="#plataformas">Conectar plataformas</a>.</div>'}
       <div class="linha-inter"><div><b>Abastecer a vitrine todo dia</b></div><label class="inter"><input type="checkbox" id="ab-on" ${ab.ativo ? 'checked' : ''} aria-label="Abastecer a vitrine todo dia"><span></span></label></div>
       <div class="form-grade" style="margin-top:12px">
         <div class="campo"><label for="ab-pal">Palavras para buscar</label><input id="ab-pal" value="${esc(ab.palavras.join(', '))}" placeholder="ex.: organizador, kit skincare, potes"><span class="ajuda">Separe por vírgula (até 10)</span></div>
@@ -1363,7 +1688,7 @@ async function telaNicho() {
       <p class="ajuda" style="color:var(--mudo);font-size:12.5px;margin:8px 0 12px">Buscas de hoje: ${ab.termosHoje.length ? ab.termosHoje.map(esc).join(', ') : 'nenhuma'}</p>
       <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="botao sec" type="button" id="ab-agora">${ico('raio', 16)}Abastecer agora</button><button class="botao" type="submit">Salvar</button></div>
     </form>` : ''}
-    <section class="cartao secao-form"><h2>Modelos de mensagem</h2><p>Escolha uma voz para as ofertas. Cada modelo já tem variações, sorteadas por grupo para as mensagens não ficarem iguais.</p>
+    <section class="cartao secao-form" data-aba="mensagens"><h2>Modelos de mensagem</h2><p>Escolha uma voz para as ofertas. Cada modelo já tem variações, sorteadas por grupo para as mensagens não ficarem iguais.</p>
       <div class="modelos">${d.modelos.map((m) => `<div class="cartao modelo"><b>${esc(m.nome)}</b><div class="zap"><div class="bolha"><span data-previa="${m.id}">…</span><span class="hora">12:00</span></div></div>
         <button class="botao sec peq" type="button" data-usar-modelo="${m.id}">Usar este modelo</button></div>`).join('')}</div></section>`;
   for (const m of d.modelos) api('previa', { method: 'POST', body: { modelo: m.texto } }).then((x) => { const el = C().querySelector(`[data-previa="${m.id}"]`); if (el) el.innerHTML = zapHtml(x.texto); }).catch(() => {});
@@ -1378,7 +1703,17 @@ async function telaNicho() {
       finally { telaNicho(); }
     });
   }
-  $('#aplicar-pacote').onclick = tentar(async () => { await api('nicho/achadinhos', { method: 'POST' }); aviso('Pacote de achadinhos aplicado'); telaNicho(); });
+  const mostrarAba = (a) => {
+    E.abaNicho = a;
+    C().querySelectorAll('[data-aba]').forEach((el) => el.classList.toggle('aba-oculta', el.dataset.aba !== a));
+    C().querySelectorAll('[data-aba-n]').forEach((b) => { b.classList.toggle('ativa', b.dataset.abaN === a); b.setAttribute('aria-selected', String(b.dataset.abaN === a)); });
+  };
+  C().querySelectorAll('[data-aba-n]').forEach((b) => (b.onclick = () => mostrarAba(b.dataset.abaN)));
+  mostrarAba(E.abaNicho);
+  C().querySelectorAll('[data-pacote]').forEach((b) => (b.onclick = tentar(async () => {
+    if (!confirm(`Aplicar o pacote "${b.dataset.pacoteNome}"? A curadoria, as coleções, o modelo da mensagem e os horários atuais serão trocados.`)) return;
+    await api('nicho/pacote', { method: 'POST', body: { id: b.dataset.pacote } }); aviso(`Pacote "${b.dataset.pacoteNome}" aplicado`); telaNicho();
+  })));
   const reaisC = (v) => { const x = Number(String(v).replace(/\./g, '').replace(',', '.')); return Number.isFinite(x) && x > 0 ? Math.round(x * 100) : 0; };
   $('#form-nicho').onsubmit = tentar(async (e) => {
     e.preventDefault();
@@ -1534,10 +1869,25 @@ function escolherGrupos(temaId) {
   $('#salvar-g').onclick = tentar(async () => { await api(`temas/${temaId}/grupos`, { method: 'POST', body: { grupos: ordem.map(Number) } }); fechar(); aviso('Grupos do tema salvos'); telaEntradas(); });
 }
 
-const ROTAS = { automacao: telaAutomacao, automaticas: telaAutomaticas, nicho: telaNicho, entradas: telaEntradas, visao: telaVisao, ofertas: telaOfertas, agendamentos: telaAgendamentos, grupos: telaGrupos, membros: telaMembros, comissoes: telaComissoes, cupons: telaCupons, whatsapp: telaWhatsapp, config: telaConfig, admin: telaAdmin };
+const ROTAS = { instagram: telaInstagram, plataformas: telaPlataformas, automacao: telaAutomacao, automaticas: telaAutomaticas, nicho: telaNicho, entradas: telaEntradas, visao: telaVisao, ofertas: telaOfertas, agendamentos: telaAgendamentos, grupos: telaGrupos, membros: telaMembros, comissoes: telaComissoes, cupons: telaCupons, whatsapp: telaWhatsapp, config: telaConfig, admin: telaAdmin };
+
+/** Números do menu (pendentes, bloqueadas, Instagram) e barra de envios de hoje; no máximo a cada 20 s. */
+async function atualizarContadores(forcar = false) {
+  if (!forcar && E.contEm && Date.now() - E.contEm < 20_000) return E.cont;
+  try { E.cont = await api('contadores'); E.contEm = Date.now(); E.pendentes = E.cont.pendentes; montarMenu(); } catch { /* sem contadores */ }
+  return E.cont;
+}
+/** Barra "Envios de hoje" por número: usados / limite (plano ou aquecimento). */
+function barraEnvios(numeros) {
+  if (!numeros?.length) return '';
+  return `<section class="cartao bloco envios-hoje"><div class="cab-reg"><div><h2>Envios de hoje</h2><p class="sub">Cada oferta gasta um envio por grupo. Quando a barra enche, o resto espera o dia seguinte.</p></div><a href="#whatsapp" style="font-size:13px">Números</a></div>
+    ${numeros.map((n) => { const pct = Math.min(100, Math.round((n.hoje / Math.max(1, n.limite)) * 100)); return `<div class="eh-linha"><div class="eh-nome"><b>${esc(n.nome)}</b><span>${num(n.hoje)} de ${num(n.limite)}${n.aquecendo ? ` · aquecimento, dia ${n.dia}` : ''}</span></div>
+      <div class="meta-barra ${pct >= 100 ? 'cheia' : pct >= 80 ? 'quase' : ''}"><i style="width:${pct}%"></i></div></div>`; }).join('')}</section>`;
+}
 
 async function navegar() {
   const tela = (location.hash.slice(1) || 'visao').split('/')[0];
+  atualizarContadores();
   if (E.telaAtual !== tela) { E.filtroStatus = ''; E.telaAtual = tela; }
   montarMenu();
   $('#lateral').classList.remove('aberta');

@@ -261,9 +261,17 @@ test('servidor: /r/ redireciona e conta; CSV sai com cabeçalho de download', as
   await new Promise((r) => srv.once('listening', r));
   const base = `http://localhost:${(srv.address() as any).port}`;
   try {
-    const r = await fetch(base + '/r/abc1234', { redirect: 'manual', headers: { 'user-agent': 'Mozilla/5.0' } });
+    // Acesso da rede interna (a Evolution API montando a prévia): redireciona, mas não conta.
+    const interno = await fetch(base + '/r/abc1234', { redirect: 'manual', headers: { 'user-agent': 'Mozilla/5.0' } });
+    assert.equal(interno.status, 302);
+    assert.equal((e.db.prepare('SELECT COUNT(*) AS n FROM cliques').get() as any).n, 0);
+    const r = await fetch(base + '/r/abc1234', { redirect: 'manual', headers: { 'user-agent': 'Mozilla/5.0 (iPhone)', 'x-forwarded-for': '200.150.1.2' } });
     assert.equal(r.status, 302);
     assert.equal(r.headers.get('location'), 'https://loja.com/p');
+    assert.equal((e.db.prepare('SELECT COUNT(*) AS n FROM cliques').get() as any).n, 1);
+    // A mesma pessoa abrindo de novo logo depois conta uma vez só; prévia do WhatsApp não conta.
+    await fetch(base + '/r/abc1234', { redirect: 'manual', headers: { 'user-agent': 'Mozilla/5.0 (iPhone)', 'x-forwarded-for': '200.150.1.2' } });
+    await fetch(base + '/r/abc1234', { redirect: 'manual', headers: { 'user-agent': 'WhatsApp/2.24.1 A', 'x-forwarded-for': '31.13.1.1' } });
     assert.equal((e.db.prepare('SELECT COUNT(*) AS n FROM cliques').get() as any).n, 1);
     assert.equal((await fetch(base + '/r/zzzzzzz', { redirect: 'manual' })).status, 404);
     const cookie = 'ofx=' + assinarSessao({ conta: e.conta, email: 'ana@exemplo.com', nome: 'Ana', demo: false, admin: false, leitura: false, exp: Date.now() + 60_000 }, 'seg');
@@ -282,4 +290,23 @@ test('servidor: /r/ redireciona e conta; CSV sai com cabeçalho de download', as
     assert.equal(pv.variacoes, true);
     assert.ok(pv.texto.startsWith('🔥 *Air Fryer'));
   } finally { srv.close(); }
+});
+
+test('TikTok Shop: o link do app sai direto (sem /r/) e com foto; depois de 100 dias não sai mais', async () => {
+  const e = ambiente();
+  await preparar(e, 1);
+  const id = novaOferta(e, { plataforma: 'tiktok', urlOriginal: 'https://www.tiktok.com/view/product/1729384756123456789', urlAfiliado: 'https://vt.tiktok.com/ZSabc123/', imagem: 'https://p16.tiktokcdn.com/g.jpg' });
+  const o = s.oferta(e.db, e.conta, id);
+  s.agendar(e.ctx, e.conta, { ofertaId: id, texto: s.textoOferta(e.db, e.conta, o), imagem: o.imagem });
+  await mandarTudo(e);
+  assert.equal(e.wpp.enviados.length, 1);
+  assert.match(e.wpp.enviados[0].texto, /https:\/\/vt\.tiktok\.com\/ZSabc123\//);
+  assert.doesNotMatch(e.wpp.enviados[0].texto, /ofertix\.teste\/r\//);
+  assert.equal(e.wpp.enviados[0].imagem, 'https://p16.tiktokcdn.com/g.jpg');
+  e.avancar(100 * 24 * HORA);
+  e.db.prepare('UPDATE config_conta SET repeticao_horas = 0').run();
+  s.agendar(e.ctx, e.conta, { ofertaId: id, texto: s.textoOferta(e.db, e.conta, o) });
+  await mandarTudo(e);
+  assert.equal(e.wpp.enviados.length, 1, 'link vencido não sai');
+  assert.match((e.db.prepare("SELECT erro FROM envios WHERE status = 'erro'").get() as any).erro, /vencido/);
 });

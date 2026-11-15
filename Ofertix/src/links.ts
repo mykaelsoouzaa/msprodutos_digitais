@@ -1,9 +1,9 @@
 // Reconhece links de lojas, troca pelo link de afiliado e busca os dados do produto.
 import { limparAmazon, limparRastreioML } from './regras.ts';
-export type Plataforma = 'shopee' | 'mercadolivre' | 'amazon' | 'magalu' | 'outra';
+export type Plataforma = 'shopee' | 'mercadolivre' | 'amazon' | 'magalu' | 'tiktok' | 'outra';
 
 export const NOME_PLATAFORMA: Record<Plataforma, string> = {
-  shopee: 'Shopee', mercadolivre: 'Mercado Livre', amazon: 'Amazon', magalu: 'Magalu', outra: 'Loja',
+  shopee: 'Shopee', mercadolivre: 'Mercado Livre', amazon: 'Amazon', magalu: 'Magalu', tiktok: 'TikTok Shop', outra: 'Loja',
 };
 
 const URL_RE = /https?:\/\/[^\s<>"'`]+/gi;
@@ -21,8 +21,26 @@ export function plataformaDe(url: string): Plataforma {
   if (/(^|\.)mercadolivre\.com\.br$|(^|\.)mercadolibre\.com$|(^|\.)meli\.la$|(^|\.)mlstatic\.com$/.test(host)) return 'mercadolivre';
   if (/(^|\.)amazon\.com\.br$|(^|\.)amzn\.to$|(^|\.)a\.co$/.test(host)) return 'amazon';
   if (/(^|\.)magazineluiza\.com\.br$|(^|\.)magalu\.com$|(^|\.)divulgador\.magalu\.com$/.test(host)) return 'magalu';
+  if (ehProdutoTikTok(url)) return 'tiktok';
   return 'outra';
 }
+
+/**
+ * TikTok Shop (6.8): página de produto, de loja ou de vitrine do TikTok Shop. Link curto do app (vm.tiktok.com,
+ * vt.tiktok.com, tiktok.com/t/) pode ser vídeo comum: só vira TikTok Shop depois de aberto (linkCurtoTikTok).
+ */
+export function ehProdutoTikTok(url: string): boolean {
+  let u: URL;
+  try { u = new URL(url); } catch { return false; }
+  const h = u.hostname.toLowerCase();
+  if (/(^|\.)shop\.tiktok\.com$|(^|\.)tiktokshop\.com$/.test(h)) return true;
+  return /(^|\.)tiktok\.com$/.test(h) && /^\/(view\/product|shop|product)\b|\/(product|showcase)\//.test(u.pathname);
+}
+export function linkCurtoTikTok(url: string): boolean {
+  try { const u = new URL(url); return /^(vm|vt)\.tiktok\.com$/i.test(u.hostname) || (/(^|\.)tiktok\.com$/i.test(u.hostname) && /^\/t\//.test(u.pathname)); } catch { return false; }
+}
+/** Código do produto do TikTok Shop (…/product/1729…). */
+export const idTikTok = (url: string) => String(url ?? '').match(/\/product\/(\d{8,})/)?.[1] ?? '';
 
 export const lojaSuportada = (url: string) => plataformaDe(url) !== 'outra';
 
@@ -69,6 +87,56 @@ export async function resolverLink(url: string, f: typeof fetch = fetch, max = 5
   return atual;
 }
 
+/**
+ * Mercado Livre: link /social/ (a vitrine do afiliado que mandou a oferta) → o produto dela.
+ * Procura o código do anúncio (MLB…) primeiro no próprio endereço e, se não estiver lá, na página.
+ * Com vários produtos, fica o do título da página (o destacado da oferta); sem como decidir, devolve vazio.
+ */
+export async function produtoDoSocialML(url: string, f: typeof fetch = fetch): Promise<string> {
+  const ids = (t: string) => [...new Set([...t.matchAll(/\bMLB-?(\d{6,})/gi)].map((m) => m[1]!))];
+  let texto = url;
+  try { texto = decodeURIComponent(decodeURIComponent(url)); } catch { /* fica o original */ }
+  const noEndereco = ids(texto);
+  if (noEndereco.length === 1) return `https://produto.mercadolivre.com.br/MLB-${noEndereco[0]}`;
+  try {
+    const r = await f(url, { headers: { 'user-agent': 'Mozilla/5.0 (compatible; Ofertix/1.0)', 'accept-language': 'pt-BR' }, signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return '';
+    const html = (await r.text()).slice(0, 600_000);
+    // Links de produto completos na página (anúncio ou catálogo), na ordem em que aparecem.
+    // Códigos soltos não servem: o nome das fotos também tem "MLB…" (ex.: D_NQ_NP_846237-MLB104793048175_012026-P.webp).
+    const vezes = new Map<string, number>();
+    const linkDe = new Map<string, string>();
+    for (const m of html.matchAll(/https?:\/\/(?:www\.|produto\.)?mercadoli(?:vre|bre)\.com\.br\/[^"'\s<>\\]*?(?:MLB-?\d{6,}|\/p\/MLB\d{6,})[^"'\s<>\\]*/gi)) {
+      const u = m[0].split('?')[0]!.split('#')[0]!;
+      if (/\.(webp|jpe?g|png|gif|svg)$/i.test(u) || /\/social\//.test(u)) continue;
+      const id = ids(u)[0];
+      if (!id) continue;
+      if (!linkDe.has(id)) linkDe.set(id, u);
+      vezes.set(id, (vezes.get(id) ?? 0) + 1);
+    }
+    if (linkDe.size === 1) return [...linkDe.values()][0]!;
+    if (linkDe.size > 1) {
+      // Vitrine com vários: o produto da oferta é o do título da página (og:title); senão, o que mais aparece.
+      const titulo = (html.match(/<meta[^>]+property="og:title"[^>]+content="([^"]*)"/i)?.[1] ?? '')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const palavras = titulo.split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !/^(mercado|livre|r)$/.test(w));
+      const nota = (u: string) => {
+        const slug = u.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        return palavras.filter((w) => slug.includes(w)).length;
+      };
+      const ordem = [...linkDe].map(([id, u]) => ({ u, n: nota(u), v: vezes.get(id) ?? 0 }))
+        .sort((x, y) => y.n - x.n || y.v - x.v);
+      const [p1, p2] = ordem;
+      if (p1 && (p1.n > (p2?.n ?? -1) || (p1.n === p2!.n && p1.v > p2!.v))) return p1.u;
+      return '';
+    }
+    // Sem link de produto: só aceita código que não seja de foto, e só se for um.
+    const soltos = [...new Set([...html.matchAll(/\bMLB-?(\d{6,})(?![\d_])/gi)].filter((m) => !/-$/.test(html.slice(Math.max(0, m.index! - 1), m.index!))).map((m) => m[1]!))];
+    if (soltos.length === 1) return `https://produto.mercadolivre.com.br/MLB-${soltos[0]}`;
+  } catch { /* sem página */ }
+  return '';
+}
+
 export interface DadosPagina { titulo: string; imagem: string; preco: number | null }
 
 const meta = (html: string, prop: string) => {
@@ -82,7 +150,8 @@ const desescapar = (s: string) => s.replace(/&amp;/g, '&').replace(/&quot;/g, '"
 /** Dados básicos pela página (Open Graph). Funciona para a maioria das lojas; a Shopee usa a API. */
 export function lerPagina(html: string): DadosPagina {
   const titulo = desescapar(meta(html, 'og:title') || (html.match(/<title>([^<]*)<\/title>/i)?.[1] ?? '')).slice(0, 200);
-  const imagem = desescapar(meta(html, 'og:image'));
+  let imagem = desescapar(meta(html, 'og:image:secure_url') || meta(html, 'og:image') || meta(html, 'twitter:image'));
+  if (imagem.startsWith('//')) imagem = 'https:' + imagem;
   const precoTxt = meta(html, 'product:price:amount') || meta(html, 'og:price:amount');
   const preco = precoTxt ? Math.round(Number(precoTxt.replace(',', '.')) * 100) : null;
   return { titulo, imagem, preco: Number.isFinite(preco) ? preco : null };
@@ -90,7 +159,8 @@ export function lerPagina(html: string): DadosPagina {
 
 export async function buscarPagina(url: string, f: typeof fetch = fetch): Promise<DadosPagina> {
   try {
-    const r = await f(url, { headers: { 'user-agent': 'Mozilla/5.0 (compatible; Ofertix/1.0)', 'accept-language': 'pt-BR' }, signal: AbortSignal.timeout(8000) });
+    // Agente de navegador comum: algumas lojas (Mercado Livre) mandam uma página de verificação, sem a foto, para robôs.
+    const r = await f(url, { headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36', accept: 'text/html,application/xhtml+xml', 'accept-language': 'pt-BR,pt;q=0.9' }, signal: AbortSignal.timeout(10000) });
     if (!r.ok) return { titulo: '', imagem: '', preco: null };
     return lerPagina((await r.text()).slice(0, 400_000));
   } catch {

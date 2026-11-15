@@ -4,8 +4,7 @@ import { type DB, agora } from './db.ts';
 import { plano } from './planos.ts';
 import {
   type Plataforma, NOME_PLATAFORMA, plataformaDe, extrairLinks, lojaSuportada, idsShopee,
-  linkAmazon, linkModelo, resolverLink, buscarPagina,
-} from './links.ts';
+  linkAmazon, linkModelo, resolverLink, buscarPagina, produtoDoSocialML, ehProdutoTikTok, linkCurtoTikTok, idTikTok } from './links.ts';
 import { linkCurtoShopee, produtoShopee, comissoesShopee, avaliacaoShopee } from './shopee.ts';
 import { anotarEntrada, anotarPreco, limiteDoNumero } from './extras.ts';
 import { classificar, colecaoDoDia, lerNicho, motivoRecusa, rodapeAfiliado, CATEGORIAS, nomeCategoria } from './nicho.ts';
@@ -40,11 +39,17 @@ export async function converterLink(c: Ctx, conta: number, url: string): Promise
   if (!/^https?:$/.test(u.protocol)) throw new ErroUso('Link inválido');
   const cfg = config(c.db, conta);
   let final = u.toString();
-  if (plataformaDe(final) === 'outra') throw new ErroUso('Por enquanto o Ofertix aceita links da Shopee, Mercado Livre, Amazon e Magalu');
+  // TikTok Shop: o link de afiliado só sai do app do TikTok. O Ofertix manda o link exatamente como foi colado.
+  if (linkCurtoTikTok(final) || ehProdutoTikTok(final)) return linkTikTok(c, final);
+  if (plataformaDe(final) === 'outra') throw new ErroUso('Por enquanto o Ofertix aceita links da Shopee, Mercado Livre, Amazon, TikTok Shop e Magalu');
   // Links curtos (s.shopee, amzn.to, meli.la...) precisam ser abertos para achar o produto.
   if (/^(s\.shopee\.com\.br|shp\.ee|amzn\.to|a\.co|meli\.la)$/i.test(u.hostname) || /\/(sec|social)\//.test(u.pathname)) final = await resolverLink(final, c.f);
-  // Mercado Livre: link de vitrine de outro afiliado que não leva a um produto não tem como virar o link da conta.
-  if (plataformaDe(final) === 'mercadolivre' && /\/social\//.test(new URL(final).pathname)) throw new ErroUso('Link de vitrine de outro afiliado do Mercado Livre: abra o produto e copie o link dele');
+  // Mercado Livre: link /social/ (vitrine de outro afiliado). Tenta achar o produto dela; sem produto único, não troca.
+  if (plataformaDe(final) === 'mercadolivre' && /\/social\//.test(new URL(final).pathname)) {
+    const produto = await produtoDoSocialML(final, c.f);
+    if (!produto) throw new ErroUso(`Link de vitrine de outro afiliado do Mercado Livre (${new URL(final).pathname}) sem um produto só: abra o produto e copie o link dele`);
+    final = produto;
+  }
   const plataforma = plataformaDe(final) === 'outra' ? plataformaDe(url) : plataformaDe(final);
 
   const base: NovaOferta = { plataforma, urlOriginal: final, urlAfiliado: final, titulo: '', imagem: '', precoDe: null, precoPor: null, comissaoPct: null };
@@ -76,6 +81,24 @@ export async function converterLink(c: Ctx, conta: number, url: string): Promise
   return base;
 }
 
+/**
+ * TikTok Shop (Programa de Tráfego Externo): o link gerado no app (produto → Compartilhar → Copiar link) leva a comissão
+ * do criador por 14 dias e vale 100 dias. Não dá para gerar nem trocar esse link fora do app, então ele sai como veio,
+ * sem o link curto /r/ do Ofertix. O endereço aberto só serve para achar o produto (título, foto, repetição).
+ */
+async function linkTikTok(c: Ctx, url: string): Promise<NovaOferta> {
+  let aberto = url;
+  if (linkCurtoTikTok(url)) aberto = await resolverLink(url, c.f).catch(() => url);
+  if (linkCurtoTikTok(url) && !ehProdutoTikTok(aberto)) throw new ErroUso('Esse link do TikTok não é de um produto do TikTok Shop. No app, abra o produto, toque em Compartilhar e copie o link.');
+  const id = idTikTok(aberto);
+  const base: NovaOferta = { plataforma: 'tiktok', urlOriginal: id ? `https://www.tiktok.com/view/product/${id}` : aberto.split('?')[0]!, urlAfiliado: url, titulo: '', imagem: '', precoDe: null, precoPor: null, comissaoPct: null };
+  const pg = await buscarPagina(aberto, c.f).catch(() => null);
+  if (pg) { base.titulo = pg.titulo.replace(/\s*[-|]\s*TikTok( Shop)?\s*$/i, ''); base.imagem = pg.imagem; base.precoPor = pg.preco; }
+  return base;
+}
+/** Link do TikTok Shop vale 100 dias: depois disso a oferta não sai mais (precisa de um link novo). */
+export const TIKTOK_VALIDADE = 100 * 86400_000;
+
 export function salvarOferta(c: Ctx, conta: number, o: NovaOferta, origem = 'manual', origemGrupo = ''): number {
   c.db.prepare(`INSERT INTO ofertas (conta_id, plataforma, url_original, url_afiliado, titulo, imagem, preco_de, preco_por, comissao_pct, origem, origem_grupo, criado_em, categoria, nota, vendas)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -102,7 +125,8 @@ export function oferta(db: DB, conta: number, id: number) {
 
 /** Texto pronto da oferta, com o cupom ativo da loja (se houver). */
 export function textoOferta(db: DB, conta: number, o: any): string {
-  const cup = db.prepare('SELECT codigo FROM cupons WHERE conta_id = ? AND plataforma = ? AND ativo = 1 ORDER BY id DESC LIMIT 1').get(conta, o.plataforma) as any;
+  const hojeTxt = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+  const cup = db.prepare("SELECT codigo FROM cupons WHERE conta_id = ? AND plataforma = ? AND ativo = 1 AND (validade = '' OR validade >= ?) ORDER BY id DESC LIMIT 1").get(conta, o.plataforma, hojeTxt) as any;
   const cfg = config(db, conta);
   const amazon = o.plataforma === 'amazon';
   const texto = rodapeAfiliado(montarMensagem({
@@ -115,7 +139,7 @@ export function textoOferta(db: DB, conta: number, o: any): string {
 
 // ---------------- Agendamentos e fila ----------------
 
-export function agendar(c: Ctx, conta: number, a: { ofertaId?: number; texto: string; imagem?: string; quando?: number; grupos?: number[] | 'todos'; origem?: string }): number {
+export function agendar(c: Ctx, conta: number, a: { ofertaId?: number; extras?: any[]; texto: string; imagem?: string; quando?: number; grupos?: number[] | 'todos'; origem?: string }): number {
   const texto = String(a.texto ?? '').trim();
   if (!texto) throw new ErroUso('Escreva o texto da oferta');
   if (texto.length > 4000) throw new ErroUso('Texto muito longo');
@@ -127,8 +151,8 @@ export function agendar(c: Ctx, conta: number, a: { ofertaId?: number; texto: st
   } else if (!(c.db.prepare('SELECT 1 FROM grupos WHERE conta_id = ? AND enviar = 1 LIMIT 1').get(conta))) {
     throw new ErroUso('Ligue o envio em ao menos um grupo');
   }
-  const r = c.db.prepare('INSERT INTO agendamentos (conta_id, oferta_id, texto, imagem, quando, grupos, origem, criado_em) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(conta, a.ofertaId ?? null, texto, a.imagem ?? '', quando, JSON.stringify(grupos), a.origem ?? 'manual', t(c));
+  const r = c.db.prepare('INSERT INTO agendamentos (conta_id, oferta_id, texto, imagem, quando, grupos, origem, criado_em, extras) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(conta, a.ofertaId ?? null, texto, a.imagem ?? '', quando, JSON.stringify(grupos), a.origem ?? 'manual', t(c), a.extras?.length ? JSON.stringify(a.extras) : '');
   return Number(r.lastInsertRowid);
 }
 
@@ -287,13 +311,36 @@ export function linkRastreado(c: Ctx, e: { conta_id: number; oferta_id: number |
   return `${c.urlPublica}/r/${codigo}`;
 }
 
-export const ROBO = /bot|crawl|spider|slurp|facebookexternalhit|^WhatsApp\/|preview|curl|wget|python|node-fetch|headless/i;
+export const ROBO = /bot|crawl|spider|slurp|facebookexternalhit|facebookcatalog|meta-externalagent|^WhatsApp\/|whatsapp|preview|embed|curl|wget|python|node-fetch|undici|axios|got\/|okhttp|go-http|java\/|libwww|httpclient|baileys|headless|lighthouse|scrapy|iframely|skypeuri|vkshare|telegram|discord|slack|twitter|linkedin|pinterest|google-|apple|yandex|bingpreview|petal|ahrefs|semrush/i;
 
 /** Clique no link curto: devolve o destino e conta o clique (robôs de prévia não contam). */
-export function registrarClique(c: Ctx, codigo: string, userAgent: string): string | null {
+/**
+ * O que não é clique de gente (6.11.1):
+ *  - robôs pelo agente (prévia do WhatsApp, do Facebook, buscadores, bibliotecas de programação);
+ *  - acesso do próprio servidor ou da rede interna: a Evolution API abre o link para montar a prévia na hora do envio;
+ *  - acesso nos primeiros 20 segundos depois de o link ser criado (a prévia é montada no envio, ninguém clica tão rápido);
+ *  - a mesma pessoa (IP + navegador) abrindo o mesmo link de novo em 30 minutos conta uma vez só.
+ */
+export const JANELA_PREVIA = 20_000;
+const vistosClique = new Map<string, number>();
+export const ipInterno = (ip: string, proprios: string[] = []) => {
+  const x = String(ip ?? '').replace(/^::ffff:/, '').trim();
+  return !x || proprios.includes(x) || /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|::1$|fc|fd|fe80)/i.test(x);
+};
+export function registrarClique(c: Ctx, codigo: string, userAgent: string, ip = '', ipsProprios: string[] = []): string | null {
   const l = c.db.prepare('SELECT * FROM links WHERE codigo = ?').get(codigo) as any;
   if (!l) return null;
-  if (userAgent && !ROBO.test(userAgent)) c.db.prepare('INSERT INTO cliques (codigo, conta_id, em) VALUES (?, ?, ?)').run(codigo, l.conta_id, t(c));
+  const agora = t(c);
+  const gente = userAgent && !ROBO.test(userAgent) && !(ip && ipInterno(ip, ipsProprios)) && agora - Number(l.criado_em) >= JANELA_PREVIA;
+  if (gente) {
+    const chave = `${codigo}|${ip}|${userAgent}`;
+    const antes = vistosClique.get(chave);
+    if (!antes || agora - antes > 30 * 60_000) {
+      vistosClique.set(chave, agora);
+      if (vistosClique.size > 50_000) vistosClique.clear();
+      c.db.prepare('INSERT INTO cliques (codigo, conta_id, em) VALUES (?, ?, ?)').run(codigo, l.conta_id, agora);
+    }
+  }
   return l.destino;
 }
 
@@ -301,7 +348,7 @@ const inicioDoDia = (ms: number) => { const d = new Date(ms); d.setHours(0, 0, 0
 
 /** Manda o que está na hora. Respeita o limite diário por número do plano. */
 export async function processarFila(c: Ctx, maximo = 20): Promise<number> {
-  const fila = c.db.prepare(`SELECT e.*, i.chave, i.status AS inst_status, g.jid, a.texto, a.imagem, a.oferta_id, a.enquete, o.url_afiliado, o.plataforma
+  const fila = c.db.prepare(`SELECT e.*, i.chave, i.status AS inst_status, g.jid, a.texto, a.imagem, a.oferta_id, a.enquete, a.extras, o.url_afiliado, o.plataforma, o.criado_em AS oferta_criada
     FROM envios e JOIN instancias i ON i.id = e.instancia_id JOIN grupos g ON g.id = e.grupo_id JOIN agendamentos a ON a.id = e.agendamento_id
     LEFT JOIN ofertas o ON o.id = a.oferta_id
     WHERE e.status = 'fila' AND e.enviar_em <= ? ORDER BY e.enviar_em LIMIT ?`).all(t(c), maximo) as any[];
@@ -347,9 +394,24 @@ export async function processarFila(c: Ctx, maximo = 20): Promise<number> {
         }
         let texto = expandirVariacoes(e.texto);
         // Amazon: o link sai direto (sem /r/) e sem foto; regras do Programa de Associados em src/regras.ts.
+        // TikTok Shop: o link sai direto (só o link oficial do app leva a comissão), com foto.
         const amazon = e.plataforma === 'amazon';
-        if (!amazon && cfg.contar_cliques && e.url_afiliado && /^https?:\/\//.test(c.urlPublica) && texto.includes(e.url_afiliado)) {
+        const direto = amazon || e.plataforma === 'tiktok';
+        if (e.plataforma === 'tiktok' && e.oferta_criada && t(c) - Number(e.oferta_criada) > TIKTOK_VALIDADE - 86400_000) {
+          c.db.prepare("UPDATE envios SET status = 'erro', erro = ? WHERE id = ?").run('Link do TikTok Shop vencido (vale 100 dias): gere um link novo no app e cole de novo', e.id);
+          continue;
+        }
+        if (!direto && cfg.contar_cliques && e.url_afiliado && /^https?:\/\//.test(c.urlPublica) && texto.includes(e.url_afiliado)) {
           texto = texto.split(e.url_afiliado).join(linkRastreado(c, e, e.url_afiliado));
+        }
+        // Outros links de loja da mesma mensagem (espelhamento): cada um com o seu link que conta clique.
+        if (cfg.contar_cliques && e.extras && /^https?:\/\//.test(c.urlPublica)) {
+          let lista: any[] = [];
+          try { lista = JSON.parse(e.extras); } catch { /* sem extras */ }
+          for (const [oid, url, pl] of lista) {
+            if (!url || pl === 'amazon' || pl === 'tiktok' || !texto.includes(url)) continue;
+            texto = texto.split(url).join(linkRastreado(c, { ...e, oferta_id: Number(oid) || null }, url));
+          }
         }
         await c.wpp.enviar(e.chave, e.jid, texto, !amazon && /^https?:\/\//.test(e.imagem) ? e.imagem : undefined);
         c.db.prepare("UPDATE envios SET status = 'enviado', enviado_em = ? WHERE id = ?").run(t(c), e.id);
@@ -412,6 +474,10 @@ export function alternarGrupo(db: DB, conta: number, id: number, campo: 'enviar'
   const g = db.prepare('SELECT * FROM grupos WHERE id = ? AND conta_id = ?').get(id, conta) as any;
   if (!g) throw new ErroUso('Grupo não encontrado', 404);
   if (ligado) {
+    // Grupo monitorado (captura ou origem de espelhamento) não vira grupo de envio, e vice-versa (6.6).
+    const origem = db.prepare('SELECT 1 FROM espelhos WHERE origem_grupo_id = ?').get(id);
+    if (campo === 'enviar' && (g.monitorar || origem)) throw new ErroUso(`Esse grupo é de monitoramento (${origem ? 'origem de um espelhamento em Automação' : 'captura ligada'}). Desligue o monitoramento antes de enviar ofertas para ele.`);
+    if (campo === 'monitorar' && g.enviar) throw new ErroUso('Esse grupo é de envio. Desligue o envio antes de monitorar.');
     const p = planoDa(db, conta);
     if (campo === 'monitorar' && !p.captura) throw new ErroUso('A captura de ofertas não faz parte do seu plano');
     const max = campo === 'enviar' ? p.gruposEnvio : p.gruposMonitorados;
@@ -442,11 +508,12 @@ export async function eventoWhatsApp(c: Ctx, chave: string, token: string, ev: a
 
   if (tipo === 'group.participants.update') {
     const d = ev?.data ?? {};
-    const g = c.db.prepare('SELECT id FROM grupos WHERE instancia_id = ? AND jid = ?').get(i.id, String(d.id ?? '')) as any;
+    const g = c.db.prepare('SELECT id, monitorar, (SELECT 1 FROM espelhos WHERE origem_grupo_id = grupos.id) AS espelho FROM grupos WHERE instancia_id = ? AND jid = ?').get(i.id, String(d.id ?? '')) as any;
     const qtd = Array.isArray(d.participants) ? d.participants.length : 1;
     const acao = String(d.action ?? '');
     if (g && (acao === 'add' || acao === 'remove')) {
-      c.db.prepare('INSERT INTO membros_eventos (conta_id, grupo_id, tipo, qtd, em) VALUES (?, ?, ?, ?, ?)').run(i.conta_id, g.id, acao === 'add' ? 'entrou' : 'saiu', qtd, t(c));
+      // Entradas e saídas só contam nos seus grupos; grupo monitorado (ou origem de espelhamento) é de outra pessoa.
+      if (!g.monitorar && !g.espelho) c.db.prepare('INSERT INTO membros_eventos (conta_id, grupo_id, tipo, qtd, em) VALUES (?, ?, ?, ?, ?)').run(i.conta_id, g.id, acao === 'add' ? 'entrou' : 'saiu', qtd, t(c));
       c.db.prepare('UPDATE grupos SET participantes = MAX(0, participantes + ?) WHERE id = ?').run(acao === 'add' ? qtd : -qtd, g.id);
       if (acao === 'add') anotarEntrada(c.db, g.id, qtd);
     }
@@ -495,9 +562,15 @@ export async function eventoWhatsApp(c: Ctx, chave: string, token: string, ev: a
 
 export async function sincronizarComissoes(c: Ctx, conta: number, dias = 30): Promise<number> {
   const cfg = config(c.db, conta);
-  if (!cfg.shopee_app_id || !cfg.shopee_segredo) throw new ErroUso('Cadastre o AppID e a Senha da Open API da Shopee em Configurações');
+  if (!cfg.shopee_app_id || !cfg.shopee_segredo) throw new ErroUso('Cadastre o AppID e a Senha da Open API da Shopee em Conectar plataformas');
   const fim = Math.floor(t(c) / 1000), inicio = fim - dias * 86400;
-  const itens = await comissoesShopee({ appId: cfg.shopee_app_id, segredo: cfg.shopee_segredo }, inicio, fim, c.f);
+  let itens;
+  try { itens = await comissoesShopee({ appId: cfg.shopee_app_id, segredo: cfg.shopee_segredo }, inicio, fim, c.f); }
+  catch (e) {
+    c.db.prepare('UPDATE config_conta SET shopee_sinc_em = ?, shopee_sinc_erro = ? WHERE conta_id = ?').run(t(c), (e as Error).message.slice(0, 300), conta);
+    throw new ErroUso(`A Shopee não devolveu o relatório: ${(e as Error).message}`);
+  }
+  c.db.prepare("UPDATE config_conta SET shopee_sinc_em = ?, shopee_sinc_erro = '', shopee_sinc_itens = ? WHERE conta_id = ?").run(t(c), itens.length, conta);
   for (const it of itens) {
     c.db.prepare(`INSERT INTO comissoes (conta_id, plataforma, pedido, produto, valor_centavos, comissao_centavos, status, em) VALUES (?, 'shopee', ?, ?, ?, ?, ?, ?)
       ON CONFLICT (conta_id, plataforma, pedido, produto) DO UPDATE SET valor_centavos = excluded.valor_centavos, comissao_centavos = excluded.comissao_centavos, status = excluded.status`)
@@ -584,12 +657,16 @@ export function porCategoria(db: DB, conta: number, de: number, ate: number) {
   }).filter((x) => x.envios || x.cliques).sort((a, b) => b.cliquesPorEnvio - a.cliquesPorEnvio || b.cliques - a.cliques);
 }
 
+/** Filtro SQL: eventos de membros só dos grupos de envio (o monitorado é de outra pessoa). */
+export const SO_ENVIO = 'grupo_id NOT IN (SELECT id FROM grupos WHERE monitorar = 1 UNION SELECT origem_grupo_id FROM espelhos)';
+
 export function membros(c: Ctx, conta: number, nomePeriodo: string, grupo?: number) {
   const { de, ate } = periodo(nomePeriodo, t(c));
   const filtro = grupo ? ' AND grupo_id = ?' : '';
   const args: any[] = grupo ? [conta, de, ate, grupo] : [conta, de, ate];
-  const ev = c.db.prepare(`SELECT tipo, qtd, em FROM membros_eventos WHERE conta_id = ? AND em >= ? AND em < ?${filtro}`).all(...args) as any[];
-  const grupos = c.db.prepare(`SELECT id, nome, participantes FROM grupos WHERE conta_id = ? AND (enviar = 1 OR monitorar = 1)${grupo ? ' AND id = ?' : ''} ORDER BY participantes DESC`).all(...(grupo ? [conta, grupo] : [conta])) as any[];
+  // Só os seus grupos de envio: grupo monitorado (de outra pessoa) não entra nas estatísticas.
+  const ev = c.db.prepare(`SELECT tipo, qtd, em, grupo_id FROM membros_eventos WHERE conta_id = ? AND em >= ? AND em < ?${filtro} AND ${SO_ENVIO}`).all(...args) as any[];
+  const grupos = c.db.prepare(`SELECT id, nome, participantes FROM grupos WHERE conta_id = ? AND enviar = 1${grupo ? ' AND id = ?' : ''} ORDER BY participantes DESC`).all(...(grupo ? [conta, grupo] : [conta])) as any[];
   const total = grupos.reduce((s, g) => s + g.participantes, 0);
   const dias = porDia(de, ate).map((x) => diaLocal(new Date(x + 'T12:00:00').getTime()));
   const entrou = (d: string) => ev.filter((e) => e.tipo === 'entrou' && diaLocal(e.em) === d).reduce((s, e) => s + e.qtd, 0);
@@ -597,12 +674,16 @@ export function membros(c: Ctx, conta: number, nomePeriodo: string, grupo?: numb
   const saldoTotal = ev.reduce((s, e) => s + (e.tipo === 'entrou' ? e.qtd : -e.qtd), 0);
   // Total de cada dia reconstruído de trás para frente a partir do total atual.
   let acumulado = total;
-  const serie = dias.slice().reverse().map((d) => { const r = { dia: d, total: acumulado, entrou: entrou(d), saiu: saiu(d) }; acumulado -= r.entrou - r.saiu; return r; }).reverse();
+  const serie = dias.slice().reverse().map((d) => { const r = { dia: d, total: Math.max(0, acumulado), entrou: entrou(d), saiu: saiu(d) }; acumulado -= r.entrou - r.saiu; return r; }).reverse();
   const saidas = ev.filter((e) => e.tipo === 'saiu').reduce((s, e) => s + e.qtd, 0);
+  const entradas = ev.filter((e) => e.tipo === 'entrou').reduce((s, e) => s + e.qtd, 0);
+  // Saída diária (churn): saídas por dia sobre a média de participantes no período, nunca acima de 100%.
+  const media = serie.length ? serie.reduce((s, x) => s + x.total, 0) / serie.length : total;
+  const porGrupo = (id: number, tipo: string) => ev.filter((e) => e.grupo_id === id && e.tipo === tipo).reduce((s, e) => s + e.qtd, 0);
   return {
-    grupos: grupos.length, total, saldoDiario: dias.length ? Math.round((saldoTotal / dias.length) * 10) / 10 : 0,
-    churnDiario: total ? Math.round((saidas / dias.length / total) * 1000) / 10 : 0,
-    serie, lista: grupos,
+    grupos: grupos.length, total, entradas, saidas, saldoDiario: dias.length ? Math.round((saldoTotal / dias.length) * 10) / 10 : 0,
+    churnDiario: media >= 1 ? Math.min(100, Math.round((saidas / dias.length / media) * 1000) / 10) : 0,
+    serie, lista: grupos.map((g) => ({ ...g, entrou: porGrupo(g.id, 'entrou'), saiu: porGrupo(g.id, 'saiu') })),
   };
 }
 
@@ -621,6 +702,7 @@ export function resumoComissoes(c: Ctx, conta: number, nomePeriodo: string, stat
     pendentes: linhas.filter((l) => l.status === 'pendente').length,
     taxa: linhas.length ? Math.round((validos.length / linhas.length) * 1000) / 10 : 0,
     linhas: linhas.slice(0, 100),
+    shopee: (() => { const g = config(c.db, conta); return { conectada: !!(g.shopee_app_id && g.shopee_segredo), em: Number(g.shopee_sinc_em) || 0, erro: g.shopee_sinc_erro || '', itens: Number(g.shopee_sinc_itens) || 0 }; })(),
   };
 }
 
@@ -732,8 +814,12 @@ export function textoResumo(c: Ctx, conta: number): string {
   const cliques = n('SELECT COUNT(*) AS n FROM cliques WHERE conta_id = ? AND em >= ? AND em < ?', conta, de, ate);
   const capt = n("SELECT COUNT(*) AS n FROM ofertas WHERE conta_id = ? AND origem = 'captura' AND criado_em >= ? AND criado_em < ?", conta, de, ate);
   const com = n("SELECT COALESCE(SUM(comissao_centavos),0) AS n FROM comissoes WHERE conta_id = ? AND status <> 'cancelado' AND em >= ? AND em < ?", conta, de, ate);
-  const entrou = n("SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'entrou' AND em >= ? AND em < ?", conta, de, ate);
-  const saiu = n("SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'saiu' AND em >= ? AND em < ?", conta, de, ate);
+  const entrou = n(`SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'entrou' AND em >= ? AND em < ? AND ${SO_ENVIO}`, conta, de, ate);
+  const saiu = n(`SELECT COALESCE(SUM(qtd),0) AS n FROM membros_eventos WHERE conta_id = ? AND tipo = 'saiu' AND em >= ? AND em < ? AND ${SO_ENVIO}`, conta, de, ate);
+  const participantes = n('SELECT COALESCE(SUM(participantes),0) AS n FROM grupos WHERE conta_id = ? AND enviar = 1', conta);
+  const esp = db.prepare("SELECT status, COUNT(*) AS n FROM espelho_log WHERE conta_id = ? AND em >= ? AND em < ? GROUP BY status").all(conta, de, ate) as any[];
+  const espN = (st: string) => Number(esp.find((x) => x.status === st)?.n ?? 0);
+  const insta = n("SELECT COUNT(*) AS n FROM insta_log WHERE conta_id = ? AND status = 'enviada' AND em >= ? AND em < ?", conta, de, ate);
   const pend = n("SELECT COUNT(*) AS n FROM agendamentos WHERE conta_id = ? AND status = 'pendente'", conta);
   const vitrine = n('SELECT COUNT(*) AS n FROM ofertas WHERE conta_id = ? AND vitrine = 1 AND esgotada = 0', conta);
   const top = db.prepare(`SELECT o.titulo, COUNT(k.id) AS n FROM cliques k JOIN links l ON l.codigo = k.codigo JOIN ofertas o ON o.id = l.oferta_id
@@ -744,8 +830,10 @@ export function textoResumo(c: Ctx, conta: number): string {
     `👆 ${cliques} cliques${enviados ? ` (${(cliques / enviados).toFixed(1).replace('.', ',')} por mensagem)` : ''}`,
     `🧲 ${capt} ofertas capturadas`,
     `💰 ${reais(com) || 'R$ 0,00'} em comissões registradas`,
-    `👥 +${entrou} / −${saiu} membros`,
+    `👥 +${entrou} / −${saiu} membros nos seus grupos (${participantes} no total)`,
   ];
+  if (esp.length) linhas.push(`🪞 Espelhamento: ${espN('agendada')} copiada(s), ${espN('bloqueada')} bloqueada(s), ${espN('ignorada')} ignorada(s)`);
+  if (insta) linhas.push(`📸 Instagram: ${insta} link(s) enviado(s) no direct`);
   if (top) linhas.push('', `🏆 Mais clicada: ${top.titulo} (${top.n})`);
   linhas.push('', `🗓️ ${pend} agendamento(s) pendente(s) · 🛍️ ${vitrine} na vitrine`);
   const av = avisos(c, conta).filter((a) => a.nivel !== 'info');

@@ -47,7 +47,10 @@ test('busca na Shopee: sem credenciais pede o cadastro; na demonstração usa o 
   const id = await v6.adicionarDaBusca(d.ctx, d.conta, r.itens[0], true);
   const o = s.oferta(d.db, d.conta, id);
   assert.equal(o.plataforma, 'shopee'); assert.equal(o.vitrine, 1); assert.equal(o.origem, 'busca');
-  assert.ok((await v6.buscarShopee(d.ctx, d.conta, 'potes de vidro')).itens[0].ja);
+  // 6.6: o que já está na vitrine não aparece mais na busca; o que já é oferta (fora da vitrine) aparece marcado.
+  assert.ok(!(await v6.buscarShopee(d.ctx, d.conta, 'potes de vidro')).itens.some((x) => x.link === r.itens[0]!.link));
+  await v6.adicionarDaBusca(d.ctx, d.conta, r2.itens.find((x) => /Escova/.test(x.titulo)), false);
+  assert.ok((await v6.buscarShopee(d.ctx, d.conta, 'escova secadora')).itens.find((x) => /Escova/.test(x.titulo))!.ja);
   await assert.rejects(v6.adicionarDaBusca(d.ctx, d.conta, { ...r.itens[0], link: 'https://golpe.com/x' }), /inválido/);
 });
 

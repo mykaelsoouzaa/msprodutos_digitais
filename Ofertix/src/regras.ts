@@ -47,3 +47,28 @@ export function limparRastreioML(url: string): string {
   u.hash = u.hash.replace(/(^#|&)(tracking_id|matt_[^=&]*|reco_[^=&]*|c_[^=&]*)=[^&]*/gi, '$1').replace(/^#&+|&+$/g, '').replace(/^#$/, '');
   return u.toString();
 }
+
+/**
+ * Configurações: acha a tag da Amazon ou os parâmetros de afiliado do Mercado Livre num link gerado pela própria conta.
+ * Links curtos (amzn.to, /sec/, meli.la) são abertos para chegar ao endereço final.
+ */
+export async function extrairAfiliado(loja: string, url: string, abrir: (u: string) => Promise<string>): Promise<string> {
+  let u: URL;
+  try { u = new URL(String(url ?? '').trim()); } catch { throw new Error('Cole o link completo, começando com https://'); }
+  if (!/^https?:$/.test(u.protocol)) throw new Error('Cole o link completo, começando com https://');
+  const curto = /^(amzn\.to|a\.co|meli\.la)$/i.test(u.hostname) || /\/(sec|social)\//.test(u.pathname);
+  if (curto) u = new URL(await abrir(u.toString()));
+  if (loja === 'amazon') {
+    if (!/(^|\.)amazon\.com\.br$/i.test(u.hostname)) throw new Error('Esse link não é da Amazon Brasil');
+    const tag = u.searchParams.get('tag') ?? '';
+    if (!/^[A-Za-z0-9_-]{2,60}$/.test(tag)) throw new Error('Esse link não tem a sua tag. Gere o link pela barra do Associados (SiteStripe) com a sua conta.');
+    return tag;
+  }
+  if (loja === 'mercadolivre') {
+    if (!/(^|\.)mercadoli(vre|bre)\.com(\.br)?$/i.test(u.hostname)) throw new Error('Esse link não é do Mercado Livre');
+    const params = [...u.searchParams].filter(([k, v]) => /^(matt_[a-z_]+|tracking_id)$/i.test(k) && v);
+    if (!params.length) throw new Error('Não achei parâmetros de afiliado nesse link. Use um link do Gerador de links do seu painel de afiliados.');
+    return params.map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+  }
+  throw new Error('Loja inválida');
+}

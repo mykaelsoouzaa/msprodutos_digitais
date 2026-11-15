@@ -14,7 +14,11 @@ export interface Config {
   evolutionUrl: string;        // http://127.0.0.1:8080
   evolutionApiKey: string;
   adminEmails: string[];
-  whatsappContato?: string;   // número do botão de WhatsApp da página de vendas (DDI + DDD + número)
+  whatsappContato?: string;
+  instagramAppId?: string;     // app da Meta (produto Instagram, login do Instagram)
+  instagramAppSecret?: string;
+  instagramVerifyToken?: string;
+  instagramConfigId?: string;  // configuração do Login do Facebook para Empresas (apps novos da Meta) // o mesmo texto colado no painel de webhooks da Meta   // número do botão de WhatsApp da página de vendas (DDI + DDD + número)
 }
 
 export function lerConfig(): Config {
@@ -30,6 +34,10 @@ export function lerConfig(): Config {
     evolutionUrl: env('EVOLUTION_URL').replace(/\/+$/, ''),
     evolutionApiKey: env('EVOLUTION_API_KEY'),
     whatsappContato: env('WHATSAPP_CONTATO', '5531999041748').replace(/\D/g, ''),
+    instagramAppId: env('INSTAGRAM_APP_ID'),
+    instagramAppSecret: env('INSTAGRAM_APP_SECRET'),
+    instagramVerifyToken: env('INSTAGRAM_VERIFY_TOKEN'),
+    instagramConfigId: env('INSTAGRAM_CONFIG_ID'),
     adminEmails: env('ADMIN_EMAILS').toLowerCase().split(',').map((s) => s.trim()).filter(Boolean),
   };
 }

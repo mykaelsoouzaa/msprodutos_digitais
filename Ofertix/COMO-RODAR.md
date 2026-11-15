@@ -114,6 +114,155 @@ Texto para o card em Serviços da página inicial:
 
 O banco fica em `/srv/ms/dados/ofertix.db`, dentro da pasta que o backup diário das 3h30 já copia. Confira se o script de backup pega todos os arquivos `.db` dessa pasta.
 
+## Atualizar para a 6.11.1 (cliques de verdade)
+
+Os cliques contavam a prévia do link: na hora do envio, a Evolution API abre o link para montar a prévia, e isso virava
+"clique" em cada grupo. Agora não contam: acesso nos primeiros 20 segundos depois de o link nascer, acesso do próprio
+servidor ou da rede interna (IP público do endereço do Ofertix, 127.x, 10.x, 172.16-31.x, 192.168.x), robôs e
+bibliotecas (axios, undici, Baileys, prévias de redes sociais) e a mesma pessoa abrindo o mesmo link de novo em 30
+minutos. Ao subir, os "cliques" antigos dos primeiros 20 segundos são apagados uma vez (tabela `migracoes`).
+
+## Atualizar para a 6.11 (10 pacotes prontos de curadoria)
+
+Nicho e curadoria → Curadoria → Pacotes prontos: Achadinhos femininos, Achados até R$ 50, Tudo até R$ 20, Casa e
+cozinha, Beleza e skincare, Moda e acessórios, Mães e bebês, Tech e eletrônicos, Achadinhos masculinos e Black Friday.
+Cada um traz regras, coleções da semana, modelo de mensagem, rodapé e horários (`PACOTES` em `src/nicho.ts`,
+`POST /api/nicho/pacote`). O pacote em uso fica marcado.
+
+## Atualizar para a 6.10 (membros só dos seus grupos e 10 melhorias)
+
+- Grupo monitorado (ou origem de espelhamento) não entra mais em Membros, nos resumos diário e semanal do WhatsApp,
+  nem nos grupos cansados; entradas e saídas dele nem são gravadas. Saída diária (churn) calculada sobre a média de
+  participantes do período, no máximo 100%. Gráfico de membros sem passar da área.
+- Membros: tabela com entraram, saíram, saldo e lotação de cada grupo.
+- "Envios de hoje" por número (usados / limite do plano ou do aquecimento) na Visão geral e na Automação.
+- Avisos da Visão geral com "Dispensar" (some por 24 horas neste navegador).
+- Menu com números: Automação (mensagens bloqueadas hoje) e Instagram (links enviados hoje).
+- Agendamentos: quantidade em cada aba, busca pelo produto ou texto, selo "sem foto" na cópia que saiu sem foto.
+- Grupos de envio: barra de lotação (até 1.024 pessoas).
+- Resumo diário: total de participantes dos seus grupos, espelhamento do dia e links do Instagram.
+
+## Atualizar para a 6.9 (layout e funções)
+
+- **Nicho e curadoria** em abas (Curadoria, Rotina da semana, Mensagens) com um resumo do que entra nos grupos no topo.
+- **Cupons e campanhas:** campanhas da própria Shopee (Open API, `shopeeOfferV2`) aparecem sozinhas, com o link de
+  afiliado da conta, "Copiar link" e "Mandar nos grupos". Cupom ganhou "Válido até": vencido não entra no texto.
+- **Comissões:** a Shopee é lida 2 minutos depois de o servidor subir e a cada 3 horas (antes só a cada 6 horas, e cada
+  atualização zerava a contagem). O relatório é pedido em janelas de 7 dias. A página mostra quando a Shopee foi lida e
+  o erro da última leitura, em vez de pedir para conectar de novo.
+- **Instagram:** a conta conectada fica num quadro próprio, com Conectar de novo e Desconectar.
+- **Foto das ofertas:** a página do produto é lida como navegador comum (o Mercado Livre manda uma página sem foto para
+  robôs) e aceita `og:image:secure_url` e `twitter:image`.
+
+## Atualizar para a 6.8.1 (espelhamento: foto, limite do dia, assinatura)
+
+- Foto da cópia, nesta ordem: a foto original (do webhook, se vier em base64, ou baixada pela Evolution API), a foto do
+  produto, a miniatura que vem junto da mensagem (foto ou prévia do link) e, por último, a foto da página do produto.
+  O registro diz de onde veio a foto, ou por que saiu sem foto.
+- Mensagens de grupos com mensagens temporárias ou "ver uma vez" são lidas (vinham embrulhadas e perdiam a foto).
+- A oferta principal é a que tem foto (o produto), não o link de cupom.
+- Todos os links de loja da mensagem copiada contam clique (antes só o primeiro).
+- Linha com @ de outro perfil ("Time @achadinhos.imperdiveis") sai sozinha. E-mail não conta.
+- Limite do dia: se a cópia não cabe mais nos envios de hoje (plano ou aquecimento do número), ela fica "Ignorada"
+  com o motivo, em vez de entrar na fila e virar um erro por grupo.
+
+## Atualizar para a 6.8 (TikTok Shop)
+
+Links do TikTok Shop entram como qualquer loja (Ofertas → colar o link). O link de afiliado do TikTok Shop só sai do app
+(produto → Compartilhar → Copiar link, com a verificação de identidade feita), então o Ofertix manda o link exatamente
+como foi colado, sem o /r/, com foto e preço. Vale 100 dias: depois disso o envio é recusado com o aviso para gerar um
+novo. No espelhamento, link do TikTok Shop de outra pessoa bloqueia a mensagem (não tem como virar o da conta).
+Passo a passo na página Conectar plataformas. Nada a configurar no servidor.
+
+## Atualizar para a 6.7.1 (Instagram pelo login do Facebook, apps novos)
+
+Com `INSTAGRAM_CONFIG_ID` no `.env`, o botão Conectar Instagram abre o login do Facebook para Empresas: a pessoa
+marca a Página e o Instagram, e o Ofertix guarda o token da Página (não vence) e responde pela Página.
+Sem ele, continua o login do Instagram (apps antigos).
+
+## Atualizar para a 6.7 (Instagram: comentou EU QUERO, recebe o link no direct)
+
+Página nova **Instagram** no menu. Quem comenta a palavra-chave num post ou reel (ou manda no direct) recebe a
+mensagem com o link no direct, e o comentário ganha uma resposta pública ("Te mandei no direct! 💌"). A mesma pessoa
+recebe uma vez por post a cada 24 horas. Tudo pela API oficial do Instagram, com um app da Meta da MS Soluções.
+
+### 1. Criar o app na Meta (uma vez)
+Apps criados a partir de 2026 não têm mais a opção "API com login do Instagram": o caminho é o **login do Facebook**
+(6.7.1). Precisa: Instagram profissional **ligado a uma Página do Facebook** (Instagram → Editar perfil → Página).
+1. developers.facebook.com → Meus apps → Criar app → caso de uso "Gerenciar mensagens e conteúdo no Instagram".
+2. Casos de uso → Personalizar → **Configuração da API com login do Facebook** → "Go to permissions and features" e adicione:
+   `instagram_basic`, `instagram_manage_comments`, `instagram_manage_messages`, `pages_show_list`,
+   `pages_read_engagement`, `pages_manage_metadata`, `business_management`.
+3. Menu **Login do Facebook para Empresas → Configurações** (o primeiro): em URIs de redirecionamento do OAuth válidos,
+   `https://ofertix.cloud/instagram/retorno`. Salve.
+4. Menu **Login do Facebook para Empresas → Configurações** (o segundo, "Configurations") → Criar configuração:
+   tipo **Token de acesso do usuário**, as mesmas permissões do passo 2. Copie o **ID da configuração**.
+5. **Configurações do app → Básico**: copie o **ID do app** e a **Chave secreta**; preencha a Política de Privacidade
+   `https://ofertix.cloud/privacidade` e a exclusão de dados `https://ofertix.cloud/privacidade#exclusao`.
+6. Webhooks (na mesma página do passo 2, "Configurar webhooks", objeto **Instagram**): URL de retorno
+   `https://ofertix.cloud/webhook/instagram`, token = `INSTAGRAM_VERIFY_TOKEN`; assine **comments** e **messages**.
+7. No Instagram do perfil: Configurações → Mensagens e respostas → Ferramentas conectadas → **Permitir acesso às mensagens**.
+
+Em modo de Desenvolvimento funciona para quem tem função no app (você, que criou o app e é dono da Página). Para
+clientes do Ofertix conectarem os próprios perfis, o app passa pela Análise do app.
+
+### 2. Servidor
+Já logado na VPS, acrescente ao `/srv/ms/ofertix/.env` (sem colar os valores em lugar nenhum):
+```
+INSTAGRAM_APP_ID=<id do app do Instagram>
+INSTAGRAM_APP_SECRET=<chave secreta do app do Instagram>
+INSTAGRAM_VERIFY_TOKEN=<um texto aleatório>
+INSTAGRAM_CONFIG_ID=<id da configuração do passo 4>
+```
+e reinicie (`pm2 restart ofertix`). O webhook precisa responder antes de clicar em Verificar no painel da Meta.
+
+### 3. No Ofertix
+Página Instagram → **Conectar Instagram** → entre com o perfil e autorize → "Nova palavra-chave". Teste comentando
+"eu quero" de outra conta num post.
+
+## Atualizar para a 6.6.5 (mesmo produto de dois grupos monitorados)
+
+Se dois grupos de origem mandam o mesmo produto (texto e link diferentes), só a primeira cópia sai; a outra fica
+como "Ignorada: Repetida" por 12 horas. O produto é reconhecido pelo código (MLB do Mercado Livre, item da Shopee, ASIN da Amazon).
+
+## Atualizar para a 6.6.4 (espelho com foto em mensagem só de texto)
+
+Mensagem copiada que era só texto com a prévia do link agora sai com a foto do produto (ou a miniatura da prévia).
+A linha que era só uma chamada para um link que saiu ("Convide seus amigos para o grupo: …") sai inteira.
+
+## Atualizar para a 6.6.3 (vitrine do Mercado Livre: produto certo)
+
+O código "MLB" do nome das fotos não conta mais como produto. O Ofertix usa o link de produto que está na página;
+com vários, fica o que bate com o título da oferta.
+
+## Atualizar para a 6.6.2 (vitrine do Mercado Livre com produto destacado)
+
+Quando o link /social/ abre a vitrine inteira do outro afiliado, o Ofertix fica com o produto destacado da oferta
+(o que aparece mais vezes na página) e põe os seus parâmetros nele. Se nenhum se destaca, continua bloqueado.
+
+## Atualizar para a 6.6.1 (link /social/ do Mercado Livre no espelhamento)
+
+Link do Mercado Livre que outro grupo manda pela vitrine dele (`/social/...`) agora vira o link da sua conta quando
+leva a um produto só: o Ofertix acha o código do anúncio (MLB...) no endereço ou na página e põe os seus parâmetros.
+Se a vitrine mostrar vários produtos, a mensagem continua bloqueada e o motivo mostra o endereço.
+A mensagem de bloqueio passou a dizer "Link do Mercado Livre".
+
+## Atualizar para a 6.6 (Conectar plataformas, busca melhor, grupos de monitoramento)
+
+- **Conectar plataformas** (menu Conta): Shopee, Amazon e Mercado Livre saíram de Configurações e ganharam página própria, com o passo a passo e um botão Salvar só delas.
+- **Busca na Shopee:** até 50 produtos por vez; filtros de categoria (sem precisar escrever nada), preço até R$ 20/30/50/100/200 e "Para o grupo", que usa o tema do grupo e já deixa só ele marcado na hora de enviar. O que já está na vitrine não aparece.
+- **Grupos de envio:** grupos de monitoramento (captura ou origem de espelhamento) aparecem em cinza, com a etiqueta "monitoramento", e não podem virar grupo de envio (nem o contrário).
+- **Automação:** botão Sincronizar grupos ao lado do grupo de origem; "Últimas mensagens" mostra há quanto tempo atualizou e lê de novo sozinha a cada 30 segundos.
+
+Nada muda no banco nem no `.env`.
+
+## Atualizar para a 6.5 (passo a passo das lojas)
+
+- Em Configurações, a parte de lojas virou **Lojas de afiliado**, em três colunas (Shopee, Amazon e Mercado Livre), cada uma com o passo a passo, os campos e se já está configurada.
+- **Achar a tag** (Amazon) e **Achar meus parâmetros** (Mercado Livre): cole um link gerado pela sua conta e o Ofertix preenche o campo sozinho. Links curtos (`amzn.to`, `/sec/`) são abertos para chegar ao endereço final.
+
+Nada muda no banco nem no `.env`.
+
 ## Atualizar para a 6.4 (regras da Amazon e do Mercado Livre)
 
 - **Amazon:** o link sai direto (sem `/r/`, então não conta clique), sem preço e sem foto, com o aviso de associado no fim. Vale para ofertas, vitrine pública, lista do dia e espelhamento.

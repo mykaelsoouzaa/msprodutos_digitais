@@ -264,6 +264,46 @@ CREATE TABLE IF NOT EXISTS espelho_log (
   hash TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS espelho_log_conta ON espelho_log (conta_id, em);
+CREATE TABLE IF NOT EXISTS insta_contas (
+  conta_id INTEGER PRIMARY KEY REFERENCES contas(id) ON DELETE CASCADE,
+  ig_id TEXT NOT NULL,                 -- id da conta profissional (o mesmo que vem no webhook)
+  usuario TEXT NOT NULL DEFAULT '',
+  token TEXT NOT NULL,                 -- token de longa duração (60 dias, renovado sozinho)
+  token_em INTEGER NOT NULL,
+  conectado_em INTEGER NOT NULL,
+  erro TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS insta_contas_ig ON insta_contas (ig_id);
+
+CREATE TABLE IF NOT EXISTS insta_regras (
+  id INTEGER PRIMARY KEY,
+  conta_id INTEGER NOT NULL REFERENCES contas(id) ON DELETE CASCADE,
+  nome TEXT NOT NULL,
+  palavras TEXT NOT NULL,              -- "eu quero, quero, link"
+  mensagem TEXT NOT NULL,              -- o que vai no direct ({nome} = @ da pessoa)
+  publica TEXT NOT NULL DEFAULT '',    -- respostas no comentário, uma por linha (sorteia uma)
+  ativo INTEGER NOT NULL DEFAULT 1,
+  respondidas INTEGER NOT NULL DEFAULT 0,
+  criado_em INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS insta_log (
+  id INTEGER PRIMARY KEY,
+  conta_id INTEGER NOT NULL REFERENCES contas(id) ON DELETE CASCADE,
+  regra_id INTEGER,
+  tipo TEXT NOT NULL,                  -- comentario | direct
+  ref TEXT NOT NULL,                   -- id do comentário ou da mensagem
+  de_id TEXT NOT NULL,
+  de_usuario TEXT NOT NULL DEFAULT '',
+  texto TEXT NOT NULL DEFAULT '',
+  midia TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL,                -- enviada | ignorada | erro
+  motivo TEXT NOT NULL DEFAULT '',
+  em INTEGER NOT NULL,
+  UNIQUE (conta_id, tipo, ref)
+);
+CREATE INDEX IF NOT EXISTS insta_log_conta ON insta_log (conta_id, em);
+
 CREATE TABLE IF NOT EXISTS midias (
   codigo TEXT PRIMARY KEY,
   conta_id INTEGER NOT NULL,
@@ -318,6 +358,15 @@ const COLUNAS_V2: [string, string, string][] = [
   // v10: envio por tema
   ['grupos', 'categorias', "TEXT NOT NULL DEFAULT ''"],
   ['grupos', 'preco_max', 'INTEGER NOT NULL DEFAULT 0'],
+  // 6.7.1: Instagram pelo Login do Facebook para Empresas
+  ['insta_contas', 'modo', "TEXT NOT NULL DEFAULT 'ig'"],
+  ['insta_contas', 'page_id', "TEXT NOT NULL DEFAULT ''"],
+  // 6.8.1: outros links de loja da mensagem copiada ([oferta, link, loja] em JSON)
+  ['agendamentos', 'extras', "TEXT NOT NULL DEFAULT ''"],
+  // 6.9: última leitura do relatório de comissões da Shopee
+  ['config_conta', 'shopee_sinc_em', 'INTEGER NOT NULL DEFAULT 0'],
+  ['config_conta', 'shopee_sinc_erro', "TEXT NOT NULL DEFAULT ''"],
+  ['config_conta', 'shopee_sinc_itens', 'INTEGER NOT NULL DEFAULT 0'],
 ];
 
 export function abrirBanco(arquivo: string): DB {
@@ -327,6 +376,13 @@ export function abrirBanco(arquivo: string): DB {
   for (const [tabela, coluna, tipo] of COLUNAS_V2) {
     const tem = (db.prepare(`PRAGMA table_info(${tabela})`).all() as any[]).some((c) => c.name === coluna);
     if (!tem) db.exec(`ALTER TABLE ${tabela} ADD COLUMN ${coluna} ${tipo}`);
+  }
+  // Correções de dados que rodam uma vez só.
+  db.exec('CREATE TABLE IF NOT EXISTS migracoes (nome TEXT PRIMARY KEY, em INTEGER NOT NULL)');
+  if (!db.prepare("SELECT 1 FROM migracoes WHERE nome = 'cliques-previa'").get()) {
+    // 6.11.1: tira os "cliques" da prévia do link montada no envio (até 20 s depois de o link nascer).
+    db.exec('DELETE FROM cliques WHERE id IN (SELECT q.id FROM cliques q JOIN links l ON l.codigo = q.codigo WHERE q.em - l.criado_em < 20000)');
+    db.prepare("INSERT INTO migracoes (nome, em) VALUES ('cliques-previa', ?)").run(Date.now());
   }
   return db;
 }
